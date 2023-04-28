@@ -22,6 +22,7 @@ struct Model {
     next_name: String,
     next_description: String,
     tweaks: Vec<Box<dyn Tweak>>,
+    queue: Vec<QueueItem>,
 }
 
 // impl Model {
@@ -41,19 +42,35 @@ impl Default for Model {
             next_name: String::from("Entry"),
             next_description: String::from(""),
             tweaks: Vec::new(),
+            queue: Vec::new(),
         }
     }
 }
 
+enum QueueItem {
+    Remove(usize),
+}
+
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        while let Some(q) = self.queue.pop() {
+            match q {
+                QueueItem::Remove(index) => {
+                    self.tweaks.remove(index);
+                }
+            }
+        }
+
         egui::SidePanel::right("Custom UI")
             .min_width(512.)
             .show(ctx, |ui| {
                 ui.heading("Entries");
-                for entry in &self.tweaks {
+                for (i, entry) in self.tweaks.iter().enumerate() {
                     ui.label(entry.name());
                     ui.small(entry.description());
+                    if ui.button("remove").clicked() {
+                        self.queue.push(QueueItem::Remove(i));
+                    }
                 }
             });
 
