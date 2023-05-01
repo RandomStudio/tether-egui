@@ -1,9 +1,8 @@
 use std::ops::RangeInclusive;
 
 pub trait Tweak {
-    fn name(&self) -> &str;
-    fn description(&self) -> &str;
-    fn plug_name(&self) -> &str;
+    fn topic(&self, role: &str, id: &str) -> String;
+    fn common(&self) -> &Common;
 }
 
 pub struct Common {
@@ -32,17 +31,17 @@ impl Common {
             },
         }
     }
+    fn topic(&self, role: &str, id: &str) -> String {
+        format!("{}/{}/{}", role, id, self.plug_name)
+    }
 }
 
 impl Tweak for Common {
-    fn name(&self) -> &str {
-        self.name.as_str()
+    fn topic(&self, role: &str, id: &str) -> String {
+        self.topic(role, id)
     }
-    fn description(&self) -> &str {
-        self.description.as_str()
-    }
-    fn plug_name(&self) -> &str {
-        self.plug_name.as_str()
+    fn common(&self) -> &Common {
+        self
     }
 }
 
@@ -79,14 +78,11 @@ impl NumberTweak {
 }
 
 impl Tweak for NumberTweak {
-    fn name(&self) -> &str {
-        &self.common.name()
+    fn common(&self) -> &Common {
+        &self.common
     }
-    fn description(&self) -> &str {
-        self.common.description()
-    }
-    fn plug_name(&self) -> &str {
-        self.common.plug_name()
+    fn topic(&self, role: &str, id: &str) -> String {
+        self.common.topic(role, id)
     }
 }
 
@@ -121,13 +117,10 @@ impl ColourTweak {
 }
 
 impl Tweak for ColourTweak {
-    fn name(&self) -> &str {
-        self.common.name()
+    fn common(&self) -> &Common {
+        &self.common
     }
-    fn description(&self) -> &str {
-        self.common.description()
-    }
-    fn plug_name(&self) -> &str {
-        self.common.plug_name()
+    fn topic(&self, role: &str, id: &str) -> String {
+        self.common.topic(role, id)
     }
 }

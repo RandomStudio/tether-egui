@@ -27,6 +27,8 @@ struct Model {
     next_name: String,
     next_description: String,
     next_plug_name: String,
+    agent_role: String,
+    agent_id: String,
     tweaks: Vec<TweakEntry>,
     queue: Vec<QueueItem>,
 }
@@ -52,6 +54,8 @@ impl Default for Model {
             next_name,
             next_description,
             next_plug_name,
+            agent_role: "dummy".into(),
+            agent_id: "any".into(),
             tweaks: Vec::new(),
             queue: Vec::new(),
         }
@@ -79,21 +83,27 @@ impl eframe::App for Model {
                 for (i, entry) in self.tweaks.iter_mut().enumerate() {
                     match entry {
                         TweakEntry::Number(e) => {
-                            ui.label(&format!("Number: {}", e.name()));
+                            ui.label(&format!("Number: {}", e.common().name));
                             let (min, max) = e.range();
                             ui.add(Slider::new(e.value_mut(), min..=max));
-                            ui.label(&format!("Topic: {}", e.plug_name()));
+                            ui.label(&format!(
+                                "Topic: {}",
+                                e.common().topic(&self.agent_role, &self.agent_id)
+                            ));
                         }
                         TweakEntry::Colour(e) => {
-                            ui.label(&format!("Colour: {}", e.name()));
+                            ui.label(&format!("Colour: {}", e.common().name));
                             ui.color_edit_button_srgba_unmultiplied(e.value_mut());
                             let srgba = e.value();
                             ui.label(format!(
                                 "sRGBA: {} {} {} {}",
                                 srgba[0], srgba[1], srgba[2], srgba[3],
                             ));
-                            ui.small(e.description());
-                            ui.label(&format!("Topic: {}", e.plug_name()));
+                            ui.small(&e.common().description);
+                            ui.label(&format!(
+                                "Topic: {}",
+                                e.common().topic(&self.agent_role, &self.agent_id)
+                            ));
                         }
                     }
 
@@ -107,6 +117,19 @@ impl eframe::App for Model {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("UI builder");
+
+            ui.collapsing("Agent", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Role");
+                    ui.text_edit_singleline(&mut self.agent_role);
+                });
+                ui.horizontal(|ui| {
+                    ui.label("ID or Group");
+                    ui.text_edit_singleline(&mut self.agent_id);
+                });
+            });
+
+            ui.separator();
 
             ui.horizontal(|ui| {
                 ui.label("Name");
