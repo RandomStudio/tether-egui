@@ -16,7 +16,7 @@ fn main() -> Result<(), eframe::Error> {
         ..Default::default()
     };
     eframe::run_native(
-        "My egui App",
+        "Tether egui UI Builder",
         options,
         Box::new(|_cc| Box::<Model>::default()),
     )
