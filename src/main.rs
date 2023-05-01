@@ -1,7 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use eframe::egui;
-use tweaks::{NumberTweak, Tweak};
+use egui::Slider;
+use tweaks::{ColourTweak, NumberTweak, Tweak};
 
 mod tweaks;
 
@@ -18,10 +19,14 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
+enum TweakEntry {
+    Number(NumberTweak),
+    Colour(ColourTweak),
+}
 struct Model {
     next_name: String,
     next_description: String,
-    tweaks: Vec<Box<dyn Tweak>>,
+    tweaks: Vec<TweakEntry>,
     queue: Vec<QueueItem>,
 }
 
@@ -65,9 +70,19 @@ impl eframe::App for Model {
             .min_width(512.)
             .show(ctx, |ui| {
                 ui.heading("Entries");
-                for (i, entry) in self.tweaks.iter().enumerate() {
-                    ui.label(entry.name());
-                    ui.small(entry.description());
+                for (i, entry) in self.tweaks.iter_mut().enumerate() {
+                    ui.horizontal(|ui| match entry {
+                        TweakEntry::Number(e) => {
+                            ui.label(e.name());
+                            let (min, max) = e.range();
+                            ui.add(Slider::new(e.value_mut(), min..=max));
+                        }
+                        TweakEntry::Colour(e) => {
+                            ui.label(e.name());
+                            ui.small(e.description());
+                        }
+                    });
+
                     if ui.button("remove").clicked() {
                         self.queue.push(QueueItem::Remove(i));
                     }
@@ -86,12 +101,12 @@ impl eframe::App for Model {
                 ui.text_edit_singleline(&mut self.next_description);
             });
             if ui.button("Add number value").clicked() {
-                self.tweaks.push(Box::new(NumberTweak {
-                    name: self.next_name.clone(),
-                    description: self.next_description.clone(),
-                    range: None,
-                    value: 0.,
-                }));
+                self.tweaks.push(TweakEntry::Number(NumberTweak::new(
+                    self.next_name.clone(),
+                    self.next_description.clone(),
+                    0.,
+                    None,
+                )));
             }
         });
     }
