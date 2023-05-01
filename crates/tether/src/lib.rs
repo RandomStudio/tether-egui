@@ -6,6 +6,12 @@ use log::{debug, error, info};
 extern crate paho_mqtt;
 use paho_mqtt::{Client, ConnectOptionsBuilder, CreateOptionsBuilder, Message};
 
+extern crate rmp_serde;
+extern crate serde;
+
+use rmp_serde::to_vec_named;
+use serde::Serialize;
+
 pub struct TetherAgent {
     client: Client,
     role: String,
@@ -64,7 +70,9 @@ impl TetherAgent {
         }
     }
 
-    pub fn publish(&self, payload: Vec<u8>) -> Result<(), paho_mqtt::Error> {
+    pub fn publish<T: Serialize>(&self, data: T) -> Result<(), paho_mqtt::Error> {
+        let payload = to_vec_named(&data).unwrap();
+
         let msg = Message::new("dummy/dummy/test", payload, 1);
         self.client.publish(msg)
     }

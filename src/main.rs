@@ -4,7 +4,6 @@ use std::net::Ipv4Addr;
 
 use eframe::egui;
 use egui::Slider;
-use rmp_serde::to_vec_named;
 use tether::TetherAgent;
 use tweaks::{ColourTweak, NumberTweak, Tweak};
 
@@ -55,6 +54,12 @@ impl Default for Model {
         let next_name = get_next_name(0);
         let next_description = String::from("");
         let next_plug_name = next_name.clone();
+        let tether = TetherAgent::new(
+            std::net::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+            "tweaks",
+            None,
+        );
+        tether.connect();
         Self {
             next_name,
             next_description,
@@ -63,11 +68,7 @@ impl Default for Model {
             agent_id: "any".into(),
             tweaks: Vec::new(),
             queue: Vec::new(),
-            tether: TetherAgent::new(
-                std::net::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
-                "tweaks",
-                None,
-            ),
+            tether,
         }
     }
 }
@@ -101,8 +102,7 @@ impl eframe::App for Model {
                                 e.common().topic(&self.agent_role, &self.agent_id)
                             ));
                             if ui.button("Send").clicked() {
-                                let payload = to_vec_named(&e.value()).unwrap();
-                                self.tether.publish(payload).expect("Failed to send");
+                                self.tether.publish(&e.value()).expect("Failed to send");
                             }
                         }
                         TweakEntry::Colour(e) => {
