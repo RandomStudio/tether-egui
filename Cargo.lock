@@ -1922,12 +1922,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tether"
+version = "0.0.1"
+
+[[package]]
 name = "tether-egui"
 version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
  "env_logger",
+ "tether",
 ]
 
 [[package]]

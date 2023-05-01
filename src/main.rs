@@ -2,6 +2,7 @@
 
 use eframe::egui;
 use egui::Slider;
+use tether::TetherAgent;
 use tweaks::{ColourTweak, NumberTweak, Tweak};
 
 mod tweaks;
@@ -31,6 +32,7 @@ struct Model {
     agent_id: String,
     tweaks: Vec<TweakEntry>,
     queue: Vec<QueueItem>,
+    tether: TetherAgent,
 }
 
 impl Model {
@@ -58,6 +60,7 @@ impl Default for Model {
             agent_id: "any".into(),
             tweaks: Vec::new(),
             queue: Vec::new(),
+            tether: TetherAgent::new("tweaks", None),
         }
     }
 }
@@ -121,11 +124,15 @@ impl eframe::App for Model {
             ui.collapsing("Agent", |ui| {
                 ui.horizontal(|ui| {
                     ui.label("Role");
-                    ui.text_edit_singleline(&mut self.agent_role);
+                    if ui.text_edit_singleline(&mut self.agent_role).changed() {
+                        self.tether.set_role(&self.agent_role);
+                    }
                 });
                 ui.horizontal(|ui| {
                     ui.label("ID or Group");
-                    ui.text_edit_singleline(&mut self.agent_id);
+                    if ui.text_edit_singleline(&mut self.agent_id).changed() {
+                        self.tether.set_id(&self.agent_id);
+                    }
                 });
             });
 
