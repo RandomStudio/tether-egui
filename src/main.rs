@@ -102,7 +102,13 @@ impl eframe::App for Model {
                                 e.common().topic(&self.agent_role, &self.agent_id)
                             ));
                             if ui.button("Send").clicked() {
-                                self.tether.publish(&e.value()).expect("Failed to send");
+                                self.tether
+                                    .publish(
+                                        &e.value(),
+                                        &e.topic(&self.agent_role, &self.agent_id),
+                                        None,
+                                    )
+                                    .expect("Failed to send");
                             }
                         }
                         TweakEntry::Colour(e) => {

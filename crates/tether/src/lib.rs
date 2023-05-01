@@ -70,10 +70,15 @@ impl TetherAgent {
         }
     }
 
-    pub fn publish<T: Serialize>(&self, data: T) -> Result<(), paho_mqtt::Error> {
+    pub fn publish<T: Serialize>(
+        &self,
+        data: T,
+        topic: &str,
+        qos: Option<i32>,
+    ) -> Result<(), paho_mqtt::Error> {
         let payload = to_vec_named(&data).unwrap();
 
-        let msg = Message::new("dummy/dummy/test", payload, 1);
+        let msg = Message::new(topic, payload, qos.unwrap_or(1));
         self.client.publish(msg)
     }
 
