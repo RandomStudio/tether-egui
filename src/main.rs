@@ -96,12 +96,7 @@ impl eframe::App for Model {
                         TweakEntry::Number(e) => {
                             ui.label(&format!("Number: {}", e.common().name));
                             let (min, max) = e.range();
-                            ui.add(Slider::new(e.value_mut(), min..=max));
-                            ui.label(&format!(
-                                "Topic: {}",
-                                e.common().topic(&self.agent_role, &self.agent_id)
-                            ));
-                            if ui.button("Send").clicked() {
+                            if ui.add(Slider::new(e.value_mut(), min..=max)).changed() {
                                 self.tether
                                     .publish(
                                         &e.value(),
@@ -109,7 +104,11 @@ impl eframe::App for Model {
                                         None,
                                     )
                                     .expect("Failed to send");
-                            }
+                            };
+                            ui.label(&format!(
+                                "Topic: {}",
+                                e.common().topic(&self.agent_role, &self.agent_id)
+                            ));
                         }
                         TweakEntry::Colour(e) => {
                             ui.label(&format!("Colour: {}", e.common().name));
