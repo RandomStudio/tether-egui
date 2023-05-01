@@ -1,7 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::net::Ipv4Addr;
+
 use eframe::egui;
 use egui::Slider;
+use rmp_serde::to_vec_named;
 use tether::TetherAgent;
 use tweaks::{ColourTweak, NumberTweak, Tweak};
 
@@ -60,7 +63,11 @@ impl Default for Model {
             agent_id: "any".into(),
             tweaks: Vec::new(),
             queue: Vec::new(),
-            tether: TetherAgent::new("tweaks", None),
+            tether: TetherAgent::new(
+                std::net::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+                "tweaks",
+                None,
+            ),
         }
     }
 }
@@ -93,6 +100,10 @@ impl eframe::App for Model {
                                 "Topic: {}",
                                 e.common().topic(&self.agent_role, &self.agent_id)
                             ));
+                            if ui.button("Send").clicked() {
+                                let payload = to_vec_named(&e.value()).unwrap();
+                                self.tether.publish(payload).expect("Failed to send");
+                            }
                         }
                         TweakEntry::Colour(e) => {
                             ui.label(&format!("Colour: {}", e.common().name));
@@ -122,6 +133,17 @@ impl eframe::App for Model {
             ui.heading("UI builder");
 
             ui.collapsing("Agent", |ui| {
+                if self.tether.is_connected() {
+                    ui.heading("Connected ☑");
+                } else {
+                    ui.heading("Not connected ✖");
+                    if ui.button("Connect").clicked() {
+                        self.tether.connect();
+                    }
+                }
+
+                ui.separator();
+
                 ui.horizontal(|ui| {
                     ui.label("Role");
                     if ui.text_edit_singleline(&mut self.agent_role).changed() {

@@ -1,3 +1,4 @@
+use serde::Serialize;
 use std::ops::RangeInclusive;
 
 pub trait Tweak {
@@ -45,7 +46,11 @@ impl Tweak for Common {
     }
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+
 pub struct NumberTweak {
+    #[serde(skip)]
     common: Common,
     value: f32,
     range: RangeInclusive<f32>,
