@@ -71,21 +71,29 @@ impl eframe::App for Model {
             .show(ctx, |ui| {
                 ui.heading("Entries");
                 for (i, entry) in self.tweaks.iter_mut().enumerate() {
-                    ui.horizontal(|ui| match entry {
+                    match entry {
                         TweakEntry::Number(e) => {
-                            ui.label(e.name());
+                            ui.label(&format!("Number: {}", e.name()));
                             let (min, max) = e.range();
                             ui.add(Slider::new(e.value_mut(), min..=max));
                         }
                         TweakEntry::Colour(e) => {
-                            ui.label(e.name());
+                            ui.label(&format!("Colour: {}", e.name()));
+                            ui.color_edit_button_srgba_unmultiplied(e.value_mut());
+                            let srgba = e.value();
+                            ui.label(format!(
+                                "sRGBA: {} {} {} {}",
+                                srgba[0], srgba[1], srgba[2], srgba[3],
+                            ));
                             ui.small(e.description());
                         }
-                    });
+                    }
 
                     if ui.button("remove").clicked() {
                         self.queue.push(QueueItem::Remove(i));
                     }
+
+                    ui.separator();
                 }
             });
 
@@ -100,12 +108,19 @@ impl eframe::App for Model {
                 ui.label("Description");
                 ui.text_edit_singleline(&mut self.next_description);
             });
-            if ui.button("Add number value").clicked() {
+            if ui.button("Add Number value").clicked() {
                 self.tweaks.push(TweakEntry::Number(NumberTweak::new(
                     self.next_name.clone(),
                     self.next_description.clone(),
                     0.,
                     None,
+                )));
+            }
+            if ui.button("Add Colour value").clicked() {
+                self.tweaks.push(TweakEntry::Colour(ColourTweak::new(
+                    self.next_name.clone(),
+                    self.next_description.clone(),
+                    (255, 255, 255, 255),
                 )));
             }
         });

@@ -47,7 +47,7 @@ impl Tweak for NumberTweak {
     }
 }
 
-type ColourRGBA8 = (u8, u8, u8, f32);
+type ColourRGBA8 = [u8; 4];
 
 pub struct ColourTweak {
     name: String,
@@ -56,17 +56,21 @@ pub struct ColourTweak {
 }
 
 impl ColourTweak {
-    pub fn new(name: String, description: String, rgb: (u8, u8, u8), alpha: f32) -> Self {
-        let (r, g, b) = rgb;
+    pub fn new(name: String, description: String, rgba: (u8, u8, u8, u8)) -> Self {
+        let (r, g, b, a) = rgba;
         ColourTweak {
             name,
             description,
-            value: (r, g, b, alpha),
+            value: [r, g, b, a],
         }
     }
 
     pub fn value(&self) -> ColourRGBA8 {
         self.value
+    }
+
+    pub fn value_mut(&mut self) -> &mut ColourRGBA8 {
+        &mut self.value
     }
 }
 
