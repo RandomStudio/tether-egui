@@ -176,8 +176,8 @@ impl eframe::App for Model {
                 for (i, entry) in self.widgets.iter_mut().enumerate() {
                     match entry {
                         WidgetEntry::Number(e) => {
-                            ui.label(&format!("Number: {}", e.common().name));
                             let (min, max) = e.range();
+                            ui.label(&format!("Number: {} ({}..={})", e.common().name, min, max));
                             if ui
                                 .add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false))
                                 .changed()
