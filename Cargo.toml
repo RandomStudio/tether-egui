@@ -3,15 +3,10 @@ name = "tether-egui"
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-members = [
-  "crates/tether"
-]
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 egui = "0.21.0"
 eframe = "0.21.3"
 env_logger = "0.10"
-tether = { path = "crates/tether" }
+tether-agent = "0.2.2"
 serde = { version = "1.0", features = ["derive"] }

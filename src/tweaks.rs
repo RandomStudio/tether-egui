@@ -1,21 +1,27 @@
 use serde::Serialize;
 use std::ops::RangeInclusive;
+use tether_agent::{PlugDefinition, TetherAgent};
 
 pub trait Tweak {
-    fn topic(&self, role: &str, id: &str) -> String;
     fn common(&self) -> &Common;
 }
 
 pub struct Common {
     pub name: String,
     pub description: String,
-    pub plug_name: String,
+    pub plug: PlugDefinition,
 }
 
 impl Common {
-    pub fn new(name: &str, description: Option<&str>, plug_name: Option<&str>) -> Self {
+    pub fn new(
+        tweak_name: &str,
+        description: Option<&str>,
+        plug_name: &str,
+        custom_topic: Option<&str>,
+        agent: &TetherAgent,
+    ) -> Self {
         Common {
-            name: String::from(name),
+            name: String::from(tweak_name),
             description: {
                 if let Some(d) = description {
                     String::from(d)
@@ -23,28 +29,16 @@ impl Common {
                     String::from("no description provided")
                 }
             },
-            plug_name: {
-                if let Some(p) = plug_name {
-                    String::from(p)
-                } else {
-                    String::from(name)
-                }
-            },
+            plug: agent
+                .create_output_plug(plug_name, None, custom_topic)
+                .unwrap(),
         }
     }
-    fn topic(&self, role: &str, id: &str) -> String {
-        format!("{}/{}/{}", role, id, self.plug_name)
-    }
 }
-
-impl Tweak for Common {
-    fn topic(&self, role: &str, id: &str) -> String {
-        self.topic(role, id)
-    }
-    fn common(&self) -> &Common {
-        self
-    }
-}
+// pub fn topic(&self, agent: &TetherAgent) -> String {
+//     let (role, id) = agent.description();
+//     format!("{}/{}/{}", role, id, self.plug_name)
+// }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -60,12 +54,14 @@ impl NumberTweak {
     pub fn new(
         name: &str,
         description: Option<&str>,
-        plug_name: Option<&str>,
+        plug_name: &str,
+        custom_topic: Option<&str>,
         value: f32,
         range: Option<RangeInclusive<f32>>,
+        agent: &TetherAgent,
     ) -> Self {
         NumberTweak {
-            common: Common::new(name, description, plug_name),
+            common: Common::new(name, description, plug_name, custom_topic, agent),
             value,
             range: range.unwrap_or(0. ..=1.),
         }
@@ -86,9 +82,6 @@ impl Tweak for NumberTweak {
     fn common(&self) -> &Common {
         &self.common
     }
-    fn topic(&self, role: &str, id: &str) -> String {
-        self.common.topic(role, id)
-    }
 }
 
 type ColourRGBA8 = [u8; 4];
@@ -100,14 +93,16 @@ pub struct ColourTweak {
 
 impl ColourTweak {
     pub fn new(
-        name: &str,
+        tweak_name: &str,
         description: Option<&str>,
-        plug_name: Option<&str>,
+        plug_name: &str,
+        custom_topic: Option<&str>,
         rgba: (u8, u8, u8, u8),
+        agent: &TetherAgent,
     ) -> Self {
         let (r, g, b, a) = rgba;
         ColourTweak {
-            common: Common::new(name, description, plug_name),
+            common: Common::new(tweak_name, description, plug_name, custom_topic, agent),
             value: [r, g, b, a],
         }
     }
@@ -124,8 +119,5 @@ impl ColourTweak {
 impl Tweak for ColourTweak {
     fn common(&self) -> &Common {
         &self.common
-    }
-    fn topic(&self, role: &str, id: &str) -> String {
-        self.common.topic(role, id)
     }
 }

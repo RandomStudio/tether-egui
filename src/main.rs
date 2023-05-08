@@ -1,11 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::net::Ipv4Addr;
-
 use eframe::egui;
 use egui::Slider;
-use tether::TetherAgent;
-use tweaks::{ColourTweak, NumberTweak, Tweak};
+use tether_agent::TetherAgent;
+use tweaks::{ColourTweak, Common, NumberTweak, Tweak};
 
 mod tweaks;
 
@@ -27,49 +25,57 @@ enum TweakEntry {
     Colour(ColourTweak),
 }
 struct Model {
-    next_name: String,
-    next_description: String,
-    next_plug_name: String,
+    next_tweak: Common,
+    use_custom_topic: bool,
+    next_topic: String,
     agent_role: String,
     agent_id: String,
     tweaks: Vec<TweakEntry>,
     queue: Vec<QueueItem>,
-    tether: TetherAgent,
+    tether_agent: TetherAgent,
 }
 
-impl Model {
-    fn prepare_next_entry(&mut self) {
-        self.next_name = get_next_name(self.tweaks.len());
-        self.next_description = String::from("");
-        self.next_plug_name = self.next_name.clone();
-    }
-}
+// impl Model {
+//     fn prepare_next_entry(&mut self) {
+//         self.next_name = get_next_name(self.tweaks.len());
+//         self.next_description = String::from("");
+//         self.next_plug_name = self.next_name.clone();
+//     }
+// }
 
 fn get_next_name(count: usize) -> String {
     format!("plug{}", count + 1)
 }
 
+fn next_tweak(index: usize, agent: &TetherAgent) -> Common {
+    let default_name = get_next_name(index);
+    Common::new(&default_name, None, &default_name, None, agent)
+}
+
 impl Default for Model {
     fn default() -> Self {
-        let next_name = get_next_name(0);
-        let next_description = String::from("");
-        let next_plug_name = next_name.clone();
-        let tether = TetherAgent::new(
-            std::net::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
-            "tweaks",
-            None,
-        );
-        tether.connect();
+        let tether_agent = TetherAgent::new("tweaks", None, None);
+        let (role, id) = tether_agent.description();
+        let next_tweak = next_tweak(0, &tether_agent);
+        let next_topic = next_tweak.plug.topic.clone();
+        tether_agent.connect();
         Self {
-            next_name,
-            next_description,
-            next_plug_name,
-            agent_role: "dummy".into(),
-            agent_id: "any".into(),
+            next_tweak,
+            use_custom_topic: false,
+            next_topic,
+            agent_role: role.into(),
+            agent_id: id.into(),
             tweaks: Vec::new(),
             queue: Vec::new(),
-            tether,
+            tether_agent,
         }
+    }
+}
+
+impl Model {
+    fn prepare_next_entry(&mut self) {
+        self.next_tweak = next_tweak(self.tweaks.len(), &self.tether_agent);
+        // self.next_topic = "".into();
     }
 }
 
@@ -97,18 +103,12 @@ impl eframe::App for Model {
                             ui.label(&format!("Number: {}", e.common().name));
                             let (min, max) = e.range();
                             if ui.add(Slider::new(e.value_mut(), min..=max)).changed() {
-                                self.tether
-                                    .publish(
-                                        &e.value(),
-                                        &e.topic(&self.agent_role, &self.agent_id),
-                                        None,
-                                    )
+                                self.tether_agent
+                                    .encode_and_publish(&e.common().plug, e.value())
                                     .expect("Failed to send");
                             };
-                            ui.label(&format!(
-                                "Topic: {}",
-                                e.common().topic(&self.agent_role, &self.agent_id)
-                            ));
+                            // ui.text_edit_singleline(&mut e.common().topic(&self.tether_agent));
+                            ui.label(&format!("Topic: {}", e.common().plug.topic));
                         }
                         TweakEntry::Colour(e) => {
                             ui.label(&format!("Colour: {}", e.common().name));
@@ -119,10 +119,7 @@ impl eframe::App for Model {
                                 srgba[0], srgba[1], srgba[2], srgba[3],
                             ));
                             ui.small(&e.common().description);
-                            ui.label(&format!(
-                                "Topic: {}",
-                                e.common().topic(&self.agent_role, &self.agent_id)
-                            ));
+                            ui.label(&format!("Topic: {}", e.common().plug.topic));
                         }
                     }
 
@@ -138,12 +135,12 @@ impl eframe::App for Model {
             ui.heading("UI builder");
 
             ui.collapsing("Agent", |ui| {
-                if self.tether.is_connected() {
+                if self.tether_agent.is_connected() {
                     ui.heading("Connected ☑");
                 } else {
                     ui.heading("Not connected ✖");
                     if ui.button("Connect").clicked() {
-                        self.tether.connect();
+                        self.tether_agent.connect();
                     }
                 }
 
@@ -152,13 +149,13 @@ impl eframe::App for Model {
                 ui.horizontal(|ui| {
                     ui.label("Role");
                     if ui.text_edit_singleline(&mut self.agent_role).changed() {
-                        self.tether.set_role(&self.agent_role);
+                        self.tether_agent.set_role(&self.agent_role);
                     }
                 });
                 ui.horizontal(|ui| {
                     ui.label("ID or Group");
                     if ui.text_edit_singleline(&mut self.agent_id).changed() {
-                        self.tether.set_id(&self.agent_id);
+                        self.tether_agent.set_id(&self.agent_id);
                     }
                 });
             });
@@ -167,46 +164,76 @@ impl eframe::App for Model {
 
             ui.horizontal(|ui| {
                 ui.label("Name");
-                if ui.text_edit_singleline(&mut self.next_name).changed() {
-                    self.next_plug_name = self.next_name.clone();
-                };
+                if ui.text_edit_singleline(&mut self.next_tweak.name).changed() {
+                    let shortened_name =
+                        String::from(self.next_tweak.name.replace(" ", "_").trim());
+                    self.next_tweak.plug.name = shortened_name;
+                }
             });
             ui.horizontal(|ui| {
                 ui.label("Description");
-                ui.text_edit_singleline(&mut self.next_description);
+                ui.text_edit_singleline(&mut self.next_tweak.description);
             });
             ui.horizontal(|ui| {
                 ui.label("Plug Name");
-                ui.text_edit_singleline(&mut self.next_plug_name);
+                if ui
+                    .text_edit_singleline(&mut self.next_tweak.plug.name)
+                    .changed()
+                {
+                    self.next_topic = self.next_tweak.plug.topic.clone();
+                }
+            });
+            ui.horizontal(|ui| ui.checkbox(&mut self.use_custom_topic, "Use custom topic"));
+            ui.add_enabled_ui(self.use_custom_topic, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Topic");
+                    ui.text_edit_singleline(&mut self.next_topic);
+                });
             });
             if ui.button("Add Number value").clicked() {
                 self.tweaks.push(TweakEntry::Number(NumberTweak::new(
-                    self.next_name.as_str(),
+                    &self.next_tweak.name,
                     {
-                        if self.next_description == "" {
+                        if self.next_tweak.description == "" {
                             None
                         } else {
-                            Some(self.next_description.as_str())
+                            Some(&self.next_tweak.description)
                         }
                     },
-                    Some(self.next_plug_name.as_str()),
+                    &self.next_tweak.plug.name,
+                    {
+                        if self.use_custom_topic {
+                            Some(&self.next_topic)
+                        } else {
+                            None
+                        }
+                    },
                     0.,
                     None,
+                    &self.tether_agent,
                 )));
                 self.prepare_next_entry();
             }
             if ui.button("Add Colour value").clicked() {
                 self.tweaks.push(TweakEntry::Colour(ColourTweak::new(
-                    self.next_name.as_str(),
+                    self.next_tweak.name.as_str(),
                     {
-                        if self.next_description == "" {
+                        if self.next_tweak.description == "" {
                             None
                         } else {
-                            Some(self.next_description.as_str())
+                            Some(&self.next_tweak.description)
                         }
                     },
-                    Some(self.next_plug_name.as_str()),
+                    &self.next_tweak.plug.name,
+                    {
+                        if self.use_custom_topic {
+                            Some(&self.next_topic)
+                        } else {
+                            None
+                        }
+                    },
                     (255, 255, 255, 255),
+                    &self.tether_agent,
                 )));
                 self.prepare_next_entry();
             }
