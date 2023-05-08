@@ -1,10 +1,13 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::ops::RangeInclusive;
 use tether_agent::{PlugDefinition, TetherAgent};
 
 pub trait Widget {
     fn common(&self) -> &Common;
 }
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 
 pub struct Common {
     pub name: String,
@@ -35,11 +38,9 @@ impl Common {
         }
     }
 }
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-
 pub struct NumberWidget {
-    #[serde(skip)]
     common: Common,
     value: f32,
     range: RangeInclusive<f32>,
@@ -80,6 +81,9 @@ impl Widget for NumberWidget {
 }
 
 type ColourRGBA8 = [u8; 4];
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 
 pub struct ColourWidget {
     common: Common,

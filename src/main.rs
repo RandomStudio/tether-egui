@@ -2,6 +2,7 @@
 
 use eframe::egui;
 use egui::Slider;
+use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 use widgets::{ColourWidget, Common, NumberWidget, Widget};
 
@@ -19,6 +20,9 @@ fn main() -> Result<(), eframe::Error> {
         Box::new(|_cc| Box::<Model>::default()),
     )
 }
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 
 enum WidgetEntry {
     Number(NumberWidget),

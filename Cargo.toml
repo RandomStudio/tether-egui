@@ -8,5 +8,5 @@ edition = "2021"
 egui = "0.21.0"
 eframe = "0.21.3"
 env_logger = "0.10"
-tether-agent = "0.2.2"
+tether-agent = "0.2.3"
 serde = { version = "1.0", features = ["derive"] }
