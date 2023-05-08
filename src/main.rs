@@ -3,7 +3,7 @@
 use std::fs;
 
 use eframe::egui;
-use egui::Slider;
+use egui::{Color32, RichText, Slider};
 use env_logger::Env;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
@@ -17,7 +17,7 @@ fn main() -> Result<(), eframe::Error> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(1024.0, 960.0)),
+        initial_window_size: Some(egui::vec2(1280.0, 960.0)),
         ..Default::default()
     };
     eframe::run_native(
@@ -169,15 +169,71 @@ impl eframe::App for Model {
             }
         }
 
+        egui::SidePanel::left("Settings").show(ctx, |ui| {
+            ui.heading("Load/Save");
+            if ui.button("Save").clicked() {
+                let text = serde_json::to_string_pretty(&self.widgets)
+                    .expect("failed to serialise widget data");
+                match fs::write("./widgets.json", text) {
+                    Ok(()) => {
+                        info!("Saved OK");
+                    }
+                    Err(e) => {
+                        error!("Error saving to disk: {:?}", e);
+                    }
+                }
+            }
+
+            ui.separator();
+
+            ui.heading("Agent");
+
+            if self.tether_agent.is_connected() {
+                ui.label(RichText::new("Connected ☑").color(Color32::GREEN));
+            } else {
+                ui.label(RichText::new("Not connected ✖").color(Color32::RED));
+                if ui.button("Connect").clicked() {
+                    self.tether_agent.connect();
+                }
+            }
+
+            ui.separator();
+
+            ui.horizontal(|ui| {
+                ui.label("Role");
+                if ui.text_edit_singleline(&mut self.agent_role).changed() {
+                    self.tether_agent.set_role(&self.agent_role);
+                    self.prepare_next_entry();
+                }
+            });
+            ui.horizontal(|ui| {
+                ui.label("ID or Group");
+                if ui.text_edit_singleline(&mut self.agent_id).changed() {
+                    self.tether_agent.set_id(&self.agent_id);
+                    self.prepare_next_entry();
+                }
+            });
+        });
+
         egui::SidePanel::right("Custom UI")
             .min_width(512.)
             .show(ctx, |ui| {
                 ui.heading("Entries");
+                // TODO: use grid
+
                 for (i, entry) in self.widgets.iter_mut().enumerate() {
                     match entry {
                         WidgetEntry::Number(e) => {
                             let (min, max) = e.range();
-                            ui.label(&format!("Number: {} ({}..={})", e.common().name, min, max));
+                            ui.label(
+                                RichText::new(format!(
+                                    "Number: {} ({}..={})",
+                                    e.common().name,
+                                    min,
+                                    max
+                                ))
+                                .background_color(Color32::DARK_BLUE),
+                            );
                             if ui
                                 .add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false))
                                 .changed()
@@ -191,7 +247,10 @@ impl eframe::App for Model {
                             ui.label(&format!("Topic: {}", e.common().plug.topic));
                         }
                         WidgetEntry::Colour(e) => {
-                            ui.label(&format!("Colour: {}", e.common().name));
+                            ui.label(
+                                RichText::new(format!("Colour: {}", e.common().name))
+                                    .background_color(Color32::DARK_BLUE),
+                            );
                             if ui
                                 .color_edit_button_srgba_unmultiplied(e.value_mut())
                                 .changed()
@@ -210,7 +269,7 @@ impl eframe::App for Model {
                         }
                     }
 
-                    if ui.button("remove").clicked() {
+                    if ui.button("❌ Remove").clicked() {
                         self.queue.push(QueueItem::Remove(i));
                     }
 
@@ -218,54 +277,7 @@ impl eframe::App for Model {
                 }
             });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("UI builder");
-
-            if ui.button("Save").clicked() {
-                let text = serde_json::to_string_pretty(&self.widgets)
-                    .expect("failed to serialise widget data");
-                match fs::write("./widgets.json", text) {
-                    Ok(()) => {
-                        info!("Saved OK");
-                    }
-                    Err(e) => {
-                        error!("Error saving to disk: {:?}", e);
-                    }
-                }
-            }
-
-            ui.separator();
-
-            ui.collapsing("Agent", |ui| {
-                if self.tether_agent.is_connected() {
-                    ui.heading("Connected ☑");
-                } else {
-                    ui.heading("Not connected ✖");
-                    if ui.button("Connect").clicked() {
-                        self.tether_agent.connect();
-                    }
-                }
-
-                ui.separator();
-
-                ui.horizontal(|ui| {
-                    ui.label("Role");
-                    if ui.text_edit_singleline(&mut self.agent_role).changed() {
-                        self.tether_agent.set_role(&self.agent_role);
-                        self.prepare_next_entry();
-                    }
-                });
-                ui.horizontal(|ui| {
-                    ui.label("ID or Group");
-                    if ui.text_edit_singleline(&mut self.agent_id).changed() {
-                        self.tether_agent.set_id(&self.agent_id);
-                        self.prepare_next_entry();
-                    }
-                });
-            });
-
-            ui.separator();
-
+        egui::CentralPanel::default().show(ctx, |_ui| {
             egui::Window::new("Number").show(ctx, |ui| {
                 self.common_widget_values(ui);
                 ui.collapsing("range", |ui| {
@@ -287,7 +299,8 @@ impl eframe::App for Model {
                         self.next_range = (0., 1.0);
                     }
                 });
-                if ui.button("Add").clicked() {
+                ui.separator();
+                if ui.button("✚ Add").clicked() {
                     self.widgets.push(WidgetEntry::Number(NumberWidget::new(
                         &self.next_widget.name,
                         {
@@ -316,7 +329,8 @@ impl eframe::App for Model {
             egui::Window::new("Colour").show(ctx, |ui| {
                 ui.heading("Colours");
                 self.common_widget_values(ui);
-                if ui.button("Add").clicked() {
+                ui.separator();
+                if ui.button("✚ Add").clicked() {
                     self.widgets.push(WidgetEntry::Colour(ColourWidget::new(
                         self.next_widget.name.as_str(),
                         {
