@@ -36,6 +36,7 @@ enum WidgetEntry {
 }
 struct Model {
     next_widget: Common,
+    next_range: (f32, f32),
     use_custom_topic: bool,
     next_topic: String,
     agent_role: String,
@@ -80,6 +81,7 @@ impl Default for Model {
 
         Self {
             next_widget,
+            next_range: (0., 1.0),
             use_custom_topic: false,
             next_topic,
             agent_role: role.into(),
@@ -262,6 +264,14 @@ impl eframe::App for Model {
 
             ui.heading("Number");
             self.common_widget_values(ui);
+            ui.add(egui::Slider::new(
+                &mut self.next_range.0,
+                i32::MIN as f32..=i32::MAX as f32,
+            ));
+            ui.add(egui::Slider::new(
+                &mut self.next_range.1,
+                i32::MIN as f32..=i32::MAX as f32,
+            ));
             if ui.button("Add").clicked() {
                 self.widgets.push(WidgetEntry::Number(NumberWidget::new(
                     &self.next_widget.name,
@@ -281,7 +291,7 @@ impl eframe::App for Model {
                         }
                     },
                     0.,
-                    None,
+                    Some(self.next_range.0..=self.next_range.1),
                     &self.tether_agent,
                 )));
                 self.prepare_next_entry();
