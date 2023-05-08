@@ -2144,7 +2144,9 @@ dependencies = [
  "eframe",
  "egui",
  "env_logger 0.10.0",
+ "log",
  "serde",
+ "serde_json",
  "tether-agent",
 ]
 

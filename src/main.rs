@@ -1,7 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::fs;
+
 use eframe::egui;
 use egui::Slider;
+use env_logger::Env;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 use widgets::{ColourWidget, Common, NumberWidget, Widget};
@@ -9,7 +13,9 @@ use widgets::{ColourWidget, Common, NumberWidget, Widget};
 mod widgets;
 
 fn main() -> Result<(), eframe::Error> {
-    env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+    // Initialize the logger from the environment
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+
     let options = eframe::NativeOptions {
         initial_window_size: Some(egui::vec2(1024.0, 960.0)),
         ..Default::default()
@@ -191,6 +197,21 @@ impl eframe::App for Model {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("UI builder");
+
+            if ui.button("Save").clicked() {
+                let text = serde_json::to_string_pretty(&self.widgets)
+                    .expect("failed to serialise widget data");
+                match fs::write("./widgets.json", text) {
+                    Ok(()) => {
+                        info!("Saved OK");
+                    }
+                    Err(e) => {
+                        error!("Error saving to disk: {:?}", e);
+                    }
+                }
+            }
+
+            ui.separator();
 
             ui.collapsing("Agent", |ui| {
                 if self.tether_agent.is_connected() {
