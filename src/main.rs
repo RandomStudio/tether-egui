@@ -167,7 +167,11 @@ impl eframe::App for Model {
                 if ui.text_edit_singleline(&mut self.next_tweak.name).changed() {
                     let shortened_name =
                         String::from(self.next_tweak.name.replace(" ", "_").trim());
-                    self.next_tweak.plug.name = shortened_name;
+                    self.next_tweak.plug.name = shortened_name.clone();
+                    if !self.use_custom_topic {
+                        let (role, id) = self.tether_agent.description();
+                        self.next_topic = format!("{role}/{id}/{}", shortened_name.clone());
+                    }
                 }
             });
             ui.horizontal(|ui| {
@@ -180,10 +184,25 @@ impl eframe::App for Model {
                     .text_edit_singleline(&mut self.next_tweak.plug.name)
                     .changed()
                 {
-                    self.next_topic = self.next_tweak.plug.topic.clone();
+                    if !self.use_custom_topic {
+                        let (role, id) = self.tether_agent.description();
+                        let plug_name = self.next_tweak.plug.name.clone();
+                        self.next_topic = format!("{role}/{id}/{plug_name}");
+                    }
                 }
             });
-            ui.horizontal(|ui| ui.checkbox(&mut self.use_custom_topic, "Use custom topic"));
+            ui.horizontal(|ui| {
+                if ui
+                    .checkbox(&mut self.use_custom_topic, "Use custom topic")
+                    .changed()
+                {
+                    if !self.use_custom_topic {
+                        let (role, id) = self.tether_agent.description();
+                        let plug_name = self.next_tweak.plug.name.clone();
+                        self.next_topic = format!("{role}/{id}/{plug_name}");
+                    }
+                }
+            });
             ui.add_enabled_ui(self.use_custom_topic, |ui| {
                 ui.horizontal(|ui| {
                     ui.label("Topic");
