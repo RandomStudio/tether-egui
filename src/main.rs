@@ -266,68 +266,80 @@ impl eframe::App for Model {
 
             ui.separator();
 
-            ui.heading("Number");
-            self.common_widget_values(ui);
-            ui.add(egui::Slider::new(
-                &mut self.next_range.0,
-                i16::MIN as f32..=i16::MAX as f32,
-            ));
-            ui.add(egui::Slider::new(
-                &mut self.next_range.1,
-                i16::MIN as f32..=i16::MAX as f32,
-            ));
-            if ui.button("Add").clicked() {
-                self.widgets.push(WidgetEntry::Number(NumberWidget::new(
-                    &self.next_widget.name,
-                    {
-                        if self.next_widget.description == "" {
-                            None
-                        } else {
-                            Some(&self.next_widget.description)
-                        }
-                    },
-                    &self.next_widget.plug.name,
-                    {
-                        if self.use_custom_topic {
-                            Some(&self.next_topic)
-                        } else {
-                            None
-                        }
-                    },
-                    0.,
-                    Some(self.next_range.0..=self.next_range.1),
-                    &self.tether_agent,
-                )));
-                self.prepare_next_entry();
-            }
+            egui::Window::new("Number").show(ctx, |ui| {
+                self.common_widget_values(ui);
+                ui.collapsing("range", |ui| {
+                    ui.add(
+                        egui::Slider::new(
+                            &mut self.next_range.0,
+                            i16::MIN as f32..=i16::MAX as f32,
+                        )
+                        .text("min"),
+                    );
+                    ui.add(
+                        egui::Slider::new(
+                            &mut self.next_range.1,
+                            i16::MIN as f32..=i16::MAX as f32,
+                        )
+                        .text("max"),
+                    );
+                    if ui.small_button("Reset").clicked() {
+                        self.next_range = (0., 1.0);
+                    }
+                });
+                if ui.button("Add").clicked() {
+                    self.widgets.push(WidgetEntry::Number(NumberWidget::new(
+                        &self.next_widget.name,
+                        {
+                            if self.next_widget.description == "" {
+                                None
+                            } else {
+                                Some(&self.next_widget.description)
+                            }
+                        },
+                        &self.next_widget.plug.name,
+                        {
+                            if self.use_custom_topic {
+                                Some(&self.next_topic)
+                            } else {
+                                None
+                            }
+                        },
+                        0.,
+                        Some(self.next_range.0..=self.next_range.1),
+                        &self.tether_agent,
+                    )));
+                    self.prepare_next_entry();
+                }
+            });
 
-            ui.separator();
-
-            ui.heading("Colours");
-            self.common_widget_values(ui);
-            if ui.button("Add").clicked() {
-                self.widgets.push(WidgetEntry::Colour(ColourWidget::new(
-                    self.next_widget.name.as_str(),
-                    {
-                        if self.next_widget.description == "" {
-                            None
-                        } else {
-                            Some(&self.next_widget.description)
-                        }
-                    },
-                    &self.next_widget.plug.name,
-                    {
-                        if self.use_custom_topic {
-                            Some(&self.next_topic)
-                        } else {
-                            None
-                        }
-                    },
-                    (255, 255, 255, 255),
-                    &self.tether_agent,
-                )));
-                self.prepare_next_entry();
-            }
+            egui::Window::new("Colour").show(ctx, |ui| {
+                ui.heading("Colours");
+                self.common_widget_values(ui);
+                if ui.button("Add").clicked() {
+                    self.widgets.push(WidgetEntry::Colour(ColourWidget::new(
+                        self.next_widget.name.as_str(),
+                        {
+                            if self.next_widget.description == "" {
+                                None
+                            } else {
+                                Some(&self.next_widget.description)
+                            }
+                        },
+                        &self.next_widget.plug.name,
+                        {
+                            if self.use_custom_topic {
+                                Some(&self.next_topic)
+                            } else {
+                                None
+                            }
+                        },
+                        (255, 255, 255, 255),
+                        &self.tether_agent,
+                    )));
+                    self.prepare_next_entry();
+                }
+            });
         });
     }
 }
