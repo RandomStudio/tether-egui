@@ -3,9 +3,9 @@
 use eframe::egui;
 use egui::Slider;
 use tether_agent::TetherAgent;
-use tweaks::{ColourTweak, Common, NumberTweak, Tweak};
+use widgets::{ColourWidget, Common, NumberWidget, Widget};
 
-mod tweaks;
+mod widgets;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -20,52 +20,44 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
-enum TweakEntry {
-    Number(NumberTweak),
-    Colour(ColourTweak),
+enum WidgetEntry {
+    Number(NumberWidget),
+    Colour(ColourWidget),
 }
 struct Model {
-    next_tweak: Common,
+    next_widget: Common,
     use_custom_topic: bool,
     next_topic: String,
     agent_role: String,
     agent_id: String,
-    tweaks: Vec<TweakEntry>,
+    widgets: Vec<WidgetEntry>,
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
 }
-
-// impl Model {
-//     fn prepare_next_entry(&mut self) {
-//         self.next_name = get_next_name(self.tweaks.len());
-//         self.next_description = String::from("");
-//         self.next_plug_name = self.next_name.clone();
-//     }
-// }
 
 fn get_next_name(count: usize) -> String {
     format!("plug{}", count + 1)
 }
 
-fn next_tweak(index: usize, agent: &TetherAgent) -> Common {
+fn create_next_widget(index: usize, agent: &TetherAgent) -> Common {
     let default_name = get_next_name(index);
     Common::new(&default_name, None, &default_name, None, agent)
 }
 
 impl Default for Model {
     fn default() -> Self {
-        let tether_agent = TetherAgent::new("tweaks", None, None);
+        let tether_agent = TetherAgent::new("gui", None, None);
         let (role, id) = tether_agent.description();
-        let next_tweak = next_tweak(0, &tether_agent);
-        let next_topic = next_tweak.plug.topic.clone();
+        let next_widget = create_next_widget(0, &tether_agent);
+        let next_topic = next_widget.plug.topic.clone();
         tether_agent.connect();
         Self {
-            next_tweak,
+            next_widget,
             use_custom_topic: false,
             next_topic,
             agent_role: role.into(),
             agent_id: id.into(),
-            tweaks: Vec::new(),
+            widgets: Vec::new(),
             queue: Vec::new(),
             tether_agent,
         }
@@ -74,7 +66,7 @@ impl Default for Model {
 
 impl Model {
     fn prepare_next_entry(&mut self) {
-        self.next_tweak = next_tweak(self.tweaks.len(), &self.tether_agent);
+        self.next_widget = create_next_widget(self.widgets.len(), &self.tether_agent);
         // self.next_topic = "".into();
     }
 }
@@ -88,7 +80,7 @@ impl eframe::App for Model {
         while let Some(q) = self.queue.pop() {
             match q {
                 QueueItem::Remove(index) => {
-                    self.tweaks.remove(index);
+                    self.widgets.remove(index);
                 }
             }
         }
@@ -97,9 +89,9 @@ impl eframe::App for Model {
             .min_width(512.)
             .show(ctx, |ui| {
                 ui.heading("Entries");
-                for (i, entry) in self.tweaks.iter_mut().enumerate() {
+                for (i, entry) in self.widgets.iter_mut().enumerate() {
                     match entry {
-                        TweakEntry::Number(e) => {
+                        WidgetEntry::Number(e) => {
                             ui.label(&format!("Number: {}", e.common().name));
                             let (min, max) = e.range();
                             if ui.add(Slider::new(e.value_mut(), min..=max)).changed() {
@@ -110,7 +102,7 @@ impl eframe::App for Model {
                             // ui.text_edit_singleline(&mut e.common().topic(&self.tether_agent));
                             ui.label(&format!("Topic: {}", e.common().plug.topic));
                         }
-                        TweakEntry::Colour(e) => {
+                        WidgetEntry::Colour(e) => {
                             ui.label(&format!("Colour: {}", e.common().name));
                             ui.color_edit_button_srgba_unmultiplied(e.value_mut());
                             let srgba = e.value();
@@ -164,10 +156,13 @@ impl eframe::App for Model {
 
             ui.horizontal(|ui| {
                 ui.label("Name");
-                if ui.text_edit_singleline(&mut self.next_tweak.name).changed() {
+                if ui
+                    .text_edit_singleline(&mut self.next_widget.name)
+                    .changed()
+                {
                     let shortened_name =
-                        String::from(self.next_tweak.name.replace(" ", "_").trim());
-                    self.next_tweak.plug.name = shortened_name.clone();
+                        String::from(self.next_widget.name.replace(" ", "_").trim());
+                    self.next_widget.plug.name = shortened_name.clone();
                     if !self.use_custom_topic {
                         let (role, id) = self.tether_agent.description();
                         self.next_topic = format!("{role}/{id}/{}", shortened_name.clone());
@@ -176,17 +171,17 @@ impl eframe::App for Model {
             });
             ui.horizontal(|ui| {
                 ui.label("Description");
-                ui.text_edit_singleline(&mut self.next_tweak.description);
+                ui.text_edit_singleline(&mut self.next_widget.description);
             });
             ui.horizontal(|ui| {
                 ui.label("Plug Name");
                 if ui
-                    .text_edit_singleline(&mut self.next_tweak.plug.name)
+                    .text_edit_singleline(&mut self.next_widget.plug.name)
                     .changed()
                 {
                     if !self.use_custom_topic {
                         let (role, id) = self.tether_agent.description();
-                        let plug_name = self.next_tweak.plug.name.clone();
+                        let plug_name = self.next_widget.plug.name.clone();
                         self.next_topic = format!("{role}/{id}/{plug_name}");
                     }
                 }
@@ -198,7 +193,7 @@ impl eframe::App for Model {
                 {
                     if !self.use_custom_topic {
                         let (role, id) = self.tether_agent.description();
-                        let plug_name = self.next_tweak.plug.name.clone();
+                        let plug_name = self.next_widget.plug.name.clone();
                         self.next_topic = format!("{role}/{id}/{plug_name}");
                     }
                 }
@@ -210,16 +205,16 @@ impl eframe::App for Model {
                 });
             });
             if ui.button("Add Number value").clicked() {
-                self.tweaks.push(TweakEntry::Number(NumberTweak::new(
-                    &self.next_tweak.name,
+                self.widgets.push(WidgetEntry::Number(NumberWidget::new(
+                    &self.next_widget.name,
                     {
-                        if self.next_tweak.description == "" {
+                        if self.next_widget.description == "" {
                             None
                         } else {
-                            Some(&self.next_tweak.description)
+                            Some(&self.next_widget.description)
                         }
                     },
-                    &self.next_tweak.plug.name,
+                    &self.next_widget.plug.name,
                     {
                         if self.use_custom_topic {
                             Some(&self.next_topic)
@@ -234,16 +229,16 @@ impl eframe::App for Model {
                 self.prepare_next_entry();
             }
             if ui.button("Add Colour value").clicked() {
-                self.tweaks.push(TweakEntry::Colour(ColourTweak::new(
-                    self.next_tweak.name.as_str(),
+                self.widgets.push(WidgetEntry::Colour(ColourWidget::new(
+                    self.next_widget.name.as_str(),
                     {
-                        if self.next_tweak.description == "" {
+                        if self.next_widget.description == "" {
                             None
                         } else {
-                            Some(&self.next_tweak.description)
+                            Some(&self.next_widget.description)
                         }
                     },
-                    &self.next_tweak.plug.name,
+                    &self.next_widget.plug.name,
                     {
                         if self.use_custom_topic {
                             Some(&self.next_topic)
