@@ -61,13 +61,30 @@ impl Default for Model {
         let next_widget = create_next_widget(0, &tether_agent);
         let next_topic = next_widget.plug.topic.clone();
         tether_agent.connect();
+
+        let text = fs::read_to_string("./widgets.json");
+        let widgets = match text {
+            Ok(d) => {
+                info!("Found widget data file; parsing...");
+                let widgets = serde_json::from_str::<Vec<WidgetEntry>>(&d)
+                    .expect("failed to parse widget list");
+                info!("... loaded {} widgets OK", widgets.len());
+                // TODO: optionally "broadcast" all values from loaded Widgets
+                widgets
+            }
+            Err(e) => {
+                error!("Failed to load widgets from disk: {:?}", e);
+                Vec::new()
+            }
+        };
+
         Self {
             next_widget,
             use_custom_topic: false,
             next_topic,
             agent_role: role.into(),
             agent_id: id.into(),
-            widgets: Vec::new(),
+            widgets,
             queue: Vec::new(),
             tether_agent,
         }
