@@ -72,6 +72,58 @@ impl Model {
         self.next_topic = format!("{role}/{id}/{plug_name}");
         self.use_custom_topic = false;
     }
+
+    fn common_widget_values(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.label("Name");
+            if ui
+                .text_edit_singleline(&mut self.next_widget.name)
+                .changed()
+            {
+                let shortened_name = String::from(self.next_widget.name.replace(" ", "_").trim());
+                self.next_widget.plug.name = shortened_name.clone();
+                if !self.use_custom_topic {
+                    let (role, id) = self.tether_agent.description();
+                    self.next_topic = format!("{role}/{id}/{}", shortened_name.clone());
+                }
+            }
+        });
+        ui.horizontal(|ui| {
+            ui.label("Description");
+            ui.text_edit_singleline(&mut self.next_widget.description);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Plug Name");
+            if ui
+                .text_edit_singleline(&mut self.next_widget.plug.name)
+                .changed()
+            {
+                if !self.use_custom_topic {
+                    let (role, id) = self.tether_agent.description();
+                    let plug_name = self.next_widget.plug.name.clone();
+                    self.next_topic = format!("{role}/{id}/{plug_name}");
+                }
+            }
+        });
+        ui.horizontal(|ui| {
+            if ui
+                .checkbox(&mut self.use_custom_topic, "Use custom topic")
+                .changed()
+            {
+                if !self.use_custom_topic {
+                    let (role, id) = self.tether_agent.description();
+                    let plug_name = self.next_widget.plug.name.clone();
+                    self.next_topic = format!("{role}/{id}/{plug_name}");
+                }
+            }
+        });
+        ui.add_enabled_ui(self.use_custom_topic, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Topic");
+                ui.text_edit_singleline(&mut self.next_topic);
+            });
+        });
+    }
 }
 
 enum QueueItem {
@@ -100,14 +152,21 @@ impl eframe::App for Model {
                             if ui.add(Slider::new(e.value_mut(), min..=max)).changed() {
                                 self.tether_agent
                                     .encode_and_publish(&e.common().plug, e.value())
-                                    .expect("Failed to send");
+                                    .expect("Failed to send number");
                             };
                             // ui.text_edit_singleline(&mut e.common().topic(&self.tether_agent));
                             ui.label(&format!("Topic: {}", e.common().plug.topic));
                         }
                         WidgetEntry::Colour(e) => {
                             ui.label(&format!("Colour: {}", e.common().name));
-                            ui.color_edit_button_srgba_unmultiplied(e.value_mut());
+                            if ui
+                                .color_edit_button_srgba_unmultiplied(e.value_mut())
+                                .changed()
+                            {
+                                self.tether_agent
+                                    .encode_and_publish(&e.common().plug, e.value())
+                                    .expect("Failed to send colour")
+                            };
                             let srgba = e.value();
                             ui.label(format!(
                                 "sRGBA: {} {} {} {}",
@@ -159,57 +218,9 @@ impl eframe::App for Model {
 
             ui.separator();
 
-            ui.horizontal(|ui| {
-                ui.label("Name");
-                if ui
-                    .text_edit_singleline(&mut self.next_widget.name)
-                    .changed()
-                {
-                    let shortened_name =
-                        String::from(self.next_widget.name.replace(" ", "_").trim());
-                    self.next_widget.plug.name = shortened_name.clone();
-                    if !self.use_custom_topic {
-                        let (role, id) = self.tether_agent.description();
-                        self.next_topic = format!("{role}/{id}/{}", shortened_name.clone());
-                    }
-                }
-            });
-            ui.horizontal(|ui| {
-                ui.label("Description");
-                ui.text_edit_singleline(&mut self.next_widget.description);
-            });
-            ui.horizontal(|ui| {
-                ui.label("Plug Name");
-                if ui
-                    .text_edit_singleline(&mut self.next_widget.plug.name)
-                    .changed()
-                {
-                    if !self.use_custom_topic {
-                        let (role, id) = self.tether_agent.description();
-                        let plug_name = self.next_widget.plug.name.clone();
-                        self.next_topic = format!("{role}/{id}/{plug_name}");
-                    }
-                }
-            });
-            ui.horizontal(|ui| {
-                if ui
-                    .checkbox(&mut self.use_custom_topic, "Use custom topic")
-                    .changed()
-                {
-                    if !self.use_custom_topic {
-                        let (role, id) = self.tether_agent.description();
-                        let plug_name = self.next_widget.plug.name.clone();
-                        self.next_topic = format!("{role}/{id}/{plug_name}");
-                    }
-                }
-            });
-            ui.add_enabled_ui(self.use_custom_topic, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Topic");
-                    ui.text_edit_singleline(&mut self.next_topic);
-                });
-            });
-            if ui.button("Add Number value").clicked() {
+            ui.heading("Number");
+            self.common_widget_values(ui);
+            if ui.button("Add").clicked() {
                 self.widgets.push(WidgetEntry::Number(NumberWidget::new(
                     &self.next_widget.name,
                     {
@@ -233,7 +244,12 @@ impl eframe::App for Model {
                 )));
                 self.prepare_next_entry();
             }
-            if ui.button("Add Colour value").clicked() {
+
+            ui.separator();
+
+            ui.heading("Colours");
+            self.common_widget_values(ui);
+            if ui.button("Add").clicked() {
                 self.widgets.push(WidgetEntry::Colour(ColourWidget::new(
                     self.next_widget.name.as_str(),
                     {
