@@ -178,11 +178,15 @@ impl eframe::App for Model {
                         WidgetEntry::Number(e) => {
                             ui.label(&format!("Number: {}", e.common().name));
                             let (min, max) = e.range();
-                            if ui.add(Slider::new(e.value_mut(), min..=max)).changed() {
+                            if ui
+                                .add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false))
+                                .changed()
+                            {
                                 self.tether_agent
                                     .encode_and_publish(&e.common().plug, e.value())
                                     .expect("Failed to send number");
                             };
+                            ui.small(&e.common().description);
                             // ui.text_edit_singleline(&mut e.common().topic(&self.tether_agent));
                             ui.label(&format!("Topic: {}", e.common().plug.topic));
                         }
@@ -266,11 +270,11 @@ impl eframe::App for Model {
             self.common_widget_values(ui);
             ui.add(egui::Slider::new(
                 &mut self.next_range.0,
-                i32::MIN as f32..=i32::MAX as f32,
+                i16::MIN as f32..=i16::MAX as f32,
             ));
             ui.add(egui::Slider::new(
                 &mut self.next_range.1,
-                i32::MIN as f32..=i32::MAX as f32,
+                i16::MIN as f32..=i16::MAX as f32,
             ));
             if ui.button("Add").clicked() {
                 self.widgets.push(WidgetEntry::Number(NumberWidget::new(
