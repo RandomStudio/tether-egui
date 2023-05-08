@@ -67,7 +67,10 @@ impl Default for Model {
 impl Model {
     fn prepare_next_entry(&mut self) {
         self.next_widget = create_next_widget(self.widgets.len(), &self.tether_agent);
-        // self.next_topic = "".into();
+        let (role, id) = self.tether_agent.description();
+        let plug_name = self.next_widget.plug.name.clone();
+        self.next_topic = format!("{role}/{id}/{plug_name}");
+        self.use_custom_topic = false;
     }
 }
 
@@ -142,12 +145,14 @@ impl eframe::App for Model {
                     ui.label("Role");
                     if ui.text_edit_singleline(&mut self.agent_role).changed() {
                         self.tether_agent.set_role(&self.agent_role);
+                        self.prepare_next_entry();
                     }
                 });
                 ui.horizontal(|ui| {
                     ui.label("ID or Group");
                     if ui.text_edit_singleline(&mut self.agent_id).changed() {
                         self.tether_agent.set_id(&self.agent_id);
+                        self.prepare_next_entry();
                     }
                 });
             });
