@@ -2,6 +2,10 @@
 
 use std::fs;
 
+extern crate rmp_serde;
+extern crate rmpv;
+extern crate serde_json;
+
 use circular_buffer::CircularBuffer;
 use eframe::egui;
 use egui::{Color32, RichText, Slider, TextStyle};
@@ -12,6 +16,8 @@ use tether_agent::TetherAgent;
 use widgets::{ColourWidget, Common, NumberWidget, Widget};
 
 mod widgets;
+
+const MONITOR_LOG_LENGTH: usize = 256;
 
 fn main() -> Result<(), eframe::Error> {
     // Initialize the logger from the environment
@@ -45,7 +51,7 @@ struct Model {
     widgets: Vec<WidgetEntry>,
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
-    monitor_messages: CircularBuffer<32, String>,
+    monitor_messages: CircularBuffer<MONITOR_LOG_LENGTH, String>,
 }
 
 fn get_next_name(count: usize) -> String {
@@ -169,7 +175,11 @@ enum QueueItem {
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         while let Some((_plug_name, message)) = self.tether_agent.check_messages() {
-            let s = format!("{}: {:#?}", message.topic(), message.payload());
+            let bytes = message.payload();
+            let value: rmpv::Value =
+                rmp_serde::from_slice(bytes).expect("failed to decode msgpack");
+            let json = serde_json::to_string(&value).expect("failed to stringify JSON");
+            let s = format!("{}: {}", message.topic(), json);
             self.monitor_messages.push_back(s);
         }
 
@@ -230,14 +240,14 @@ impl eframe::App for Model {
 
             let text_style = TextStyle::Body;
             let row_height = ui.text_style_height(&text_style);
-            let num_rows = 32;
+            let num_rows = MONITOR_LOG_LENGTH;
             egui::ScrollArea::vertical()
                 .auto_shrink([false; 2])
                 .show_rows(ui, row_height, num_rows, |ui, row_range| {
-                    for row in row_range {
+                    for _row in row_range {
                         if let Some(m) = self.monitor_messages.back() {
-                            let entry = format!("#{}: {}", row, m);
-                            ui.label(entry);
+                            // let entry = format!("#{}: {}", row, m);
+                            ui.label(m);
                         }
                     }
                 });
