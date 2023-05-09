@@ -250,6 +250,11 @@ impl eframe::App for Model {
                 ui.small(t);
             }
             ui.separator();
+            ui.label(format!("Plug Names x{}", self.insights.plugs().len()));
+            for t in self.insights.plugs() {
+                ui.small(t);
+            }
+            ui.separator();
             ui.label(format!("Agent Roles x{}", self.insights.roles().len()));
             for t in self.insights.roles() {
                 ui.small(t);
@@ -307,6 +312,7 @@ impl eframe::App for Model {
                                             .encode_and_publish(&e.common().plug, e.value())
                                             .expect("Failed to send number");
                                     };
+                                    entry_footer(ui, e);
                                 }
                                 WidgetEntry::Colour(e) => {
                                     entry_heading(ui, format!("Colour: {}", e.common().name));
