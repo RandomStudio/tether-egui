@@ -2,6 +2,7 @@
 
 use std::fs;
 
+use circular_buffer::CircularBuffer;
 use eframe::egui;
 use egui::{Color32, RichText, Slider, TextStyle};
 use env_logger::Env;
@@ -44,7 +45,7 @@ struct Model {
     widgets: Vec<WidgetEntry>,
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
-    monitor_messages: Vec<String>,
+    monitor_messages: CircularBuffer<32, String>,
 }
 
 fn get_next_name(count: usize) -> String {
@@ -94,7 +95,7 @@ impl Default for Model {
             widgets,
             queue: Vec::new(),
             tether_agent,
-            monitor_messages: Vec::new(),
+            monitor_messages: CircularBuffer::new(),
         }
     }
 }
@@ -169,7 +170,7 @@ impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         while let Some((_plug_name, message)) = self.tether_agent.check_messages() {
             let s = format!("{}: {:#?}", message.topic(), message.payload());
-            self.monitor_messages.push(s);
+            self.monitor_messages.push_back(s);
         }
 
         while let Some(q) = self.queue.pop() {
@@ -234,7 +235,7 @@ impl eframe::App for Model {
                 .auto_shrink([false; 2])
                 .show_rows(ui, row_height, num_rows, |ui, row_range| {
                     for row in row_range {
-                        if let Some(m) = self.monitor_messages.iter().rev().nth(row) {
+                        if let Some(m) = self.monitor_messages.back() {
                             let entry = format!("#{}: {}", row, m);
                             ui.label(entry);
                         }
