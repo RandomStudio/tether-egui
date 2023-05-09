@@ -13,7 +13,7 @@ use env_logger::Env;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
-use widgets::{ColourWidget, Common, NumberWidget, Widget};
+use widgets::{BoolWidget, ColourRGBA8, ColourWidget, Common, NumberWidget, Widget};
 
 mod widgets;
 
@@ -38,8 +38,9 @@ fn main() -> Result<(), eframe::Error> {
 #[serde(rename_all = "camelCase")]
 
 enum WidgetEntry {
-    Number(NumberWidget),
-    Colour(ColourWidget),
+    Number(NumberWidget<f32>),
+    Colour(ColourWidget<ColourRGBA8>),
+    Bool(BoolWidget),
 }
 struct Model {
     next_widget: Common,
@@ -262,63 +263,88 @@ impl eframe::App for Model {
                 ui.add_space(16.);
                 // TODO: use grid
 
-                for (i, entry) in self.widgets.iter_mut().enumerate() {
-                    ui.separator();
+                egui::ScrollArea::vertical()
+                    .auto_shrink([false; 2])
+                    .show(ui, |ui| {
+                        for (i, entry) in self.widgets.iter_mut().enumerate() {
+                            ui.separator();
 
-                    match entry {
-                        WidgetEntry::Number(e) => {
-                            let (min, max) = e.range();
-                            ui.label(
-                                RichText::new(format!(
-                                    "Number: {} ({}..={})",
-                                    e.common().name,
-                                    min,
-                                    max
-                                ))
-                                .color(Color32::WHITE),
-                            );
-                            if ui
-                                .add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false))
-                                .changed()
-                            {
-                                self.tether_agent
-                                    .encode_and_publish(&e.common().plug, e.value())
-                                    .expect("Failed to send number");
-                            };
-                            ui.small(&e.common().description);
-                            ui.label(
-                                RichText::new(&e.common().plug.topic).color(Color32::LIGHT_BLUE),
-                            );
+                            match entry {
+                                WidgetEntry::Number(e) => {
+                                    let (min, max) = e.range();
+                                    let heading =
+                                        format!("Number: {} ({}..={})", e.common().name, min, max);
+                                    entry_heading(ui, heading);
+                                    if ui
+                                        .add(
+                                            Slider::new(e.value_mut(), min..=max)
+                                                .clamp_to_range(false),
+                                        )
+                                        .changed()
+                                    {
+                                        self.tether_agent
+                                            .encode_and_publish(&e.common().plug, e.value())
+                                            .expect("Failed to send number");
+                                    };
+                                    // TODO: generic footer for "WidgetEntry"
+                                    ui.small(&e.common().description);
+                                    ui.label(
+                                        RichText::new(&e.common().plug.topic)
+                                            .color(Color32::LIGHT_BLUE),
+                                    );
+                                }
+                                WidgetEntry::Colour(e) => {
+                                    entry_heading(ui, format!("Colour: {}", e.common().name));
+                                    if ui
+                                        .color_edit_button_srgba_unmultiplied(e.value_mut())
+                                        .changed()
+                                    {
+                                        self.tether_agent
+                                            .encode_and_publish(&e.common().plug, e.value())
+                                            .expect("Failed to send colour")
+                                    };
+                                    let srgba = e.value();
+                                    ui.label(format!(
+                                        "sRGBA: {} {} {} {}",
+                                        srgba[0], srgba[1], srgba[2], srgba[3],
+                                    ));
+                                    // TODO: generic footer for "WidgetEntry"
+                                    ui.small(&e.common().description);
+                                    ui.label(&format!("Topic: {}", e.common().plug.topic));
+                                }
+                                WidgetEntry::Bool(e) => {
+                                    entry_heading(ui, format!("Boolean: {}", e.common().name));
+                                    let checked = *e.value();
+                                    if ui
+                                        .checkbox(
+                                            e.value_mut(),
+                                            format!("State: {}", {
+                                                if checked {
+                                                    "TRUE"
+                                                } else {
+                                                    "FALSE "
+                                                }
+                                            }),
+                                        )
+                                        .changed()
+                                    {
+                                        self.tether_agent
+                                            .encode_and_publish(&e.common().plug, e.value())
+                                            .expect("Failed to send boolean");
+                                    }
+                                    // TODO: generic footer for "WidgetEntry"
+                                    ui.small(&e.common().description);
+                                    ui.label(&format!("Topic: {}", e.common().plug.topic));
+                                }
+                            }
+
+                            if ui.button("❌ Remove").clicked() {
+                                self.queue.push(QueueItem::Remove(i));
+                            }
+
+                            ui.add_space(16.);
                         }
-                        WidgetEntry::Colour(e) => {
-                            ui.label(
-                                RichText::new(format!("Colour: {}", e.common().name))
-                                    .color(Color32::WHITE),
-                            );
-                            if ui
-                                .color_edit_button_srgba_unmultiplied(e.value_mut())
-                                .changed()
-                            {
-                                self.tether_agent
-                                    .encode_and_publish(&e.common().plug, e.value())
-                                    .expect("Failed to send colour")
-                            };
-                            let srgba = e.value();
-                            ui.label(format!(
-                                "sRGBA: {} {} {} {}",
-                                srgba[0], srgba[1], srgba[2], srgba[3],
-                            ));
-                            ui.small(&e.common().description);
-                            ui.label(&format!("Topic: {}", e.common().plug.topic));
-                        }
-                    }
-
-                    if ui.button("❌ Remove").clicked() {
-                        self.queue.push(QueueItem::Remove(i));
-                    }
-
-                    ui.add_space(16.);
-                }
+                    });
             });
 
         egui::CentralPanel::default().show(ctx, |_ui| {
@@ -389,7 +415,36 @@ impl eframe::App for Model {
                                 None
                             }
                         },
-                        (255, 255, 255, 255),
+                        [255, 255, 255, 255],
+                        &self.tether_agent,
+                    )));
+                    self.prepare_next_entry();
+                }
+            });
+
+            egui::Window::new("Boolean").show(ctx, |ui| {
+                ui.heading("Boolean");
+                self.common_widget_values(ui);
+                ui.separator();
+                if ui.button("✚ Add").clicked() {
+                    self.widgets.push(WidgetEntry::Bool(BoolWidget::new(
+                        self.next_widget.name.as_str(),
+                        {
+                            if self.next_widget.description == "" {
+                                None
+                            } else {
+                                Some(&self.next_widget.description)
+                            }
+                        },
+                        &self.next_widget.plug.name,
+                        {
+                            if self.use_custom_topic {
+                                Some(&self.next_topic)
+                            } else {
+                                None
+                            }
+                        },
+                        false,
                         &self.tether_agent,
                     )));
                     self.prepare_next_entry();
@@ -397,4 +452,8 @@ impl eframe::App for Model {
             });
         });
     }
+}
+
+fn entry_heading(ui: &mut egui::Ui, heading: String) {
+    ui.label(RichText::new(heading).color(Color32::WHITE));
 }
