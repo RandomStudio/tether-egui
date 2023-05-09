@@ -192,6 +192,10 @@ impl eframe::App for Model {
         }
 
         egui::SidePanel::left("Settings").show(ctx, |ui| {
+            ui.heading("Tether Agent");
+
+            standard_spacer(ui);
+            ui.separator();
             ui.heading("Load/Save");
             if ui.button("Save").clicked() {
                 let text = serde_json::to_string_pretty(&self.widgets)
@@ -240,9 +244,10 @@ impl eframe::App for Model {
 
             ui.separator();
 
-            // let text_style = TextStyle::Body;
-            // let row_height = ui.text_style_height(&text_style);
-            // let num_rows = MONITOR_LOG_LENGTH;
+            ui.heading("Message log");
+            if self.monitor_messages.is_empty() {
+                ui.small("0 messages received");
+            }
             egui::ScrollArea::vertical()
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
@@ -258,7 +263,7 @@ impl eframe::App for Model {
             .show(ctx, |ui| {
                 ui.heading("Entries");
 
-                ui.add_space(16.);
+                standard_spacer(ui);
                 // TODO: use grid
 
                 egui::ScrollArea::vertical()
@@ -330,7 +335,7 @@ impl eframe::App for Model {
                                 self.queue.push(QueueItem::Remove(i));
                             }
 
-                            ui.add_space(16.);
+                            standard_spacer(ui);
                         }
                     });
             });
@@ -339,7 +344,7 @@ impl eframe::App for Model {
             egui::Window::new("Number").show(ctx, |ui| {
                 self.common_widget_values(ui);
 
-                ui.add_space(16.0);
+                standard_spacer(ui);
 
                 ui.label("Range");
                 ui.add(
@@ -440,6 +445,10 @@ impl eframe::App for Model {
             });
         });
     }
+}
+
+fn standard_spacer(ui: &mut egui::Ui) {
+    ui.add_space(16.);
 }
 
 fn entry_heading(ui: &mut egui::Ui, heading: String) {
