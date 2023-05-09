@@ -2,7 +2,7 @@
 
 A tiny desktop app for remote-controlling Tether-controlled systems, simulating input, and more (soon).
 
-![GUI screenshot](screenshot.png)
+![GUI screenshot](tether-egui.gif)
 
 
 ## Widgets available
