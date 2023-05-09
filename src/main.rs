@@ -8,7 +8,7 @@ extern crate serde_json;
 
 use circular_buffer::CircularBuffer;
 use eframe::egui;
-use egui::{Color32, RichText, Slider, TextStyle};
+use egui::{Color32, RichText, Slider};
 use env_logger::Env;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
@@ -51,7 +51,7 @@ struct Model {
     widgets: Vec<WidgetEntry>,
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
-    monitor_messages: CircularBuffer<MONITOR_LOG_LENGTH, String>,
+    monitor_messages: CircularBuffer<MONITOR_LOG_LENGTH, (String, String)>,
 }
 
 fn get_next_name(count: usize) -> String {
@@ -179,8 +179,9 @@ impl eframe::App for Model {
             let value: rmpv::Value =
                 rmp_serde::from_slice(bytes).expect("failed to decode msgpack");
             let json = serde_json::to_string(&value).expect("failed to stringify JSON");
-            let s = format!("{}: {}", message.topic(), json);
-            self.monitor_messages.push_back(s);
+            // let s = format!("{}: {}", message.topic(), json);
+            self.monitor_messages
+                .push_back((message.topic().into(), json));
         }
 
         while let Some(q) = self.queue.pop() {
@@ -209,6 +210,8 @@ impl eframe::App for Model {
             ui.separator();
 
             ui.heading("Agent");
+
+            ui.label(self.tether_agent.broker_uri());
 
             if self.tether_agent.is_connected() {
                 ui.label(RichText::new("Connected ☑").color(Color32::GREEN));
@@ -244,8 +247,9 @@ impl eframe::App for Model {
             egui::ScrollArea::vertical()
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
-                    for m in self.monitor_messages.iter().rev() {
-                        ui.label(m);
+                    for (topic, json) in self.monitor_messages.iter().rev() {
+                        ui.colored_label(Color32::LIGHT_BLUE, topic);
+                        ui.label(json);
                     }
                 });
         });
@@ -254,9 +258,13 @@ impl eframe::App for Model {
             .min_width(512.)
             .show(ctx, |ui| {
                 ui.heading("Entries");
+
+                ui.add_space(16.);
                 // TODO: use grid
 
                 for (i, entry) in self.widgets.iter_mut().enumerate() {
+                    ui.separator();
+
                     match entry {
                         WidgetEntry::Number(e) => {
                             let (min, max) = e.range();
@@ -267,7 +275,7 @@ impl eframe::App for Model {
                                     min,
                                     max
                                 ))
-                                .background_color(Color32::DARK_BLUE),
+                                .color(Color32::WHITE),
                             );
                             if ui
                                 .add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false))
@@ -278,13 +286,14 @@ impl eframe::App for Model {
                                     .expect("Failed to send number");
                             };
                             ui.small(&e.common().description);
-                            // ui.text_edit_singleline(&mut e.common().topic(&self.tether_agent));
-                            ui.label(&format!("Topic: {}", e.common().plug.topic));
+                            ui.label(
+                                RichText::new(&e.common().plug.topic).color(Color32::LIGHT_BLUE),
+                            );
                         }
                         WidgetEntry::Colour(e) => {
                             ui.label(
                                 RichText::new(format!("Colour: {}", e.common().name))
-                                    .background_color(Color32::DARK_BLUE),
+                                    .color(Color32::WHITE),
                             );
                             if ui
                                 .color_edit_button_srgba_unmultiplied(e.value_mut())
@@ -308,33 +317,30 @@ impl eframe::App for Model {
                         self.queue.push(QueueItem::Remove(i));
                     }
 
-                    ui.separator();
+                    ui.add_space(16.);
                 }
             });
 
         egui::CentralPanel::default().show(ctx, |_ui| {
             egui::Window::new("Number").show(ctx, |ui| {
                 self.common_widget_values(ui);
-                ui.collapsing("range", |ui| {
-                    ui.add(
-                        egui::Slider::new(
-                            &mut self.next_range.0,
-                            i16::MIN as f32..=i16::MAX as f32,
-                        )
+
+                ui.add_space(16.0);
+
+                ui.label("Range");
+                ui.add(
+                    egui::Slider::new(&mut self.next_range.0, i16::MIN as f32..=i16::MAX as f32)
                         .text("min"),
-                    );
-                    ui.add(
-                        egui::Slider::new(
-                            &mut self.next_range.1,
-                            i16::MIN as f32..=i16::MAX as f32,
-                        )
+                );
+                ui.add(
+                    egui::Slider::new(&mut self.next_range.1, i16::MIN as f32..=i16::MAX as f32)
                         .text("max"),
-                    );
-                    if ui.small_button("Reset").clicked() {
-                        self.next_range = (0., 1.0);
-                    }
-                });
+                );
+                if ui.small_button("Reset").clicked() {
+                    self.next_range = (0., 1.0);
+                }
                 ui.separator();
+
                 if ui.button("✚ Add").clicked() {
                     self.widgets.push(WidgetEntry::Number(NumberWidget::new(
                         &self.next_widget.name,
