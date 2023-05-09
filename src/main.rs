@@ -3,7 +3,7 @@
 use std::fs;
 
 use eframe::egui;
-use egui::{Color32, RichText, Slider};
+use egui::{Color32, RichText, Slider, TextStyle};
 use env_logger::Env;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
@@ -44,6 +44,7 @@ struct Model {
     widgets: Vec<WidgetEntry>,
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
+    monitor_messages: Vec<String>,
 }
 
 fn get_next_name(count: usize) -> String {
@@ -79,6 +80,10 @@ impl Default for Model {
             }
         };
 
+        let _monitor_plug = tether_agent
+            .create_input_plug("monitor", None, Some("#"))
+            .expect("failed to create monitor Input Plug");
+
         Self {
             next_widget,
             next_range: (0., 1.0),
@@ -89,6 +94,7 @@ impl Default for Model {
             widgets,
             queue: Vec::new(),
             tether_agent,
+            monitor_messages: Vec::new(),
         }
     }
 }
@@ -161,6 +167,11 @@ enum QueueItem {
 
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        while let Some((_plug_name, message)) = self.tether_agent.check_messages() {
+            let s = format!("{}: {:#?}", message.topic(), message.payload());
+            self.monitor_messages.push(s);
+        }
+
         while let Some(q) = self.queue.pop() {
             match q {
                 QueueItem::Remove(index) => {
@@ -213,6 +224,26 @@ impl eframe::App for Model {
                     self.prepare_next_entry();
                 }
             });
+
+            ui.separator();
+
+            let text_style = TextStyle::Body;
+            let row_height = ui.text_style_height(&text_style);
+            let num_rows = 32;
+            egui::ScrollArea::vertical()
+                .auto_shrink([false; 2])
+                .show_rows(ui, row_height, num_rows, |ui, row_range| {
+                    for row in row_range {
+                        if let Some(m) = self.monitor_messages.iter().rev().nth(row) {
+                            let entry = format!("#{}: {}", row, m);
+                            ui.label(entry);
+                        }
+                    }
+                });
+
+            // egui::ScrollArea::vertical().show_rows(ui, row_height, num_rows, |ui, row_range| {
+
+            // });
         });
 
         egui::SidePanel::right("Custom UI")
