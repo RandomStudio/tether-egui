@@ -486,5 +486,7 @@ fn entry_heading(ui: &mut egui::Ui, heading: String) {
 
 fn entry_footer<T>(ui: &mut egui::Ui, entry: &impl Widget<T>) {
     ui.small(&entry.common().description);
-    ui.label(&format!("Topic: {}", entry.common().plug.topic));
+    ui.label(
+        RichText::new(&format!("Topic: {}", entry.common().plug.topic)).color(Color32::LIGHT_BLUE),
+    );
 }
