@@ -71,21 +71,7 @@ impl Default for Model {
         let next_topic = next_widget.plug.topic.clone();
         tether_agent.connect();
 
-        let text = fs::read_to_string("./widgets.json");
-        let widgets = match text {
-            Ok(d) => {
-                info!("Found widget data file; parsing...");
-                let widgets = serde_json::from_str::<Vec<WidgetEntry>>(&d)
-                    .expect("failed to parse widget list");
-                info!("... loaded {} widgets OK", widgets.len());
-                // TODO: optionally "broadcast" all values from loaded Widgets
-                widgets
-            }
-            Err(e) => {
-                error!("Failed to load widgets from disk: {:?}", e);
-                Vec::new()
-            }
-        };
+        let widgets = load_widgets_from_disk();
 
         Self {
             next_widget,
@@ -100,6 +86,25 @@ impl Default for Model {
             tether_agent,
         }
     }
+}
+
+fn load_widgets_from_disk() -> Vec<WidgetEntry> {
+    let text = fs::read_to_string("./widgets.json");
+    let widgets = match text {
+        Ok(d) => {
+            info!("Found widget data file; parsing...");
+            let widgets =
+                serde_json::from_str::<Vec<WidgetEntry>>(&d).expect("failed to parse widget list");
+            info!("... loaded {} widgets OK", widgets.len());
+            // TODO: optionally "broadcast" all values from loaded Widgets
+            widgets
+        }
+        Err(e) => {
+            error!("Failed to load widgets from disk: {:?}", e);
+            Vec::new()
+        }
+    };
+    widgets
 }
 
 impl Model {
@@ -184,21 +189,29 @@ impl eframe::App for Model {
             standard_spacer(ui);
             ui.separator();
             ui.heading("Load/Save");
-            if ui.button("Save").clicked() {
-                let text = serde_json::to_string_pretty(&self.widgets)
-                    .expect("failed to serialise widget data");
-                match fs::write("./widgets.json", text) {
-                    Ok(()) => {
-                        info!("Saved OK");
-                    }
-                    Err(e) => {
-                        error!("Error saving to disk: {:?}", e);
+            ui.horizontal(|ui| {
+                if ui.button("Save").clicked() {
+                    let text = serde_json::to_string_pretty(&self.widgets)
+                        .expect("failed to serialise widget data");
+                    match fs::write("./widgets.json", text) {
+                        Ok(()) => {
+                            info!("Saved OK");
+                        }
+                        Err(e) => {
+                            error!("Error saving to disk: {:?}", e);
+                        }
                     }
                 }
-            }
+                if ui.button("Load").clicked() {
+                    self.widgets = load_widgets_from_disk();
+                }
+                if ui.button("Clear").clicked() {
+                    self.widgets.clear();
+                }
+            });
 
+            standard_spacer(ui);
             ui.separator();
-
             ui.heading("Agent");
 
             ui.label(self.tether_agent.broker_uri());
@@ -229,14 +242,27 @@ impl eframe::App for Model {
                 }
             });
 
+            standard_spacer(ui);
             ui.separator();
+            ui.heading("Insights");
             ui.label(format!("Topics x{}", self.insights.topics().len()));
             for t in self.insights.topics() {
                 ui.small(t);
             }
-
             ui.separator();
-            ui.heading("Message log");
+            ui.label(format!("Agent Roles x{}", self.insights.roles().len()));
+            for t in self.insights.roles() {
+                ui.small(t);
+            }
+            ui.separator();
+            ui.label(format!("Agent IDs (groups) x{}", self.insights.ids().len()));
+            for t in self.insights.ids() {
+                ui.small(t);
+            }
+
+            standard_spacer(ui);
+            ui.separator();
+            ui.heading(format!("Messages x{}", self.insights.message_count()));
             if self.insights.message_log().is_empty() {
                 ui.small("0 messages received");
             }
