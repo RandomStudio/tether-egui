@@ -123,11 +123,11 @@ impl Model {
                 .text_edit_singleline(&mut self.next_widget.name)
                 .changed()
             {
-                let shortened_name = String::from(self.next_widget.name.replace(" ", "_").trim());
+                let shortened_name = String::from(self.next_widget.name.replace(' ', "_").trim());
                 self.next_widget.plug.name = shortened_name.clone();
                 if !self.use_custom_topic {
                     let (role, id) = self.tether_agent.description();
-                    self.next_topic = format!("{role}/{id}/{}", shortened_name.clone());
+                    self.next_topic = format!("{role}/{id}/{}", shortened_name);
                 }
             }
         });
@@ -140,24 +140,22 @@ impl Model {
             if ui
                 .text_edit_singleline(&mut self.next_widget.plug.name)
                 .changed()
+                && !self.use_custom_topic
             {
-                if !self.use_custom_topic {
-                    let (role, id) = self.tether_agent.description();
-                    let plug_name = self.next_widget.plug.name.clone();
-                    self.next_topic = format!("{role}/{id}/{plug_name}");
-                }
+                let (role, id) = self.tether_agent.description();
+                let plug_name = self.next_widget.plug.name.clone();
+                self.next_topic = format!("{role}/{id}/{plug_name}");
             }
         });
         ui.horizontal(|ui| {
             if ui
                 .checkbox(&mut self.use_custom_topic, "Use custom topic")
                 .changed()
+                && !self.use_custom_topic
             {
-                if !self.use_custom_topic {
-                    let (role, id) = self.tether_agent.description();
-                    let plug_name = self.next_widget.plug.name.clone();
-                    self.next_topic = format!("{role}/{id}/{plug_name}");
-                }
+                let (role, id) = self.tether_agent.description();
+                let plug_name = self.next_widget.plug.name.clone();
+                self.next_topic = format!("{role}/{id}/{plug_name}");
             }
         });
         ui.add_enabled_ui(self.use_custom_topic, |ui| {
@@ -286,12 +284,6 @@ impl eframe::App for Model {
                                             .encode_and_publish(&e.common().plug, e.value())
                                             .expect("Failed to send number");
                                     };
-                                    // TODO: generic footer for "WidgetEntry"
-                                    ui.small(&e.common().description);
-                                    ui.label(
-                                        RichText::new(&e.common().plug.topic)
-                                            .color(Color32::LIGHT_BLUE),
-                                    );
                                 }
                                 WidgetEntry::Colour(e) => {
                                     entry_heading(ui, format!("Colour: {}", e.common().name));
@@ -308,9 +300,7 @@ impl eframe::App for Model {
                                         "sRGBA: {} {} {} {}",
                                         srgba[0], srgba[1], srgba[2], srgba[3],
                                     ));
-                                    // TODO: generic footer for "WidgetEntry"
-                                    ui.small(&e.common().description);
-                                    ui.label(&format!("Topic: {}", e.common().plug.topic));
+                                    entry_footer(ui, e);
                                 }
                                 WidgetEntry::Bool(e) => {
                                     entry_heading(ui, format!("Boolean: {}", e.common().name));
@@ -332,9 +322,7 @@ impl eframe::App for Model {
                                             .encode_and_publish(&e.common().plug, e.value())
                                             .expect("Failed to send boolean");
                                     }
-                                    // TODO: generic footer for "WidgetEntry"
-                                    ui.small(&e.common().description);
-                                    ui.label(&format!("Topic: {}", e.common().plug.topic));
+                                    entry_footer(ui, e);
                                 }
                             }
 
@@ -371,7 +359,7 @@ impl eframe::App for Model {
                     self.widgets.push(WidgetEntry::Number(NumberWidget::new(
                         &self.next_widget.name,
                         {
-                            if self.next_widget.description == "" {
+                            if self.next_widget.description.is_empty() {
                                 None
                             } else {
                                 Some(&self.next_widget.description)
@@ -401,7 +389,7 @@ impl eframe::App for Model {
                     self.widgets.push(WidgetEntry::Colour(ColourWidget::new(
                         self.next_widget.name.as_str(),
                         {
-                            if self.next_widget.description == "" {
+                            if self.next_widget.description.is_empty() {
                                 None
                             } else {
                                 Some(&self.next_widget.description)
@@ -430,7 +418,7 @@ impl eframe::App for Model {
                     self.widgets.push(WidgetEntry::Bool(BoolWidget::new(
                         self.next_widget.name.as_str(),
                         {
-                            if self.next_widget.description == "" {
+                            if self.next_widget.description.is_empty() {
                                 None
                             } else {
                                 Some(&self.next_widget.description)
@@ -456,4 +444,9 @@ impl eframe::App for Model {
 
 fn entry_heading(ui: &mut egui::Ui, heading: String) {
     ui.label(RichText::new(heading).color(Color32::WHITE));
+}
+
+fn entry_footer<T>(ui: &mut egui::Ui, entry: &impl Widget<T>) {
+    ui.small(&entry.common().description);
+    ui.label(&format!("Topic: {}", entry.common().plug.topic));
 }
