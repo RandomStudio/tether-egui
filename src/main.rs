@@ -6,7 +6,6 @@ extern crate rmp_serde;
 extern crate rmpv;
 extern crate serde_json;
 
-use circular_buffer::CircularBuffer;
 use eframe::egui;
 use egui::{Color32, RichText, Slider};
 use env_logger::Env;
@@ -231,7 +230,12 @@ impl eframe::App for Model {
             });
 
             ui.separator();
+            ui.label(format!("Topics x{}", self.insights.topics().len()));
+            for t in self.insights.topics() {
+                ui.small(t);
+            }
 
+            ui.separator();
             ui.heading("Message log");
             if self.insights.message_log().is_empty() {
                 ui.small("0 messages received");

@@ -35,12 +35,22 @@ impl Insights {
             let value: rmpv::Value =
                 rmp_serde::from_slice(bytes).expect("failed to decode msgpack");
             let json = serde_json::to_string(&value).expect("failed to stringify JSON");
-            // let s = format!("{}: {}", message.topic(), json);
             self.message_log.push_back((message.topic().into(), json));
+            add_if_unique(message.topic(), &mut self.topics);
         }
     }
 
     pub fn message_log(&self) -> &CircularBuffer<MONITOR_LOG_LENGTH, MessageLogEntry> {
         &self.message_log
+    }
+
+    pub fn topics(&self) -> &[String] {
+        &self.topics
+    }
+}
+
+fn add_if_unique(item: &str, list: &mut Vec<String>) {
+    if list.iter().find(|&i| i.eq(item)).is_none() {
+        list.push(String::from(item));
     }
 }
