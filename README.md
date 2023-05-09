@@ -1,6 +1,6 @@
 # Tether egui UI Builder
 
-A tiny desktop app for remote-controlling Tether-controlled systems, simulating input, and more (soon).
+A tiny desktop app for remote-controlling Tether-controlled systems, simulating input, and more (soon). Built using the immediate-mode GUI library, [egui](https://www.egui.rs/).
 
 ![GUI screenshot](tether-egui.gif)
 
