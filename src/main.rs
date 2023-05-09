@@ -238,17 +238,14 @@ impl eframe::App for Model {
 
             ui.separator();
 
-            let text_style = TextStyle::Body;
-            let row_height = ui.text_style_height(&text_style);
-            let num_rows = MONITOR_LOG_LENGTH;
+            // let text_style = TextStyle::Body;
+            // let row_height = ui.text_style_height(&text_style);
+            // let num_rows = MONITOR_LOG_LENGTH;
             egui::ScrollArea::vertical()
                 .auto_shrink([false; 2])
-                .show_rows(ui, row_height, num_rows, |ui, row_range| {
-                    for _row in row_range {
-                        if let Some(m) = self.monitor_messages.back() {
-                            // let entry = format!("#{}: {}", row, m);
-                            ui.label(m);
-                        }
+                .show(ui, |ui| {
+                    for m in self.monitor_messages.iter().rev() {
+                        ui.label(m);
                     }
                 });
         });
