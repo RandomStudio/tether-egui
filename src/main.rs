@@ -10,14 +10,14 @@ use circular_buffer::CircularBuffer;
 use eframe::egui;
 use egui::{Color32, RichText, Slider};
 use env_logger::Env;
+use insights::Insights;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 use widgets::{BoolWidget, ColourRGBA8, ColourWidget, Common, NumberWidget, Widget};
 
+mod insights;
 mod widgets;
-
-const MONITOR_LOG_LENGTH: usize = 256;
 
 fn main() -> Result<(), eframe::Error> {
     // Initialize the logger from the environment
@@ -52,7 +52,7 @@ struct Model {
     widgets: Vec<WidgetEntry>,
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
-    monitor_messages: CircularBuffer<MONITOR_LOG_LENGTH, (String, String)>,
+    insights: Insights,
 }
 
 fn get_next_name(count: usize) -> String {
@@ -88,10 +88,6 @@ impl Default for Model {
             }
         };
 
-        let _monitor_plug = tether_agent
-            .create_input_plug("monitor", None, Some("#"))
-            .expect("failed to create monitor Input Plug");
-
         Self {
             next_widget,
             next_range: (0., 1.0),
@@ -101,8 +97,8 @@ impl Default for Model {
             agent_id: id.into(),
             widgets,
             queue: Vec::new(),
+            insights: Insights::new(&tether_agent),
             tether_agent,
-            monitor_messages: CircularBuffer::new(),
         }
     }
 }
@@ -173,16 +169,6 @@ enum QueueItem {
 
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        while let Some((_plug_name, message)) = self.tether_agent.check_messages() {
-            let bytes = message.payload();
-            let value: rmpv::Value =
-                rmp_serde::from_slice(bytes).expect("failed to decode msgpack");
-            let json = serde_json::to_string(&value).expect("failed to stringify JSON");
-            // let s = format!("{}: {}", message.topic(), json);
-            self.monitor_messages
-                .push_back((message.topic().into(), json));
-        }
-
         while let Some(q) = self.queue.pop() {
             match q {
                 QueueItem::Remove(index) => {
@@ -190,6 +176,8 @@ impl eframe::App for Model {
                 }
             }
         }
+
+        self.insights.update(&self.tether_agent);
 
         egui::SidePanel::left("Settings").show(ctx, |ui| {
             ui.heading("Tether Agent");
@@ -245,13 +233,13 @@ impl eframe::App for Model {
             ui.separator();
 
             ui.heading("Message log");
-            if self.monitor_messages.is_empty() {
+            if self.insights.message_log().is_empty() {
                 ui.small("0 messages received");
             }
             egui::ScrollArea::vertical()
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
-                    for (topic, json) in self.monitor_messages.iter().rev() {
+                    for (topic, json) in self.insights.message_log().iter().rev() {
                         ui.colored_label(Color32::LIGHT_BLUE, topic);
                         ui.label(json);
                     }
