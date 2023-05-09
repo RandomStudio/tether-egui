@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use clap::Parser;
+use settings::Cli;
 use std::fs;
 
 extern crate rmp_serde;
@@ -10,17 +12,20 @@ use eframe::egui;
 use egui::{Color32, RichText, Slider};
 use env_logger::Env;
 use insights::Insights;
-use log::{error, info};
+use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 use widgets::{BoolWidget, ColourRGBA8, ColourWidget, Common, NumberWidget, Widget};
 
 mod insights;
+mod settings;
 mod widgets;
 
 fn main() -> Result<(), eframe::Error> {
+    let cli = Cli::parse();
+
     // Initialize the logger from the environment
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    env_logger::Builder::from_env(Env::default().default_filter_or(&cli.log_level)).init();
 
     let options = eframe::NativeOptions {
         initial_window_size: Some(egui::vec2(1280.0, 960.0)),
@@ -66,11 +71,18 @@ fn create_next_widget(index: usize, agent: &TetherAgent) -> Common {
 
 impl Default for Model {
     fn default() -> Self {
-        let tether_agent = TetherAgent::new("gui", None, None);
+        let cli = Cli::parse();
+
+        let tether_agent = TetherAgent::new("gui", None, Some(cli.tether_host));
         let (role, id) = tether_agent.description();
         let next_widget = create_next_widget(0, &tether_agent);
         let next_topic = next_widget.plug.topic.clone();
-        tether_agent.connect();
+
+        if cli.tether_disable {
+            warn!("Tether disabled; please connect manually if required");
+        } else {
+            tether_agent.connect();
+        }
 
         let widgets = load_widgets_from_disk();
 
@@ -83,7 +95,7 @@ impl Default for Model {
             agent_id: id.into(),
             widgets,
             queue: Vec::new(),
-            insights: Insights::new(&tether_agent),
+            insights: Insights::new(&tether_agent, cli.tether_disable),
             tether_agent,
             continuous_mode: true,
         }
@@ -226,6 +238,7 @@ impl eframe::App for Model {
                 ui.label(RichText::new("Not connected ✖").color(Color32::RED));
                 if ui.button("Connect").clicked() {
                     self.tether_agent.connect();
+                    self.insights = Insights::new(&self.tether_agent, false);
                 }
             }
 
@@ -313,9 +326,11 @@ impl eframe::App for Model {
                                         )
                                         .changed()
                                     {
-                                        self.tether_agent
-                                            .encode_and_publish(&e.common().plug, e.value())
-                                            .expect("Failed to send number");
+                                        if self.tether_agent.is_connected() {
+                                            self.tether_agent
+                                                .encode_and_publish(&e.common().plug, e.value())
+                                                .expect("Failed to send number");
+                                        }
                                     };
                                     entry_footer(ui, e);
                                 }
@@ -325,9 +340,11 @@ impl eframe::App for Model {
                                         .color_edit_button_srgba_unmultiplied(e.value_mut())
                                         .changed()
                                     {
-                                        self.tether_agent
-                                            .encode_and_publish(&e.common().plug, e.value())
-                                            .expect("Failed to send colour")
+                                        if self.tether_agent.is_connected() {
+                                            self.tether_agent
+                                                .encode_and_publish(&e.common().plug, e.value())
+                                                .expect("Failed to send colour")
+                                        }
                                     };
                                     let srgba = e.value();
                                     ui.label(format!(
@@ -352,9 +369,11 @@ impl eframe::App for Model {
                                         )
                                         .changed()
                                     {
-                                        self.tether_agent
-                                            .encode_and_publish(&e.common().plug, e.value())
-                                            .expect("Failed to send boolean");
+                                        if self.tether_agent.is_connected() {
+                                            self.tether_agent
+                                                .encode_and_publish(&e.common().plug, e.value())
+                                                .expect("Failed to send boolean");
+                                        }
                                     }
                                     entry_footer(ui, e);
                                 }

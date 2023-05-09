@@ -14,10 +14,12 @@ pub struct Insights {
 }
 
 impl Insights {
-    pub fn new(agent: &TetherAgent) -> Self {
-        let _monitor_plug = agent
-            .create_input_plug("monitor", None, Some("#"))
-            .expect("failed to create monitor Input Plug");
+    pub fn new(agent: &TetherAgent, tether_disabled: bool) -> Self {
+        if !tether_disabled {
+            let _monitor_plug = agent
+                .create_input_plug("monitor", None, Some("#"))
+                .expect("failed to create monitor Input Plug");
+        }
 
         Insights {
             topics: Vec::new(),
@@ -30,6 +32,9 @@ impl Insights {
     }
 
     pub fn update(&mut self, agent: &TetherAgent) -> bool {
+        if !agent.is_connected() {
+            return false;
+        }
         let mut updated = false;
         while let Some((_plug_name, message)) = agent.check_messages() {
             self.message_count += 1;
