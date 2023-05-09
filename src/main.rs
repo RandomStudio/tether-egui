@@ -52,6 +52,7 @@ struct Model {
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
     insights: Insights,
+    continuous_mode: bool,
 }
 
 fn get_next_name(count: usize) -> String {
@@ -84,6 +85,7 @@ impl Default for Model {
             queue: Vec::new(),
             insights: Insights::new(&tether_agent),
             tether_agent,
+            continuous_mode: true,
         }
     }
 }
@@ -173,6 +175,10 @@ enum QueueItem {
 
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if self.insights.update(&self.tether_agent) || self.continuous_mode {
+            ctx.request_repaint();
+        }
+
         while let Some(q) = self.queue.pop() {
             match q {
                 QueueItem::Remove(index) => {
@@ -180,8 +186,6 @@ impl eframe::App for Model {
                 }
             }
         }
-
-        self.insights.update(&self.tether_agent);
 
         egui::SidePanel::left("Settings").show(ctx, |ui| {
             ui.heading("Tether Agent");
@@ -245,6 +249,7 @@ impl eframe::App for Model {
             standard_spacer(ui);
             ui.separator();
             ui.heading("Insights");
+            ui.checkbox(&mut self.continuous_mode, "Continuous mode");
             ui.label(format!("Topics x{}", self.insights.topics().len()));
             for t in self.insights.topics() {
                 ui.small(t);

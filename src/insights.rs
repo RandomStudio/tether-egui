@@ -29,7 +29,8 @@ impl Insights {
         }
     }
 
-    pub fn update(&mut self, agent: &TetherAgent) {
+    pub fn update(&mut self, agent: &TetherAgent) -> bool {
+        let mut updated = false;
         while let Some((_plug_name, message)) = agent.check_messages() {
             self.message_count += 1;
             let bytes = message.payload();
@@ -43,7 +44,9 @@ impl Insights {
             add_if_unique(parse_agent_role(message.topic()), &mut self.roles);
             add_if_unique(parse_agent_id(message.topic()), &mut self.ids);
             add_if_unique(parse_plug_name(message.topic()), &mut self.plugs);
+            updated = true;
         }
+        updated
     }
 
     pub fn message_log(&self) -> &CircularBuffer<MONITOR_LOG_LENGTH, MessageLogEntry> {
