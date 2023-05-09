@@ -4,6 +4,12 @@ A tiny desktop app for remote-controlling Tether-controlled systems, simulating 
 
 ![GUI screenshot](screenshot.png)
 
+## Widgets available
+- Number (32-bit float only, for now) with range (not clamped)
+- Colour (8-bit for R,G,B,A)
+- Boolean / Checkbox
+
+
 ## TODO
 - [ ] List plug names, agent IDs, roles as per "topics" cli
 - [ ] Stats (messages per second) for each topic
