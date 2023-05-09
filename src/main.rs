@@ -241,10 +241,6 @@ impl eframe::App for Model {
                         }
                     }
                 });
-
-            // egui::ScrollArea::vertical().show_rows(ui, row_height, num_rows, |ui, row_range| {
-
-            // });
         });
 
         egui::SidePanel::right("Custom UI")
