@@ -8,8 +8,7 @@ const TETHER_HOST: std::net::IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 #[command(version, about, long_about = None)]
 pub struct Cli {
     /// Default JSON file path to load on startup; no panic if not found
-    #[arg(long = "load", default_value_t = String::from("./widgets.json"))]
-    pub json_load: String,
+    pub json_load: Option<String>,
 
     /// Flag to disable Tether connection
     #[arg(long = "tether.disable")]

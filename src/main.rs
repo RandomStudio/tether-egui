@@ -87,15 +87,16 @@ impl Default for Model {
             tether_agent.connect();
         }
 
-        info!("Will attempt to load JSON from {} ...", &cli.json_load);
-        let load_json = load_widgets_from_disk(&cli.json_load);
+        let json_file: String = cli.json_load.unwrap_or(String::from("./widgets.json"));
+        info!("Will attempt to load JSON from {} ...", &json_file);
+        let load_json = load_widgets_from_disk(&json_file);
 
         Self {
             json_file: {
                 if load_json.is_err() {
                     None
                 } else {
-                    Some(cli.json_load)
+                    Some(json_file)
                 }
             },
             next_widget,
