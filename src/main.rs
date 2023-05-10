@@ -86,7 +86,8 @@ impl Default for Model {
             tether_agent.connect();
         }
 
-        let widgets = load_widgets_from_disk("./widgets.json");
+        info!("Will attempt to load JSON from {} ...", &cli.json_load);
+        let widgets = load_widgets_from_disk(&cli.json_load);
 
         Self {
             next_widget,

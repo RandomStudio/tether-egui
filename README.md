@@ -20,7 +20,7 @@ More options: `--help`
 
 ## TODO
 - [x] Tether host can be specified in CLI
-- [ ] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
+- [x] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
 - [x] List plug names, agent IDs, roles as per "topics" cli
 - [ ] Tether Agent on separate thread
 - [ ] Stats (messages per second) for each topic

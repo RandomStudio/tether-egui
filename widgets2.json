@@ -1,0 +1,57 @@
+[
+  {
+    "floatNumber": {
+      "common": {
+        "name": "someNumber",
+        "description": "This number has decimal points. Oh yes.",
+        "plug": {
+          "name": "someNumber",
+          "topic": "gui/any/someNumber",
+          "qos": 1
+        }
+      },
+      "value": 0.42,
+      "range": {
+        "start": 0.0,
+        "end": 1.0
+      }
+    }
+  },
+  {
+    "colour": {
+      "common": {
+        "name": "backgroundColour",
+        "description": "no description provided",
+        "plug": {
+          "name": "backgroundColour",
+          "topic": "gui/any/backgroundColour",
+          "qos": 1
+        }
+      },
+      "value": [
+        121,
+        249,
+        176,
+        255
+      ]
+    }
+  },
+  {
+    "wholeNumber": {
+      "common": {
+        "name": "plug1",
+        "description": "no description provided",
+        "plug": {
+          "name": "plug1",
+          "topic": "gui/any/plug1",
+          "qos": 1
+        }
+      },
+      "value": 0,
+      "range": {
+        "start": 0,
+        "end": 1
+      }
+    }
+  }
+]
