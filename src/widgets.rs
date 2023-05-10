@@ -1,3 +1,4 @@
+use egui::emath::Numeric;
 use serde::{Deserialize, Serialize};
 use std::ops::RangeInclusive;
 use tether_agent::{PlugDefinition, TetherAgent};
@@ -45,39 +46,39 @@ impl Common {
 pub struct NumberWidget<T> {
     common: Common,
     value: T,
-    range: RangeInclusive<f32>,
+    range: RangeInclusive<T>,
 }
 
-impl NumberWidget<f32> {
+impl<T: Numeric> NumberWidget<T> {
     pub fn new(
         name: &str,
         description: Option<&str>,
         plug_name: &str,
         custom_topic: Option<&str>,
-        value: f32,
-        range: Option<RangeInclusive<f32>>,
+        value: T,
+        range: RangeInclusive<T>,
         agent: &TetherAgent,
     ) -> Self {
         NumberWidget {
             common: Common::new(name, description, plug_name, custom_topic, agent),
             value,
-            range: range.unwrap_or(0. ..=1.),
+            range,
         }
     }
 
-    pub fn range(&self) -> (f32, f32) {
+    pub fn range(&self) -> (T, T) {
         (*self.range.start(), *self.range.end())
     }
 }
 
-impl Widget<f32> for NumberWidget<f32> {
+impl<T: Numeric> Widget<T> for NumberWidget<T> {
     fn common(&self) -> &Common {
         &self.common
     }
-    fn value(&self) -> &f32 {
+    fn value(&self) -> &T {
         &self.value
     }
-    fn value_mut(&mut self) -> &mut f32 {
+    fn value_mut(&mut self) -> &mut T {
         &mut self.value
     }
 }

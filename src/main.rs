@@ -42,7 +42,8 @@ fn main() -> Result<(), eframe::Error> {
 #[serde(rename_all = "camelCase")]
 
 enum WidgetEntry {
-    Number(NumberWidget<f32>),
+    FloatNumber(NumberWidget<f64>),
+    WholeNumber(NumberWidget<i64>),
     Colour(ColourWidget<ColourRGBA8>),
     Bool(BoolWidget),
 }
@@ -314,7 +315,27 @@ impl eframe::App for Model {
                             ui.separator();
 
                             match entry {
-                                WidgetEntry::Number(e) => {
+                                WidgetEntry::FloatNumber(e) => {
+                                    let (min, max) = e.range();
+                                    let heading =
+                                        format!("Number: {} ({}..={})", e.common().name, min, max);
+                                    entry_heading(ui, heading);
+                                    if ui
+                                        .add(
+                                            Slider::new(e.value_mut(), min..=max)
+                                                .clamp_to_range(false),
+                                        )
+                                        .changed()
+                                    {
+                                        if self.tether_agent.is_connected() {
+                                            self.tether_agent
+                                                .encode_and_publish(&e.common().plug, e.value())
+                                                .expect("Failed to send number");
+                                        }
+                                    };
+                                    entry_footer(ui, e);
+                                }
+                                WidgetEntry::WholeNumber(e) => {
                                     let (min, max) = e.range();
                                     let heading =
                                         format!("Number: {} ({}..={})", e.common().name, min, max);
@@ -389,7 +410,7 @@ impl eframe::App for Model {
             });
 
         egui::CentralPanel::default().show(ctx, |_ui| {
-            egui::Window::new("Number").show(ctx, |ui| {
+            egui::Window::new("Floating-Point Number").show(ctx, |ui| {
                 self.common_widget_values(ui);
 
                 standard_spacer(ui);
@@ -409,33 +430,81 @@ impl eframe::App for Model {
                 ui.separator();
 
                 if ui.button("✚ Add").clicked() {
-                    self.widgets.push(WidgetEntry::Number(NumberWidget::new(
-                        &self.next_widget.name,
-                        {
-                            if self.next_widget.description.is_empty() {
-                                None
-                            } else {
-                                Some(&self.next_widget.description)
-                            }
-                        },
-                        &self.next_widget.plug.name,
-                        {
-                            if self.use_custom_topic {
-                                Some(&self.next_topic)
-                            } else {
-                                None
-                            }
-                        },
-                        0.,
-                        Some(self.next_range.0..=self.next_range.1),
-                        &self.tether_agent,
-                    )));
+                    self.widgets
+                        .push(WidgetEntry::FloatNumber(NumberWidget::new(
+                            &self.next_widget.name,
+                            {
+                                if self.next_widget.description.is_empty() {
+                                    None
+                                } else {
+                                    Some(&self.next_widget.description)
+                                }
+                            },
+                            &self.next_widget.plug.name,
+                            {
+                                if self.use_custom_topic {
+                                    Some(&self.next_topic)
+                                } else {
+                                    None
+                                }
+                            },
+                            0.,
+                            self.next_range.0.into()..=self.next_range.1.into(),
+                            &self.tether_agent,
+                        )));
+                    self.prepare_next_entry();
+                }
+            });
+
+            egui::Window::new("Whole Number").show(ctx, |ui| {
+                self.common_widget_values(ui);
+
+                standard_spacer(ui);
+
+                ui.label("Range");
+                ui.add(
+                    egui::Slider::new(&mut self.next_range.0, i16::MIN as f32..=i16::MAX as f32)
+                        .text("min"),
+                );
+                ui.add(
+                    egui::Slider::new(&mut self.next_range.1, i16::MIN as f32..=i16::MAX as f32)
+                        .text("max"),
+                );
+                if ui.small_button("Reset").clicked() {
+                    self.next_range = (0., 100.);
+                }
+                ui.separator();
+
+                if ui.button("✚ Add").clicked() {
+                    let min = self.next_range.0 as i64;
+                    let max = self.next_range.1 as i64;
+                    self.widgets
+                        .push(WidgetEntry::WholeNumber(NumberWidget::new(
+                            &self.next_widget.name,
+                            {
+                                if self.next_widget.description.is_empty() {
+                                    None
+                                } else {
+                                    Some(&self.next_widget.description)
+                                }
+                            },
+                            &self.next_widget.plug.name,
+                            {
+                                if self.use_custom_topic {
+                                    Some(&self.next_topic)
+                                } else {
+                                    None
+                                }
+                            },
+                            0,
+                            min..=max,
+                            &self.tether_agent,
+                        )));
                     self.prepare_next_entry();
                 }
             });
 
             egui::Window::new("Colour").show(ctx, |ui| {
-                ui.heading("Colours");
                 self.common_widget_values(ui);
                 ui.separator();
                 if ui.button("✚ Add").clicked() {
@@ -464,7 +533,6 @@ impl eframe::App for Model {
             });
 
             egui::Window::new("Boolean").show(ctx, |ui| {
-                ui.heading("Boolean");
                 self.common_widget_values(ui);
                 ui.separator();
                 if ui.button("✚ Add").clicked() {
