@@ -383,7 +383,8 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     standard_spacer(ui);
     ui.separator();
     ui.heading("Insights");
-    ui.checkbox(&mut model.continuous_mode, "Continuous mode");
+    ui.checkbox(&mut model.continuous_mode, "Continuous mode")
+        .on_hover_text("Message log will update immediately; CPU usage may be higher");
     ui.label(format!("Topics x{}", model.insights.topics().len()));
     for t in model.insights.topics() {
         ui.small(t);

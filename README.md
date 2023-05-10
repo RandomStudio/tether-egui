@@ -20,6 +20,7 @@ More options: `--help`
 
 
 ## TODO
+- [ ] Add 2D, 3D "point" Widgets
 - [x] Tether host can be specified in CLI
 - [ ] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
 - [x] List plug names, agent IDs, roles as per "topics" cli
