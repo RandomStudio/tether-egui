@@ -86,7 +86,7 @@ impl Default for Model {
             tether_agent.connect();
         }
 
-        let widgets = load_widgets_from_disk();
+        let widgets = load_widgets_from_disk("./widgets.json");
 
         Self {
             next_widget,
@@ -104,8 +104,8 @@ impl Default for Model {
     }
 }
 
-fn load_widgets_from_disk() -> Vec<WidgetEntry> {
-    let text = fs::read_to_string("./widgets.json");
+fn load_widgets_from_disk(file_path: &str) -> Vec<WidgetEntry> {
+    let text = fs::read_to_string(file_path);
     let widgets = match text {
         Ok(d) => {
             info!("Found widget data file; parsing...");

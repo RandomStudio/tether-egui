@@ -320,7 +320,12 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
             }
         }
         if ui.button("Load").clicked() {
-            model.widgets = load_widgets_from_disk();
+            if let Some(path) = rfd::FileDialog::new().pick_file() {
+                let path_string = path.display().to_string();
+                println!("GOT FILE PATH {}", &path_string);
+                // let picked_path = Some(path.display().to_string());
+                model.widgets = load_widgets_from_disk(&path_string);
+            }
         }
         if ui.button("Clear").clicked() {
             model.widgets.clear();

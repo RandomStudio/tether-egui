@@ -16,4 +16,4 @@ rmpv = { version = "0.4", features = ["with-serde"] }
 rmp-serde = "0.13"
 circular-buffer = "0.1.1"
 clap = { version = "4.1.1", features = ["derive"] }
-
+rfd = "0.11"
