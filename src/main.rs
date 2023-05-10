@@ -3,6 +3,7 @@
 use clap::Parser;
 use settings::Cli;
 use std::fs;
+use ui::{available_widgets, standard_spacer};
 
 extern crate rmp_serde;
 extern crate rmpv;
@@ -19,6 +20,7 @@ use widgets::{BoolWidget, ColourRGBA8, ColourWidget, Common, NumberWidget, Widge
 
 mod insights;
 mod settings;
+mod ui;
 mod widgets;
 
 fn main() -> Result<(), eframe::Error> {
@@ -47,7 +49,7 @@ enum WidgetEntry {
     Colour(ColourWidget<ColourRGBA8>),
     Bool(BoolWidget),
 }
-struct Model {
+pub struct Model {
     next_widget: Common,
     next_range: (f32, f32),
     use_custom_topic: bool,
@@ -410,161 +412,9 @@ impl eframe::App for Model {
             });
 
         egui::CentralPanel::default().show(ctx, |_ui| {
-            egui::Window::new("Floating-Point Number").show(ctx, |ui| {
-                self.common_widget_values(ui);
-
-                standard_spacer(ui);
-
-                ui.label("Range");
-                ui.add(
-                    egui::Slider::new(&mut self.next_range.0, i16::MIN as f32..=i16::MAX as f32)
-                        .text("min"),
-                );
-                ui.add(
-                    egui::Slider::new(&mut self.next_range.1, i16::MIN as f32..=i16::MAX as f32)
-                        .text("max"),
-                );
-                if ui.small_button("Reset").clicked() {
-                    self.next_range = (0., 1.0);
-                }
-                ui.separator();
-
-                if ui.button("✚ Add").clicked() {
-                    self.widgets
-                        .push(WidgetEntry::FloatNumber(NumberWidget::new(
-                            &self.next_widget.name,
-                            {
-                                if self.next_widget.description.is_empty() {
-                                    None
-                                } else {
-                                    Some(&self.next_widget.description)
-                                }
-                            },
-                            &self.next_widget.plug.name,
-                            {
-                                if self.use_custom_topic {
-                                    Some(&self.next_topic)
-                                } else {
-                                    None
-                                }
-                            },
-                            0.,
-                            self.next_range.0.into()..=self.next_range.1.into(),
-                            &self.tether_agent,
-                        )));
-                    self.prepare_next_entry();
-                }
-            });
-
-            egui::Window::new("Whole Number").show(ctx, |ui| {
-                self.common_widget_values(ui);
-
-                standard_spacer(ui);
-
-                ui.label("Range");
-                ui.add(
-                    egui::Slider::new(&mut self.next_range.0, i16::MIN as f32..=i16::MAX as f32)
-                        .text("min"),
-                );
-                ui.add(
-                    egui::Slider::new(&mut self.next_range.1, i16::MIN as f32..=i16::MAX as f32)
-                        .text("max"),
-                );
-                if ui.small_button("Reset").clicked() {
-                    self.next_range = (0., 100.);
-                }
-                ui.separator();
-
-                if ui.button("✚ Add").clicked() {
-                    let min = self.next_range.0 as i64;
-                    let max = self.next_range.1 as i64;
-                    self.widgets
-                        .push(WidgetEntry::WholeNumber(NumberWidget::new(
-                            &self.next_widget.name,
-                            {
-                                if self.next_widget.description.is_empty() {
-                                    None
-                                } else {
-                                    Some(&self.next_widget.description)
-                                }
-                            },
-                            &self.next_widget.plug.name,
-                            {
-                                if self.use_custom_topic {
-                                    Some(&self.next_topic)
-                                } else {
-                                    None
-                                }
-                            },
-                            0,
-                            min..=max,
-                            &self.tether_agent,
-                        )));
-                    self.prepare_next_entry();
-                }
-            });
-
-            egui::Window::new("Colour").show(ctx, |ui| {
-                self.common_widget_values(ui);
-                ui.separator();
-                if ui.button("✚ Add").clicked() {
-                    self.widgets.push(WidgetEntry::Colour(ColourWidget::new(
-                        self.next_widget.name.as_str(),
-                        {
-                            if self.next_widget.description.is_empty() {
-                                None
-                            } else {
-                                Some(&self.next_widget.description)
-                            }
-                        },
-                        &self.next_widget.plug.name,
-                        {
-                            if self.use_custom_topic {
-                                Some(&self.next_topic)
-                            } else {
-                                None
-                            }
-                        },
-                        [255, 255, 255, 255],
-                        &self.tether_agent,
-                    )));
-                    self.prepare_next_entry();
-                }
-            });
-
-            egui::Window::new("Boolean").show(ctx, |ui| {
-                self.common_widget_values(ui);
-                ui.separator();
-                if ui.button("✚ Add").clicked() {
-                    self.widgets.push(WidgetEntry::Bool(BoolWidget::new(
-                        self.next_widget.name.as_str(),
-                        {
-                            if self.next_widget.description.is_empty() {
-                                None
-                            } else {
-                                Some(&self.next_widget.description)
-                            }
-                        },
-                        &self.next_widget.plug.name,
-                        {
-                            if self.use_custom_topic {
-                                Some(&self.next_topic)
-                            } else {
-                                None
-                            }
-                        },
-                        false,
-                        &self.tether_agent,
-                    )));
-                    self.prepare_next_entry();
-                }
-            });
+            available_widgets(ctx, self);
         });
     }
-}
-
-fn standard_spacer(ui: &mut egui::Ui) {
-    ui.add_space(16.);
 }
 
 fn entry_heading(ui: &mut egui::Ui, heading: String) {
