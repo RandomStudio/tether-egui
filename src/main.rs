@@ -49,6 +49,7 @@ enum WidgetEntry {
     Bool(BoolWidget),
 }
 pub struct Model {
+    json_file: Option<String>,
     next_widget: Common,
     next_range: (f32, f32),
     use_custom_topic: bool,
@@ -87,16 +88,23 @@ impl Default for Model {
         }
 
         info!("Will attempt to load JSON from {} ...", &cli.json_load);
-        let widgets = load_widgets_from_disk(&cli.json_load);
+        let load_json = load_widgets_from_disk(&cli.json_load);
 
         Self {
+            json_file: {
+                if load_json.is_err() {
+                    None
+                } else {
+                    Some(cli.json_load)
+                }
+            },
             next_widget,
             next_range: (0., 1.0),
             use_custom_topic: false,
             next_topic,
             agent_role: role.into(),
             agent_id: id.into(),
-            widgets,
+            widgets: load_json.unwrap_or(Vec::new()),
             queue: Vec::new(),
             insights: Insights::new(&tether_agent, cli.tether_disable),
             tether_agent,
@@ -105,7 +113,7 @@ impl Default for Model {
     }
 }
 
-fn load_widgets_from_disk(file_path: &str) -> Vec<WidgetEntry> {
+fn load_widgets_from_disk(file_path: &str) -> Result<Vec<WidgetEntry>, ()> {
     let text = fs::read_to_string(file_path);
     let widgets = match text {
         Ok(d) => {
@@ -114,11 +122,11 @@ fn load_widgets_from_disk(file_path: &str) -> Vec<WidgetEntry> {
                 serde_json::from_str::<Vec<WidgetEntry>>(&d).expect("failed to parse widget list");
             info!("... loaded {} widgets OK", widgets.len());
             // TODO: optionally "broadcast" all values from loaded Widgets
-            widgets
+            Ok(widgets)
         }
         Err(e) => {
             error!("Failed to load widgets from disk: {:?}", e);
-            Vec::new()
+            Err(())
         }
     };
     widgets

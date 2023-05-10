@@ -306,6 +306,9 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     standard_spacer(ui);
     ui.separator();
     ui.heading("Load/Save");
+    if let Some(json_path) = &model.json_file {
+        ui.small(json_path);
+    }
     ui.horizontal(|ui| {
         if ui.button("Save").clicked() {
             if let Some(path) = rfd::FileDialog::new()
@@ -331,11 +334,14 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                 .pick_file()
             {
                 let path_string = path.display().to_string();
-                model.widgets = load_widgets_from_disk(&path_string);
+                model.widgets =
+                    load_widgets_from_disk(&path_string).expect("failed to load widgets");
+                model.json_file = Some(path_string);
             }
         }
         if ui.button("Clear").clicked() {
             model.widgets.clear();
+            model.json_file = None;
         }
     });
 
