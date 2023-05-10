@@ -151,12 +151,14 @@ impl eframe::App for Model {
             }
         }
 
-        egui::SidePanel::left("General").show(ctx, |ui| {
-            general_agent_area(ui, self);
-        });
+        egui::SidePanel::left("General")
+            .min_width(256.0)
+            .show(ctx, |ui| {
+                general_agent_area(ui, self);
+            });
 
         egui::SidePanel::right("Custom UI")
-            .min_width(512.)
+            .min_width(256.)
             .show(ctx, |ui| {
                 ui.heading("Entries");
 

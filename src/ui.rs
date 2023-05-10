@@ -25,157 +25,185 @@ pub fn entry_footer<T>(ui: &mut egui::Ui, entry: &impl Widget<T>) {
 }
 
 pub fn available_widgets(ctx: &egui::Context, model: &mut Model) {
-    egui::Window::new("Floating-Point Number").show(ctx, |ui| {
-        common_widget_values(ui, model);
+    egui::Window::new("Floating-Point Number")
+        .default_open(false)
+        .show(ctx, |ui| {
+            egui::Grid::new("my_grid")
+                .num_columns(2)
+                .striped(true)
+                .show(ui, |ui| {
+                    common_widget_values(ui, model);
 
-        standard_spacer(ui);
+                    standard_spacer(ui);
 
-        ui.label("Range");
-        ui.add(
-            egui::Slider::new(&mut model.next_range.0, i16::MIN as f32..=i16::MAX as f32)
-                .text("min"),
-        );
-        ui.add(
-            egui::Slider::new(&mut model.next_range.1, i16::MIN as f32..=i16::MAX as f32)
-                .text("max"),
-        );
-        if ui.small_button("Reset").clicked() {
-            model.next_range = (0., 1.0);
-        }
-        ui.separator();
+                    number_widget_range(ui, model, 1.);
 
-        if ui.button("✚ Add").clicked() {
-            model
-                .widgets
-                .push(WidgetEntry::FloatNumber(NumberWidget::new(
-                    &model.next_widget.name,
-                    {
-                        if model.next_widget.description.is_empty() {
-                            None
-                        } else {
-                            Some(&model.next_widget.description)
-                        }
-                    },
-                    &model.next_widget.plug.name,
-                    {
-                        if model.use_custom_topic {
-                            Some(&model.next_topic)
-                        } else {
-                            None
-                        }
-                    },
-                    0.,
-                    model.next_range.0.into()..=model.next_range.1.into(),
-                    &model.tether_agent,
-                )));
-            model.prepare_next_entry();
-        }
-    });
-
-    egui::Window::new("Whole Number").show(ctx, |ui| {
-        common_widget_values(ui, model);
-
-        standard_spacer(ui);
-
-        ui.label("Range");
-        ui.add(
-            egui::Slider::new(&mut model.next_range.0, i16::MIN as f32..=i16::MAX as f32)
-                .text("min"),
-        );
-        ui.add(
-            egui::Slider::new(&mut model.next_range.1, i16::MIN as f32..=i16::MAX as f32)
-                .text("max"),
-        );
-        if ui.small_button("Reset").clicked() {
-            model.next_range = (0., 100.);
-        }
-        ui.separator();
-
-        if ui.button("✚ Add").clicked() {
-            let min = model.next_range.0 as i64;
-            let max = model.next_range.1 as i64;
-            model
-                .widgets
-                .push(WidgetEntry::WholeNumber(NumberWidget::new(
-                    &model.next_widget.name,
-                    {
-                        if model.next_widget.description.is_empty() {
-                            None
-                        } else {
-                            Some(&model.next_widget.description)
-                        }
-                    },
-                    &model.next_widget.plug.name,
-                    {
-                        if model.use_custom_topic {
-                            Some(&model.next_topic)
-                        } else {
-                            None
-                        }
-                    },
-                    0,
-                    min..=max,
-                    &model.tether_agent,
-                )));
-            model.prepare_next_entry();
-        }
-    });
-
-    egui::Window::new("Colour").show(ctx, |ui| {
-        common_widget_values(ui, model);
-        ui.separator();
-        if ui.button("✚ Add").clicked() {
-            model.widgets.push(WidgetEntry::Colour(ColourWidget::new(
-                model.next_widget.name.as_str(),
-                {
-                    if model.next_widget.description.is_empty() {
-                        None
-                    } else {
-                        Some(&model.next_widget.description)
+                    if ui.button("✚ Add").clicked() {
+                        model
+                            .widgets
+                            .push(WidgetEntry::FloatNumber(NumberWidget::new(
+                                &model.next_widget.name,
+                                {
+                                    if model.next_widget.description.is_empty() {
+                                        None
+                                    } else {
+                                        Some(&model.next_widget.description)
+                                    }
+                                },
+                                &model.next_widget.plug.name,
+                                {
+                                    if model.use_custom_topic {
+                                        Some(&model.next_topic)
+                                    } else {
+                                        None
+                                    }
+                                },
+                                0.,
+                                model.next_range.0.into()..=model.next_range.1.into(),
+                                &model.tether_agent,
+                            )));
+                        model.prepare_next_entry();
                     }
-                },
-                &model.next_widget.plug.name,
-                {
-                    if model.use_custom_topic {
-                        Some(&model.next_topic)
-                    } else {
-                        None
-                    }
-                },
-                [255, 255, 255, 255],
-                &model.tether_agent,
-            )));
-            model.prepare_next_entry();
-        }
-    });
+                });
+        });
 
-    egui::Window::new("Boolean").show(ctx, |ui| {
-        common_widget_values(ui, model);
-        ui.separator();
-        if ui.button("✚ Add").clicked() {
-            model.widgets.push(WidgetEntry::Bool(BoolWidget::new(
-                model.next_widget.name.as_str(),
-                {
-                    if model.next_widget.description.is_empty() {
-                        None
-                    } else {
-                        Some(&model.next_widget.description)
+    egui::Window::new("Whole Number")
+        .default_open(false)
+        .show(ctx, |ui| {
+            egui::Grid::new("my_grid")
+                .num_columns(2)
+                .striped(true)
+                .show(ui, |ui| {
+                    common_widget_values(ui, model);
+
+                    standard_spacer(ui);
+
+                    number_widget_range(ui, model, 100.);
+
+                    if ui.button("✚ Add").clicked() {
+                        let min = model.next_range.0 as i64;
+                        let max = model.next_range.1 as i64;
+                        model
+                            .widgets
+                            .push(WidgetEntry::WholeNumber(NumberWidget::new(
+                                &model.next_widget.name,
+                                {
+                                    if model.next_widget.description.is_empty() {
+                                        None
+                                    } else {
+                                        Some(&model.next_widget.description)
+                                    }
+                                },
+                                &model.next_widget.plug.name,
+                                {
+                                    if model.use_custom_topic {
+                                        Some(&model.next_topic)
+                                    } else {
+                                        None
+                                    }
+                                },
+                                0,
+                                min..=max,
+                                &model.tether_agent,
+                            )));
+                        model.prepare_next_entry();
                     }
-                },
-                &model.next_widget.plug.name,
-                {
-                    if model.use_custom_topic {
-                        Some(&model.next_topic)
-                    } else {
-                        None
+                });
+        });
+
+    egui::Window::new("Colour")
+        .default_open(false)
+        .show(ctx, |ui| {
+            egui::Grid::new("my_grid")
+                .num_columns(2)
+                .striped(true)
+                .show(ui, |ui| {
+                    common_widget_values(ui, model);
+                    if ui.button("✚ Add").clicked() {
+                        model.widgets.push(WidgetEntry::Colour(ColourWidget::new(
+                            model.next_widget.name.as_str(),
+                            {
+                                if model.next_widget.description.is_empty() {
+                                    None
+                                } else {
+                                    Some(&model.next_widget.description)
+                                }
+                            },
+                            &model.next_widget.plug.name,
+                            {
+                                if model.use_custom_topic {
+                                    Some(&model.next_topic)
+                                } else {
+                                    None
+                                }
+                            },
+                            [255, 255, 255, 255],
+                            &model.tether_agent,
+                        )));
+                        model.prepare_next_entry();
                     }
-                },
-                false,
-                &model.tether_agent,
-            )));
-            model.prepare_next_entry();
-        }
-    });
+                });
+        });
+
+    egui::Window::new("Boolean")
+        .default_open(false)
+        .show(ctx, |ui| {
+            egui::Grid::new("my_grid")
+                .num_columns(2)
+                .striped(true)
+                .show(ui, |ui| {
+                    common_widget_values(ui, model);
+                    if ui.button("✚ Add").clicked() {
+                        model.widgets.push(WidgetEntry::Bool(BoolWidget::new(
+                            model.next_widget.name.as_str(),
+                            {
+                                if model.next_widget.description.is_empty() {
+                                    None
+                                } else {
+                                    Some(&model.next_widget.description)
+                                }
+                            },
+                            &model.next_widget.plug.name,
+                            {
+                                if model.use_custom_topic {
+                                    Some(&model.next_topic)
+                                } else {
+                                    None
+                                }
+                            },
+                            false,
+                            &model.tether_agent,
+                        )));
+                        model.prepare_next_entry();
+                    }
+                });
+        });
+}
+
+fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
+    let openness = ui
+        .collapsing("Range", |ui| {
+            ui.label("Range");
+            ui.vertical(|ui| {
+                ui.add(
+                    egui::Slider::new(&mut model.next_range.0, i16::MIN as f32..=i16::MAX as f32)
+                        .text("min"),
+                );
+                ui.add(
+                    egui::Slider::new(&mut model.next_range.1, i16::MIN as f32..=i16::MAX as f32)
+                        .text("max"),
+                );
+                if ui.small_button("Reset").clicked() {
+                    model.next_range = (0., default_max);
+                }
+            });
+        })
+        .openness;
+
+    if openness > 0. && openness < 1.0 {
+        model.next_range = (0., default_max);
+    }
+    ui.end_row();
 }
 
 pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
@@ -376,51 +404,47 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
 }
 
 pub fn common_widget_values(ui: &mut egui::Ui, model: &mut Model) {
-    ui.horizontal(|ui| {
-        ui.label("Name");
-        if ui
-            .text_edit_singleline(&mut model.next_widget.name)
-            .changed()
-        {
-            let shortened_name = String::from(model.next_widget.name.replace(' ', "_").trim());
-            model.next_widget.plug.name = shortened_name.clone();
-            if !model.use_custom_topic {
-                let (role, id) = model.tether_agent.description();
-                model.next_topic = format!("{role}/{id}/{}", shortened_name);
-            }
-        }
-    });
-    ui.horizontal(|ui| {
-        ui.label("Description");
-        ui.text_edit_singleline(&mut model.next_widget.description);
-    });
-    ui.horizontal(|ui| {
-        ui.label("Plug Name");
-        if ui
-            .text_edit_singleline(&mut model.next_widget.plug.name)
-            .changed()
-            && !model.use_custom_topic
-        {
+    ui.label("Name");
+    if ui
+        .text_edit_singleline(&mut model.next_widget.name)
+        .changed()
+    {
+        let shortened_name = String::from(model.next_widget.name.replace(' ', "_").trim());
+        model.next_widget.plug.name = shortened_name.clone();
+        if !model.use_custom_topic {
             let (role, id) = model.tether_agent.description();
-            let plug_name = model.next_widget.plug.name.clone();
-            model.next_topic = format!("{role}/{id}/{plug_name}");
+            model.next_topic = format!("{role}/{id}/{}", shortened_name);
         }
-    });
-    ui.horizontal(|ui| {
-        if ui
-            .checkbox(&mut model.use_custom_topic, "Use custom topic")
-            .changed()
-            && !model.use_custom_topic
-        {
-            let (role, id) = model.tether_agent.description();
-            let plug_name = model.next_widget.plug.name.clone();
-            model.next_topic = format!("{role}/{id}/{plug_name}");
-        }
-    });
+    }
+    ui.end_row();
+
+    ui.label("Description");
+    ui.text_edit_multiline(&mut model.next_widget.description);
+    ui.end_row();
+
+    ui.label("Plug Name");
+    if ui
+        .text_edit_singleline(&mut model.next_widget.plug.name)
+        .changed()
+        && !model.use_custom_topic
+    {
+        let (role, id) = model.tether_agent.description();
+        let plug_name = model.next_widget.plug.name.clone();
+        model.next_topic = format!("{role}/{id}/{plug_name}");
+    }
+    ui.end_row();
+
+    if ui
+        .checkbox(&mut model.use_custom_topic, "Use custom topic")
+        .changed()
+        && !model.use_custom_topic
+    {
+        let (role, id) = model.tether_agent.description();
+        let plug_name = model.next_widget.plug.name.clone();
+        model.next_topic = format!("{role}/{id}/{plug_name}");
+    }
     ui.add_enabled_ui(model.use_custom_topic, |ui| {
-        ui.horizontal(|ui| {
-            ui.label("Topic");
-            ui.text_edit_singleline(&mut model.next_topic);
-        });
+        ui.text_edit_singleline(&mut model.next_topic);
     });
+    ui.end_row();
 }
