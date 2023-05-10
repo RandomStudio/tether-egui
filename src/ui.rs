@@ -308,6 +308,8 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     ui.heading("Load/Save");
     if let Some(json_path) = &model.json_file {
         ui.small(json_path);
+    } else {
+        ui.small("(No JSON file loaded)");
     }
     ui.horizontal(|ui| {
         if ui.button("Save").clicked() {
