@@ -13,7 +13,8 @@ Specify a different MQTT Broker: `--tether.host 192.168.2.4`
 
 More options: `--help`
 ## Widgets available
-- Number (32-bit float only, for now) with range (not clamped)
+- Floating-point Number (64bit) 
+- Whole Number (i64)
 - Colour (8-bit for R,G,B,A)
 - Boolean / Checkbox
 
