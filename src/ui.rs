@@ -308,22 +308,29 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     ui.heading("Load/Save");
     ui.horizontal(|ui| {
         if ui.button("Save").clicked() {
-            let text = serde_json::to_string_pretty(&model.widgets)
-                .expect("failed to serialise widget data");
-            match fs::write("./widgets.json", text) {
-                Ok(()) => {
-                    info!("Saved OK");
-                }
-                Err(e) => {
-                    error!("Error saving to disk: {:?}", e);
+            if let Some(path) = rfd::FileDialog::new()
+                .add_filter("text", &["json"])
+                .save_file()
+            {
+                let path_string = path.display().to_string();
+                let text = serde_json::to_string_pretty(&model.widgets)
+                    .expect("failed to serialise widget data");
+                match fs::write(path_string, text) {
+                    Ok(()) => {
+                        info!("Saved OK");
+                    }
+                    Err(e) => {
+                        error!("Error saving to disk: {:?}", e);
+                    }
                 }
             }
         }
         if ui.button("Load").clicked() {
-            if let Some(path) = rfd::FileDialog::new().pick_file() {
+            if let Some(path) = rfd::FileDialog::new()
+                .add_filter("text", &["json"])
+                .pick_file()
+            {
                 let path_string = path.display().to_string();
-                println!("GOT FILE PATH {}", &path_string);
-                // let picked_path = Some(path.display().to_string());
                 model.widgets = load_widgets_from_disk(&path_string);
             }
         }
