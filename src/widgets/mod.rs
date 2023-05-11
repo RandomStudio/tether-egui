@@ -5,6 +5,7 @@ use self::{
     boolean::BoolWidget,
     colours::{ColourRGBA8, ColourWidget},
     empty::EmptyWidget,
+    generic::GenericJSONWidget,
     numbers::NumberWidget,
     point::Point2DWidget,
 };
@@ -28,6 +29,7 @@ pub enum WidgetEntry {
     Bool(BoolWidget),
     Empty(EmptyWidget),
     Point2D(Point2DWidget),
+    Generic(GenericJSONWidget),
 }
 
 pub trait CustomWidget<T> {

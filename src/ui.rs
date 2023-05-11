@@ -4,13 +4,14 @@ use crate::{
     insights::Insights,
     load_widgets_from_disk,
     widgets::{
-        boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, numbers::NumberWidget,
-        point::Point2DWidget, CustomWidget,
+        boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
+        numbers::NumberWidget, point::Point2DWidget, CustomWidget,
     },
     QueueItem,
 };
 use egui::{plot::PlotPoint, Color32, RichText, Slider, Ui};
 use log::{error, info};
+use serde_json::Value;
 
 use crate::{Model, WidgetEntry};
 
@@ -251,6 +252,41 @@ pub fn available_widgets(ctx: &egui::Context, model: &mut Model) {
                     }
                 });
         });
+
+    egui::Window::new("Generic JSON data")
+        .default_open(false)
+        .show(ctx, |ui| {
+            egui::Grid::new("my_grid")
+                .num_columns(2)
+                .striped(true)
+                .show(ui, |ui| {
+                    common_widget_values(ui, model);
+                    if ui.button("✚ Add").clicked() {
+                        model
+                            .widgets
+                            .push(WidgetEntry::Generic(GenericJSONWidget::new(
+                                model.next_widget.name.as_str(),
+                                {
+                                    if model.next_widget.description.is_empty() {
+                                        None
+                                    } else {
+                                        Some(&model.next_widget.description)
+                                    }
+                                },
+                                &model.next_widget.plug.name,
+                                {
+                                    if model.use_custom_topic {
+                                        Some(&model.next_topic)
+                                    } else {
+                                        None
+                                    }
+                                },
+                                &model.tether_agent,
+                            )));
+                        model.prepare_next_entry();
+                    }
+                });
+        });
 }
 
 fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
@@ -400,6 +436,29 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                             .tether_agent
                             .encode_and_publish(&e.common().plug, p)
                             .expect("Failed to send Point2D message");
+                    }
+                }
+                entry_footer(ui, e);
+            }
+            WidgetEntry::Generic(e) => {
+                entry_heading(ui, format!("Generic JSON: {}", e.common().name));
+                if ui.text_edit_multiline(e.value_mut()).changed() {
+                    // TODO: validate JSON?
+                    // println!("Should send: {}", e.value());
+                }
+                if model.tether_agent.is_connected() && ui.button("Send").clicked() {
+                    if let Ok(json) = serde_json::from_str::<Value>(e.value()) {
+                        match rmp_serde::to_vec_named(&json) {
+                            Ok(payload) => model
+                                .tether_agent
+                                .publish(&e.common().plug, Some(&payload))
+                                .expect(
+                                    "Failed to send Generic JSON (encoded as messagepback) message",
+                                ),
+                            Err(e) => {
+                                error!("Failed to encode MessagePack payload: {}", e);
+                            }
+                        }
                     }
                 }
                 entry_footer(ui, e);
