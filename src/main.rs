@@ -15,7 +15,12 @@ use insights::Insights;
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
-use widgets::{BoolWidget, ColourRGBA8, ColourWidget, Common, NumberWidget, Widget};
+use widgets::{
+    boolean::BoolWidget,
+    colours::{ColourRGBA8, ColourWidget},
+    numbers::NumberWidget,
+    Common,
+};
 
 mod insights;
 mod settings;
@@ -116,7 +121,7 @@ impl Default for Model {
 
 fn load_widgets_from_disk(file_path: &str) -> Result<Vec<WidgetEntry>, ()> {
     let text = fs::read_to_string(file_path);
-    let widgets = match text {
+    match text {
         Ok(d) => {
             info!("Found widget data file; parsing...");
             let widgets =
@@ -129,8 +134,7 @@ fn load_widgets_from_disk(file_path: &str) -> Result<Vec<WidgetEntry>, ()> {
             error!("Failed to load widgets from disk: {:?}", e);
             Err(())
         }
-    };
-    widgets
+    }
 }
 
 impl Model {

@@ -1,13 +1,15 @@
 use std::fs;
 
-use crate::{insights::Insights, load_widgets_from_disk, QueueItem, Widget};
+use crate::{
+    insights::Insights,
+    load_widgets_from_disk,
+    widgets::{boolean::BoolWidget, colours::ColourWidget, numbers::NumberWidget, CustomWidget},
+    QueueItem,
+};
 use egui::{Color32, RichText, Slider, Ui};
 use log::{error, info};
 
-use crate::{
-    widgets::{BoolWidget, ColourWidget, NumberWidget},
-    Model, WidgetEntry,
-};
+use crate::{Model, WidgetEntry};
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
@@ -17,10 +19,10 @@ pub fn entry_heading(ui: &mut egui::Ui, heading: String) {
     ui.label(RichText::new(heading).color(Color32::WHITE));
 }
 
-pub fn entry_footer<T>(ui: &mut egui::Ui, entry: &impl Widget<T>) {
+pub fn entry_footer<T>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
     ui.small(&entry.common().description);
     ui.label(
-        RichText::new(&format!("Topic: {}", entry.common().plug.topic)).color(Color32::LIGHT_BLUE),
+        RichText::new(format!("Topic: {}", entry.common().plug.topic)).color(Color32::LIGHT_BLUE),
     );
 }
 
@@ -218,14 +220,13 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 if ui
                     .add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false))
                     .changed()
+                    && model.tether_agent.is_connected()
                 {
-                    if model.tether_agent.is_connected() {
-                        model
-                            .tether_agent
-                            .encode_and_publish(&e.common().plug, e.value())
-                            .expect("Failed to send number");
-                    }
-                };
+                    model
+                        .tether_agent
+                        .encode_and_publish(&e.common().plug, e.value())
+                        .expect("Failed to send number");
+                }
                 entry_footer(ui, e);
             }
             WidgetEntry::WholeNumber(e) => {
@@ -235,14 +236,13 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 if ui
                     .add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false))
                     .changed()
+                    && model.tether_agent.is_connected()
                 {
-                    if model.tether_agent.is_connected() {
-                        model
-                            .tether_agent
-                            .encode_and_publish(&e.common().plug, e.value())
-                            .expect("Failed to send number");
-                    }
-                };
+                    model
+                        .tether_agent
+                        .encode_and_publish(&e.common().plug, e.value())
+                        .expect("Failed to send number");
+                }
                 entry_footer(ui, e);
             }
             WidgetEntry::Colour(e) => {
@@ -250,14 +250,13 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 if ui
                     .color_edit_button_srgba_unmultiplied(e.value_mut())
                     .changed()
+                    && model.tether_agent.is_connected()
                 {
-                    if model.tether_agent.is_connected() {
-                        model
-                            .tether_agent
-                            .encode_and_publish(&e.common().plug, e.value())
-                            .expect("Failed to send colour")
-                    }
-                };
+                    model
+                        .tether_agent
+                        .encode_and_publish(&e.common().plug, e.value())
+                        .expect("Failed to send colour")
+                }
                 let srgba = e.value();
                 ui.label(format!(
                     "sRGBA: {} {} {} {}",
@@ -280,13 +279,12 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                         }),
                     )
                     .changed()
+                    && model.tether_agent.is_connected()
                 {
-                    if model.tether_agent.is_connected() {
-                        model
-                            .tether_agent
-                            .encode_and_publish(&e.common().plug, e.value())
-                            .expect("Failed to send boolean");
-                    }
+                    model
+                        .tether_agent
+                        .encode_and_publish(&e.common().plug, e.value())
+                        .expect("Failed to send boolean");
                 }
                 entry_footer(ui, e);
             }
