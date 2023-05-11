@@ -23,7 +23,10 @@ More options: `--help`
 ## TODO
 - [ ] Add 2D, 3D "point" Widgets
 - [x] Add "empty" Widget
-- [ ] Add editable JSON Widget
+- [ ] Add editable "JSON string to MessagePack" Widget
+- [ ] All Widgets should have Send button as well as "send on change" functionality (and send-on-change should be optionally disabled for all?)
+- [ ] Include sensible default descriptions per Widget type when adding
+- [ ] Pass function/closure to Widgets to render their own GUI?
 - [x] Tether host can be specified in CLI
 - [ ] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
 - [x] List plug names, agent IDs, roles as per "topics" cli

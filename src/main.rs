@@ -20,6 +20,7 @@ use widgets::{
     colours::{ColourRGBA8, ColourWidget},
     empty::EmptyWidget,
     numbers::NumberWidget,
+    point::Point2DWidget,
     Common,
 };
 
@@ -54,6 +55,7 @@ enum WidgetEntry {
     Colour(ColourWidget<ColourRGBA8>),
     Bool(BoolWidget),
     Empty(EmptyWidget),
+    Point2D(Point2DWidget),
 }
 pub struct Model {
     json_file: Option<String>,

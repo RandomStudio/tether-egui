@@ -5,14 +5,16 @@ use crate::{
     load_widgets_from_disk,
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, numbers::NumberWidget,
-        CustomWidget,
+        point::Point2DWidget, CustomWidget,
     },
     QueueItem,
 };
-use egui::{Color32, RichText, Slider, Ui};
+use egui::{plot::PlotPoint, Color32, RichText, Slider, Ui};
 use log::{error, info};
 
 use crate::{Model, WidgetEntry};
+
+const PLOT_SIZE: f32 = 200.0;
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
@@ -216,6 +218,39 @@ pub fn available_widgets(ctx: &egui::Context, model: &mut Model) {
                     }
                 });
         });
+
+    egui::Window::new("Point2D")
+        .default_open(false)
+        .show(ctx, |ui| {
+            egui::Grid::new("my_grid")
+                .num_columns(2)
+                .striped(true)
+                .show(ui, |ui| {
+                    common_widget_values(ui, model);
+                    if ui.button("✚ Add").clicked() {
+                        model.widgets.push(WidgetEntry::Point2D(Point2DWidget::new(
+                            model.next_widget.name.as_str(),
+                            {
+                                if model.next_widget.description.is_empty() {
+                                    None
+                                } else {
+                                    Some(&model.next_widget.description)
+                                }
+                            },
+                            &model.next_widget.plug.name,
+                            {
+                                if model.use_custom_topic {
+                                    Some(&model.next_topic)
+                                } else {
+                                    None
+                                }
+                            },
+                            &model.tether_agent,
+                        )));
+                        model.prepare_next_entry();
+                    }
+                });
+        });
 }
 
 fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
@@ -331,6 +366,41 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                         .tether_agent
                         .publish(&e.common().plug, None)
                         .expect("Failed to send empty message");
+                }
+                entry_footer(ui, e);
+            }
+            WidgetEntry::Point2D(e) => {
+                entry_heading(ui, format!("Point2D: {}", e.common().name));
+                let (
+                    _screen_pos,
+                    pointer_coordinate,
+                    _pointer_coordinate_drag_delta,
+                    _bounds,
+                    hovered,
+                ) = egui::plot::Plot::new("tracking_plot")
+                    .width(PLOT_SIZE)
+                    .height(PLOT_SIZE)
+                    .data_aspect(1.0)
+                    .show(ui, |plot_ui| {
+                        (
+                            plot_ui.screen_from_plot(PlotPoint::new(0.0, 0.0)),
+                            plot_ui.pointer_coordinate(),
+                            plot_ui.pointer_coordinate_drag_delta(),
+                            plot_ui.plot_bounds(),
+                            plot_ui.plot_hovered(),
+                        )
+                    })
+                    .inner;
+                if let Some(c) = pointer_coordinate {
+                    if hovered && model.tether_agent.is_connected() {
+                        // println!("Pointer coordinates: {:?}", c)
+                        let PlotPoint { x, y } = c;
+                        let p = [x, y];
+                        model
+                            .tether_agent
+                            .encode_and_publish(&e.common().plug, p)
+                            .expect("Failed to send Point2D message");
+                    }
                 }
                 entry_footer(ui, e);
             }

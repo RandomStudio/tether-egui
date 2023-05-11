@@ -6,6 +6,7 @@ pub mod boolean;
 pub mod colours;
 pub mod empty;
 pub mod numbers;
+pub mod point;
 
 pub trait CustomWidget<T> {
     fn common(&self) -> &Common;
