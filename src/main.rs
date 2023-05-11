@@ -161,12 +161,11 @@ impl eframe::App for Model {
             });
 
         egui::SidePanel::right("Custom UI")
-            .min_width(256.)
+            .min_width(512.)
             .show(ctx, |ui| {
                 ui.heading("Entries");
 
                 standard_spacer(ui);
-                // TODO: use grid
 
                 egui::ScrollArea::vertical()
                     .auto_shrink([false; 2])

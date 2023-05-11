@@ -16,20 +16,351 @@ use serde_json::Value;
 use crate::{Model, WidgetEntry};
 
 const PLOT_SIZE: f32 = 200.0;
+const ENTRY_GRID_WIDTH: f32 = 200.;
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
 }
 
-pub fn entry_heading(ui: &mut egui::Ui, heading: String) {
-    ui.label(RichText::new(heading).color(Color32::WHITE));
+pub fn entry_heading<T>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
+    ui.vertical(|ui| {
+        ui.label(
+            RichText::new(&entry.common().name)
+                .color(Color32::WHITE)
+                .size(18.),
+        );
+        ui.small(&entry.common().description);
+    });
 }
 
-pub fn entry_footer<T>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
-    ui.small(&entry.common().description);
+pub fn entry_topic<T>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
     ui.label(
         RichText::new(format!("Topic: {}", entry.common().plug.topic)).color(Color32::LIGHT_BLUE),
     );
+}
+
+fn entry_remove(ui: &mut Ui) -> bool {
+    let clicked = ui.button("❌ Remove").clicked();
+    ui.separator();
+    standard_spacer(ui);
+    clicked
+}
+
+pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
+    ui.checkbox(&mut model.auto_send, "Auto send")
+        .on_hover_text(
+        "Trigger messages on any value change, where possible, instead of waiting for Send button",
+    );
+    standard_spacer(ui);
+
+    for (i, entry) in model.widgets.iter_mut().enumerate() {
+        match entry {
+            WidgetEntry::FloatNumber(e) => {
+                egui::Grid::new("FloatNumberGrid")
+                    .num_columns(3)
+                    .striped(true)
+                    .min_col_width(ENTRY_GRID_WIDTH)
+                    .show(ui, |ui| {
+                        // Col1
+                        entry_heading(ui, e);
+
+                        // Col 2
+                        let res = ui.vertical(|ui| {
+                            let (min, max) = e.range();
+                            let s =
+                                ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
+                            ui.small(format!("Range: {}-{}", min, max));
+                            s
+                        });
+
+                        // Col 3
+                        ui.vertical(|ui| {
+                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                                || res.inner.changed() && model.auto_send
+                            {
+                                // println!("changed? {:?}", res.inner);
+                                model
+                                    .tether_agent
+                                    .encode_and_publish(&e.common().plug, e.value())
+                                    .expect("Failed to send number");
+                            }
+                            entry_topic(ui, e);
+                        })
+                    });
+
+                if entry_remove(ui) {
+                    model.queue.push(QueueItem::Remove(i));
+                }
+            }
+            WidgetEntry::WholeNumber(e) => {
+                egui::Grid::new("WholeNumberGrid")
+                    .num_columns(3)
+                    .striped(true)
+                    .min_col_width(ENTRY_GRID_WIDTH)
+                    .show(ui, |ui| {
+                        // Col1
+                        entry_heading(ui, e);
+
+                        // Col 2
+                        let res = ui.vertical(|ui| {
+                            let (min, max) = e.range();
+                            let s =
+                                ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
+                            ui.small(format!("Range: {}-{}", min, max));
+                            s
+                        });
+
+                        // Col 3
+                        ui.vertical(|ui| {
+                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                                || res.inner.changed() && model.auto_send
+                            {
+                                // println!("changed? {:?}", res.inner);
+                                model
+                                    .tether_agent
+                                    .encode_and_publish(&e.common().plug, e.value())
+                                    .expect("Failed to send number");
+                            }
+                            entry_topic(ui, e);
+                        })
+                    });
+
+                if entry_remove(ui) {
+                    model.queue.push(QueueItem::Remove(i));
+                }
+            }
+            WidgetEntry::Colour(e) => {
+                egui::Grid::new("ColourGrid")
+                    .num_columns(3)
+                    .striped(true)
+                    .min_col_width(ENTRY_GRID_WIDTH)
+                    .show(ui, |ui| {
+                        // Col 1
+                        entry_heading(ui, e);
+
+                        // Col 2
+                        let res = ui.vertical(|ui| {
+                            let color_picker =
+                                ui.color_edit_button_srgba_unmultiplied(e.value_mut());
+                            let srgba = e.value();
+                            ui.label(format!(
+                                "sRGBA: {} {} {} {}",
+                                srgba[0], srgba[1], srgba[2], srgba[3],
+                            ));
+                            color_picker
+                        });
+
+                        // Col 3
+                        ui.vertical(|ui| {
+                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                                || res.inner.changed() && model.auto_send
+                            {
+                                model
+                                    .tether_agent
+                                    .encode_and_publish(&e.common().plug, e.value())
+                                    .expect("Failed to send colour")
+                            }
+                            entry_topic(ui, e);
+                        });
+                    });
+
+                if entry_remove(ui) {
+                    model.queue.push(QueueItem::Remove(i));
+                }
+            }
+            WidgetEntry::Bool(e) => {
+                egui::Grid::new("BoolGrid")
+                    .num_columns(3)
+                    .striped(true)
+                    .min_col_width(ENTRY_GRID_WIDTH)
+                    .show(ui, |ui| {
+                        // Col 1
+                        entry_heading(ui, e);
+
+                        // Col 2
+                        let checked = *e.value();
+                        let checkbox = ui.checkbox(
+                            e.value_mut(),
+                            format!("State: {}", {
+                                if checked {
+                                    "TRUE"
+                                } else {
+                                    "FALSE "
+                                }
+                            }),
+                        );
+
+                        // Col 3
+                        ui.vertical(|ui| {
+                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                                || checkbox.changed() && model.auto_send
+                            {
+                                model
+                                    .tether_agent
+                                    .encode_and_publish(&e.common().plug, e.value())
+                                    .expect("Failed to send boolean");
+                            }
+                            entry_topic(ui, e);
+                        })
+                    });
+                if entry_remove(ui) {
+                    model.queue.push(QueueItem::Remove(i));
+                }
+            }
+            WidgetEntry::Empty(e) => {
+                egui::Grid::new("EmptyGrid")
+                    .num_columns(3)
+                    .striped(true)
+                    .min_col_width(ENTRY_GRID_WIDTH)
+                    .show(ui, |ui| {
+                        // Col 1
+                        entry_heading(ui, e);
+
+                        // Col 2
+                        ui.label("Empty message body");
+
+                        // Col 3
+                        ui.vertical(|ui| {
+                            if model.tether_agent.is_connected() && ui.button("Send").clicked() {
+                                model
+                                    .tether_agent
+                                    .encode_and_publish(&e.common().plug, e.value())
+                                    .expect("Failed to send boolean");
+                            }
+                            entry_topic(ui, e);
+                        })
+                    });
+                if entry_remove(ui) {
+                    model.queue.push(QueueItem::Remove(i));
+                }
+            }
+            WidgetEntry::Point2D(e) => {
+                egui::Grid::new("Point2DGrid")
+                    .num_columns(3)
+                    .striped(true)
+                    .min_col_width(ENTRY_GRID_WIDTH)
+                    .show(ui, |ui| {
+                        // Col 1
+                        entry_heading(ui, e);
+
+                        // Col 2
+                        let res = ui.vertical(|ui| {
+                            let plotter = egui::plot::Plot::new("tracking_plot")
+                                .width(PLOT_SIZE)
+                                .height(PLOT_SIZE)
+                                .data_aspect(1.0)
+                                .show(ui, |plot_ui| {
+                                    (
+                                        plot_ui.screen_from_plot(PlotPoint::new(0.0, 0.0)),
+                                        plot_ui.pointer_coordinate(),
+                                        plot_ui.pointer_coordinate_drag_delta(),
+                                        plot_ui.plot_bounds(),
+                                        plot_ui.plot_hovered(),
+                                    )
+                                });
+                                ui.collapsing("Instructions", |ui| {
+                                    ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
+                                    ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
+                                    if cfg!(target_arch = "wasm32") {
+                                        ui.label("Zoom with ctrl / ⌘ + pointer wheel, or with pinch gesture.");
+                                    } else if cfg!(target_os = "macos") {
+                                        ui.label("Zoom with ctrl / ⌘ + scroll.");
+                                    } else {
+                                        ui.label("Zoom with ctrl + scroll.");
+                                    }
+                                    ui.label("Reset view with double-click.");
+                                });
+                                plotter
+                        });
+
+                        let (
+                            _screen_pos,
+                            pointer_coordinate,
+                            _pointer_coordinate_drag_delta,
+                            _bounds,
+                            hovered,
+                        ) = res.inner.inner;
+
+                        // Col 3
+                        ui.vertical(|ui| {
+                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                                || hovered && model.auto_send
+                            {
+                                if let Some(c) = pointer_coordinate {
+                                    // println!("Pointer coordinates: {:?}", c)
+                                    let PlotPoint { x, y } = c;
+                                    let p = [x, y];
+                                    model
+                                        .tether_agent
+                                        .encode_and_publish(&e.common().plug, p)
+                                        .expect("Failed to send Point2D message");
+                                }
+                            }
+
+                            entry_topic(ui, e);
+                        });
+                    });
+                if entry_remove(ui) {
+                    model.queue.push(QueueItem::Remove(i));
+                }
+            }
+            WidgetEntry::Generic(e) => {
+                egui::Grid::new("JSONGrid")
+                    .num_columns(3)
+                    .striped(true)
+                    .min_col_width(ENTRY_GRID_WIDTH)
+                    .show(ui, |ui| {
+                        // Col 1
+                        entry_heading(ui, e);
+
+                        // Col 2
+                        ui.vertical(|ui| {
+                            if ui.text_edit_multiline(e.value_mut()).changed() {
+                                if serde_json::from_str::<Value>(e.value()).is_err() {
+                                    model.is_valid_json = false;
+                                } else {
+                                    model.is_valid_json = true;
+                                }
+                            }
+                            if model.is_valid_json {
+                                ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");
+                            } else {
+                                ui.colored_label(Color32::RED, "Not valid JSON");
+                            }
+                        });
+
+                        // Col 3
+                        ui.vertical(|ui| {
+                            if model.tether_agent.is_connected() && ui.button("Send").clicked() {
+                                if let Ok(json) = serde_json::from_str::<Value>(e.value()) {
+                                    match rmp_serde::to_vec_named(&json) {
+                                        Ok(payload) => model
+                                            .tether_agent
+                                            .publish(&e.common().plug, Some(&payload))
+                                            .expect(
+                                                "Failed to send Generic JSON (encoded as messagepback) message",
+                                            ),
+                                        Err(e) => {
+                                            error!("Failed to encode MessagePack payload: {}", e);
+                                        }
+                                    }
+                                }
+                            }
+                            entry_topic(ui, e);
+                        });
+                    });
+                if entry_remove(ui) {
+                    model.queue.push(QueueItem::Remove(i));
+                }
+            }
+        }
+
+        ui.end_row();
+
+        standard_spacer(ui);
+
+        ui.end_row();
+    }
 }
 
 pub fn available_widgets(ctx: &egui::Context, model: &mut Model) {
@@ -313,176 +644,6 @@ fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
         model.next_range = (0., default_max);
     }
     ui.end_row();
-}
-
-pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
-    ui.checkbox(&mut model.auto_send, "Auto send")
-        .on_hover_text(
-        "Trigger messages on any value change, where possible, instead of waiting for Send button",
-    );
-    standard_spacer(ui);
-
-    for (i, entry) in model.widgets.iter_mut().enumerate() {
-        ui.separator();
-
-        match entry {
-            WidgetEntry::FloatNumber(e) => {
-                let (min, max) = e.range();
-                let heading = format!("Number: {} ({}..={})", e.common().name, min, max);
-                entry_heading(ui, heading);
-                let slider = ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
-                if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                    || slider.changed() && model.auto_send
-                {
-                    model
-                        .tether_agent
-                        .encode_and_publish(&e.common().plug, e.value())
-                        .expect("Failed to send number");
-                }
-                entry_footer(ui, e);
-            }
-            WidgetEntry::WholeNumber(e) => {
-                let (min, max) = e.range();
-                let heading = format!("Number: {} ({}..={})", e.common().name, min, max);
-                entry_heading(ui, heading);
-                let slider = ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
-                if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                    || slider.changed() && model.auto_send
-                {
-                    model
-                        .tether_agent
-                        .encode_and_publish(&e.common().plug, e.value())
-                        .expect("Failed to send number");
-                }
-                entry_footer(ui, e);
-            }
-            WidgetEntry::Colour(e) => {
-                entry_heading(ui, format!("Colour: {}", e.common().name));
-                let color_picker = ui.color_edit_button_srgba_unmultiplied(e.value_mut());
-                if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                    || color_picker.changed() && model.auto_send
-                {
-                    model
-                        .tether_agent
-                        .encode_and_publish(&e.common().plug, e.value())
-                        .expect("Failed to send colour")
-                }
-                let srgba = e.value();
-                ui.label(format!(
-                    "sRGBA: {} {} {} {}",
-                    srgba[0], srgba[1], srgba[2], srgba[3],
-                ));
-                entry_footer(ui, e);
-            }
-            WidgetEntry::Bool(e) => {
-                entry_heading(ui, format!("Boolean: {}", e.common().name));
-                let checked = *e.value();
-                let checkbox = ui.checkbox(
-                    e.value_mut(),
-                    format!("State: {}", {
-                        if checked {
-                            "TRUE"
-                        } else {
-                            "FALSE "
-                        }
-                    }),
-                );
-                if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                    || checkbox.changed() && model.auto_send
-                {
-                    model
-                        .tether_agent
-                        .encode_and_publish(&e.common().plug, e.value())
-                        .expect("Failed to send boolean");
-                }
-                entry_footer(ui, e);
-            }
-            WidgetEntry::Empty(e) => {
-                entry_heading(ui, format!("Empty Message: {}", e.common().name));
-                if ui.button("Send").clicked() && model.tether_agent.is_connected() {
-                    model
-                        .tether_agent
-                        .publish(&e.common().plug, None)
-                        .expect("Failed to send empty message");
-                }
-                entry_footer(ui, e);
-            }
-            WidgetEntry::Point2D(e) => {
-                entry_heading(ui, format!("Point2D: {}", e.common().name));
-                let (
-                    _screen_pos,
-                    pointer_coordinate,
-                    _pointer_coordinate_drag_delta,
-                    _bounds,
-                    hovered,
-                ) = egui::plot::Plot::new("tracking_plot")
-                    .width(PLOT_SIZE)
-                    .height(PLOT_SIZE)
-                    .data_aspect(1.0)
-                    .show(ui, |plot_ui| {
-                        (
-                            plot_ui.screen_from_plot(PlotPoint::new(0.0, 0.0)),
-                            plot_ui.pointer_coordinate(),
-                            plot_ui.pointer_coordinate_drag_delta(),
-                            plot_ui.plot_bounds(),
-                            plot_ui.plot_hovered(),
-                        )
-                    })
-                    .inner;
-                if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                    || hovered && model.auto_send
-                {
-                    if let Some(c) = pointer_coordinate {
-                        // println!("Pointer coordinates: {:?}", c)
-                        let PlotPoint { x, y } = c;
-                        let p = [x, y];
-                        model
-                            .tether_agent
-                            .encode_and_publish(&e.common().plug, p)
-                            .expect("Failed to send Point2D message");
-                    }
-                }
-                entry_footer(ui, e);
-            }
-            WidgetEntry::Generic(e) => {
-                entry_heading(ui, format!("Generic JSON: {}", e.common().name));
-                if ui.text_edit_multiline(e.value_mut()).changed() {
-                    if serde_json::from_str::<Value>(e.value()).is_err() {
-                        model.is_valid_json = false;
-                    } else {
-                        model.is_valid_json = true;
-                    }
-                }
-                if model.is_valid_json {
-                    ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");
-                } else {
-                    ui.colored_label(Color32::RED, "Not valid JSON");
-                }
-                if model.tether_agent.is_connected() && ui.button("Send").clicked() {
-                    if let Ok(json) = serde_json::from_str::<Value>(e.value()) {
-                        match rmp_serde::to_vec_named(&json) {
-                            Ok(payload) => model
-                                .tether_agent
-                                .publish(&e.common().plug, Some(&payload))
-                                .expect(
-                                    "Failed to send Generic JSON (encoded as messagepback) message",
-                                ),
-                            Err(e) => {
-                                error!("Failed to encode MessagePack payload: {}", e);
-                            }
-                        }
-                    }
-                }
-                entry_footer(ui, e);
-            }
-        }
-
-        if ui.button("❌ Remove").clicked() {
-            model.queue.push(QueueItem::Remove(i));
-        }
-
-        standard_spacer(ui);
-    }
 }
 
 pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
