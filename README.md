@@ -21,7 +21,7 @@ More options: `--help`
 
 ## TODO
 - [ ] Add 2D, 3D "point" Widgets
-- [ ] Add "empty" Widget
+- [x] Add "empty" Widget
 - [ ] Add editable JSON Widget
 - [x] Tether host can be specified in CLI
 - [ ] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
