@@ -316,6 +316,12 @@ fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
 }
 
 pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
+    ui.checkbox(&mut model.auto_send, "Auto send")
+        .on_hover_text(
+        "Trigger messages on any value change, where possible, instead of waiting for Send button",
+    );
+    standard_spacer(ui);
+
     for (i, entry) in model.widgets.iter_mut().enumerate() {
         ui.separator();
 
@@ -324,10 +330,9 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 let (min, max) = e.range();
                 let heading = format!("Number: {} ({}..={})", e.common().name, min, max);
                 entry_heading(ui, heading);
-                if ui
-                    .add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false))
-                    .changed()
-                    && model.tether_agent.is_connected()
+                let slider = ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
+                if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                    || slider.changed() && model.auto_send
                 {
                     model
                         .tether_agent
@@ -340,10 +345,9 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 let (min, max) = e.range();
                 let heading = format!("Number: {} ({}..={})", e.common().name, min, max);
                 entry_heading(ui, heading);
-                if ui
-                    .add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false))
-                    .changed()
-                    && model.tether_agent.is_connected()
+                let slider = ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
+                if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                    || slider.changed() && model.auto_send
                 {
                     model
                         .tether_agent
@@ -354,10 +358,9 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
             }
             WidgetEntry::Colour(e) => {
                 entry_heading(ui, format!("Colour: {}", e.common().name));
-                if ui
-                    .color_edit_button_srgba_unmultiplied(e.value_mut())
-                    .changed()
-                    && model.tether_agent.is_connected()
+                let color_picker = ui.color_edit_button_srgba_unmultiplied(e.value_mut());
+                if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                    || color_picker.changed() && model.auto_send
                 {
                     model
                         .tether_agent
@@ -374,19 +377,18 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
             WidgetEntry::Bool(e) => {
                 entry_heading(ui, format!("Boolean: {}", e.common().name));
                 let checked = *e.value();
-                if ui
-                    .checkbox(
-                        e.value_mut(),
-                        format!("State: {}", {
-                            if checked {
-                                "TRUE"
-                            } else {
-                                "FALSE "
-                            }
-                        }),
-                    )
-                    .changed()
-                    && model.tether_agent.is_connected()
+                let checkbox = ui.checkbox(
+                    e.value_mut(),
+                    format!("State: {}", {
+                        if checked {
+                            "TRUE"
+                        } else {
+                            "FALSE "
+                        }
+                    }),
+                );
+                if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                    || checkbox.changed() && model.auto_send
                 {
                     model
                         .tether_agent
@@ -427,8 +429,10 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                         )
                     })
                     .inner;
-                if let Some(c) = pointer_coordinate {
-                    if hovered && model.tether_agent.is_connected() {
+                if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                    || hovered && model.auto_send
+                {
+                    if let Some(c) = pointer_coordinate {
                         // println!("Pointer coordinates: {:?}", c)
                         let PlotPoint { x, y } = c;
                         let p = [x, y];

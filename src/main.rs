@@ -52,6 +52,7 @@ pub struct Model {
     tether_agent: TetherAgent,
     insights: Insights,
     continuous_mode: bool,
+    auto_send: bool,
 }
 
 fn get_next_name(count: usize) -> String {
@@ -102,6 +103,7 @@ impl Default for Model {
             tether_agent,
             continuous_mode: cli.continuous_mode,
             is_valid_json: true,
+            auto_send: true,
         }
     }
 }
