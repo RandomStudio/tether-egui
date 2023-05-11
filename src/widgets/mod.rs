@@ -1,12 +1,34 @@
 use serde::{Deserialize, Serialize};
 use tether_agent::{PlugDefinition, TetherAgent};
 
+use self::{
+    boolean::BoolWidget,
+    colours::{ColourRGBA8, ColourWidget},
+    empty::EmptyWidget,
+    numbers::NumberWidget,
+    point::Point2DWidget,
+};
+
 // Re-export modules
 pub mod boolean;
 pub mod colours;
 pub mod empty;
+pub mod generic;
 pub mod numbers;
 pub mod point;
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+/// The different possible Widget entries. Serialisable because
+/// these can be saved/loaded to/from disk
+pub enum WidgetEntry {
+    FloatNumber(NumberWidget<f64>),
+    WholeNumber(NumberWidget<i64>),
+    Colour(ColourWidget<ColourRGBA8>),
+    Bool(BoolWidget),
+    Empty(EmptyWidget),
+    Point2D(Point2DWidget),
+}
 
 pub trait CustomWidget<T> {
     fn common(&self) -> &Common;

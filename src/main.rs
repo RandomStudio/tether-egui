@@ -13,16 +13,8 @@ use eframe::egui;
 use env_logger::Env;
 use insights::Insights;
 use log::{error, info, warn};
-use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
-use widgets::{
-    boolean::BoolWidget,
-    colours::{ColourRGBA8, ColourWidget},
-    empty::EmptyWidget,
-    numbers::NumberWidget,
-    point::Point2DWidget,
-    Common,
-};
+use widgets::{Common, WidgetEntry};
 
 mod insights;
 mod settings;
@@ -46,17 +38,6 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-
-enum WidgetEntry {
-    FloatNumber(NumberWidget<f64>),
-    WholeNumber(NumberWidget<i64>),
-    Colour(ColourWidget<ColourRGBA8>),
-    Bool(BoolWidget),
-    Empty(EmptyWidget),
-    Point2D(Point2DWidget),
-}
 pub struct Model {
     json_file: Option<String>,
     next_widget: Common,
