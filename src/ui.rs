@@ -407,6 +407,18 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
             }
             WidgetEntry::Point2D(e) => {
                 entry_heading(ui, format!("Point2D: {}", e.common().name));
+                ui.collapsing("Instructions", |ui| {
+                    ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
+                    ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
+                    if cfg!(target_arch = "wasm32") {
+                        ui.label("Zoom with ctrl / ⌘ + pointer wheel, or with pinch gesture.");
+                    } else if cfg!(target_os = "macos") {
+                        ui.label("Zoom with ctrl / ⌘ + scroll.");
+                    } else {
+                        ui.label("Zoom with ctrl + scroll.");
+                    }
+                    ui.label("Reset view with double-click.");
+                });
                 let (
                     _screen_pos,
                     pointer_coordinate,
