@@ -118,7 +118,7 @@ impl Default for Model {
             queue: Vec::new(),
             insights: Insights::new(&tether_agent, cli.tether_disable),
             tether_agent,
-            continuous_mode: true,
+            continuous_mode: cli.continuous_mode,
         }
     }
 }

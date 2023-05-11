@@ -18,6 +18,11 @@ pub struct Cli {
     #[arg(long = "tether.host", default_value_t=TETHER_HOST)]
     pub tether_host: std::net::IpAddr,
 
+    /// Flag to enable "continuous mode" on startup; sometimes improves message log
+    /// latency, at the cost of higher-than-normal CPU usage
+    #[arg(long = "continuous")]
+    pub continuous_mode: bool,
+
     #[arg(long = "loglevel",default_value_t=String::from("info"))]
     pub log_level: String,
 }
