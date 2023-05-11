@@ -52,6 +52,7 @@ pub struct Model {
     tether_agent: TetherAgent,
     insights: Insights,
     continuous_mode: bool,
+    auto_send: bool,
 }
 
 fn get_next_name(count: usize) -> String {
@@ -102,6 +103,7 @@ impl Default for Model {
             tether_agent,
             continuous_mode: cli.continuous_mode,
             is_valid_json: true,
+            auto_send: true,
         }
     }
 }
@@ -159,12 +161,11 @@ impl eframe::App for Model {
             });
 
         egui::SidePanel::right("Custom UI")
-            .min_width(256.)
+            .min_width(512.)
             .show(ctx, |ui| {
                 ui.heading("Entries");
 
                 standard_spacer(ui);
-                // TODO: use grid
 
                 egui::ScrollArea::vertical()
                     .auto_shrink([false; 2])
