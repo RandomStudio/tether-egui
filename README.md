@@ -17,6 +17,7 @@ More options: `--help`
 - Whole Number (i64)
 - Colour (8-bit for R,G,B,A)
 - Boolean / Checkbox
+- Empty Message (could be a ping, heartbeat or represent an event)
 
 
 ## TODO
