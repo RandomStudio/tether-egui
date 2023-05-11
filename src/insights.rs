@@ -39,10 +39,15 @@ impl Insights {
         while let Some((_plug_name, message)) = agent.check_messages() {
             self.message_count += 1;
             let bytes = message.payload();
-            let value: rmpv::Value =
-                rmp_serde::from_slice(bytes).expect("failed to decode msgpack");
-            let json = serde_json::to_string(&value).expect("failed to stringify JSON");
-            self.message_log.push_back((message.topic().into(), json));
+            if bytes.is_empty() {
+                self.message_log
+                    .push_back((message.topic().into(), "[EMPTY_MESSAGE]".into()));
+            } else {
+                let value: rmpv::Value =
+                    rmp_serde::from_slice(bytes).expect("failed to decode msgpack");
+                let json = serde_json::to_string(&value).expect("failed to stringify JSON");
+                self.message_log.push_back((message.topic().into(), json));
+            }
 
             // Collect some stats...
             add_if_unique(message.topic(), &mut self.topics);

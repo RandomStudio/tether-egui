@@ -18,6 +18,7 @@ use tether_agent::TetherAgent;
 use widgets::{
     boolean::BoolWidget,
     colours::{ColourRGBA8, ColourWidget},
+    empty::EmptyWidget,
     numbers::NumberWidget,
     Common,
 };
@@ -52,6 +53,7 @@ enum WidgetEntry {
     WholeNumber(NumberWidget<i64>),
     Colour(ColourWidget<ColourRGBA8>),
     Bool(BoolWidget),
+    Empty(EmptyWidget),
 }
 pub struct Model {
     json_file: Option<String>,

@@ -3,7 +3,10 @@ use std::fs;
 use crate::{
     insights::Insights,
     load_widgets_from_disk,
-    widgets::{boolean::BoolWidget, colours::ColourWidget, numbers::NumberWidget, CustomWidget},
+    widgets::{
+        boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, numbers::NumberWidget,
+        CustomWidget,
+    },
     QueueItem,
 };
 use egui::{Color32, RichText, Slider, Ui};
@@ -180,6 +183,39 @@ pub fn available_widgets(ctx: &egui::Context, model: &mut Model) {
                     }
                 });
         });
+
+    egui::Window::new("Empty Message")
+        .default_open(false)
+        .show(ctx, |ui| {
+            egui::Grid::new("my_grid")
+                .num_columns(2)
+                .striped(true)
+                .show(ui, |ui| {
+                    common_widget_values(ui, model);
+                    if ui.button("✚ Add").clicked() {
+                        model.widgets.push(WidgetEntry::Empty(EmptyWidget::new(
+                            model.next_widget.name.as_str(),
+                            {
+                                if model.next_widget.description.is_empty() {
+                                    None
+                                } else {
+                                    Some(&model.next_widget.description)
+                                }
+                            },
+                            &model.next_widget.plug.name,
+                            {
+                                if model.use_custom_topic {
+                                    Some(&model.next_topic)
+                                } else {
+                                    None
+                                }
+                            },
+                            &model.tether_agent,
+                        )));
+                        model.prepare_next_entry();
+                    }
+                });
+        });
 }
 
 fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
@@ -285,6 +321,16 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                         .tether_agent
                         .encode_and_publish(&e.common().plug, e.value())
                         .expect("Failed to send boolean");
+                }
+                entry_footer(ui, e);
+            }
+            WidgetEntry::Empty(e) => {
+                entry_heading(ui, format!("Empty Message: {}", e.common().name));
+                if ui.button("Send").clicked() && model.tether_agent.is_connected() {
+                    model
+                        .tether_agent
+                        .publish(&e.common().plug, None)
+                        .expect("Failed to send empty message");
                 }
                 entry_footer(ui, e);
             }

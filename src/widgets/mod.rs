@@ -4,6 +4,7 @@ use tether_agent::{PlugDefinition, TetherAgent};
 // Re-export modules
 pub mod boolean;
 pub mod colours;
+pub mod empty;
 pub mod numbers;
 
 pub trait CustomWidget<T> {
