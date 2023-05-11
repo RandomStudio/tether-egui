@@ -24,7 +24,8 @@ More options: `--help`
 - [x] Add 2D point Widget
 - [ ] Add 3D point Widget
 - [x] Add "empty" Widget
-- [ ] Add editable "JSON string to MessagePack" Widget
+- [x] Add editable "JSON string to MessagePack" Widget
+- [ ] JSON editor should use egui syntax highlighting
 - [ ] All Widgets should have Send button as well as "send on change" functionality (and send-on-change should be optionally disabled for all?)
 - [ ] Include sensible default descriptions per Widget type when adding
 - [ ] Pass function/closure to Widgets to render their own GUI?

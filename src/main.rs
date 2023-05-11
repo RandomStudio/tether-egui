@@ -42,6 +42,7 @@ pub struct Model {
     json_file: Option<String>,
     next_widget: Common,
     next_range: (f32, f32),
+    is_valid_json: bool,
     use_custom_topic: bool,
     next_topic: String,
     agent_role: String,
@@ -100,6 +101,7 @@ impl Default for Model {
             insights: Insights::new(&tether_agent, cli.tether_disable),
             tether_agent,
             continuous_mode: cli.continuous_mode,
+            is_valid_json: true,
         }
     }
 }

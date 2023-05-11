@@ -443,8 +443,16 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
             WidgetEntry::Generic(e) => {
                 entry_heading(ui, format!("Generic JSON: {}", e.common().name));
                 if ui.text_edit_multiline(e.value_mut()).changed() {
-                    // TODO: validate JSON?
-                    // println!("Should send: {}", e.value());
+                    if serde_json::from_str::<Value>(e.value()).is_err() {
+                        model.is_valid_json = false;
+                    } else {
+                        model.is_valid_json = true;
+                    }
+                }
+                if model.is_valid_json {
+                    ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");
+                } else {
+                    ui.colored_label(Color32::RED, "Not valid JSON");
                 }
                 if model.tether_agent.is_connected() && ui.button("Send").clicked() {
                     if let Ok(json) = serde_json::from_str::<Value>(e.value()) {
