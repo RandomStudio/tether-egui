@@ -19,6 +19,7 @@ More options: `--help`
 - Boolean / Checkbox (e.g. for state)
 - Empty Message (e.g for ping, heartbeat or representing an "event")
 - Point2D (e.g. for tracking data)
+- Generic Data (Parse string as JSON -> MessagePack)
 
 ## TODO
 - [x] Add 2D point Widget
