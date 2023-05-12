@@ -704,8 +704,14 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     } else {
         ui.label(RichText::new("Not connected ✖").color(Color32::RED));
         if ui.button("Connect").clicked() {
-            model.tether_agent.connect();
-            model.insights = Insights::new(&model.tether_agent, false);
+            match model.tether_agent.connect() {
+                Ok(()) => {
+                    model.insights = Insights::new(&model.tether_agent);
+                }
+                Err(e) => {
+                    error!("Tether Agent failed to connect: {}", e);
+                }
+            }
         }
     }
 

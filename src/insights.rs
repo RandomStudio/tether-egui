@@ -14,8 +14,8 @@ pub struct Insights {
 }
 
 impl Insights {
-    pub fn new(agent: &TetherAgent, tether_disabled: bool) -> Self {
-        if !tether_disabled {
+    pub fn new(agent: &TetherAgent) -> Self {
+        if agent.is_connected() {
             let _monitor_plug = agent
                 .create_input_plug("monitor", None, Some("#"))
                 .expect("failed to create monitor Input Plug");

@@ -76,7 +76,14 @@ impl Default for Model {
         if cli.tether_disable {
             warn!("Tether disabled; please connect manually if required");
         } else {
-            tether_agent.connect();
+            match tether_agent.connect() {
+                Ok(()) => {
+                    info!("Tether Agent connected successfully");
+                }
+                Err(e) => {
+                    error!("Tether Agent failed to connect: {}", e);
+                }
+            }
         }
 
         let json_file: String = cli.json_load.unwrap_or(String::from("./widgets.json"));
@@ -99,7 +106,7 @@ impl Default for Model {
             agent_id: id.into(),
             widgets: load_json.unwrap_or(Vec::new()),
             queue: Vec::new(),
-            insights: Insights::new(&tether_agent, cli.tether_disable),
+            insights: Insights::new(&tether_agent),
             tether_agent,
             continuous_mode: cli.continuous_mode,
             is_valid_json: true,
