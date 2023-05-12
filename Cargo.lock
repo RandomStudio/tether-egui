@@ -620,6 +620,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmake"
+version = "0.1.50"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a31c789563b815f77f4250caee12365734369f942439b7defd71e18a48197130"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "colorchoice"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1819,9 +1828,9 @@ dependencies = [
 
 [[package]]
 name = "paho-mqtt"
-version = "0.11.1"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fac58bae33ba9679bb4908ffa7c3950114345860d3f9b98340c4943f18ff324"
+checksum = "f6a19171f5b405f350373e32b6c2c4b47c225afccc837c11d2e7e22ba1749c62"
 dependencies = [
  "async-channel",
  "crossbeam-channel",
@@ -1835,9 +1844,12 @@ dependencies = [
 
 [[package]]
 name = "paho-mqtt-sys"
-version = "0.7.2"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9a32c2ecd70105b9410210de25aad2a2382e97d43684d10f2150d059f9f11c8"
+checksum = "1782b5e75d712f951a2a4c7d3175a2ef37d93ddb3ad8656b37092f3f05464bc9"
+dependencies = [
+ "cmake",
+]
 
 [[package]]
 name = "pango-sys"
@@ -2426,9 +2438,9 @@ dependencies = [
 
 [[package]]
 name = "tether-agent"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "611124ceb16a22367f997ccae1a0aaa8978645cbbfd5d1bf91fe380b9d6688f5"
+checksum = "66715b9d4ab32bdff07520f0922617843ce79be3306d675a1df6d1d677fe1132"
 dependencies = [
  "env_logger 0.7.1",
  "log",
