@@ -56,7 +56,7 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
     for (i, entry) in model.widgets.iter_mut().enumerate() {
         match entry {
             WidgetEntry::FloatNumber(e) => {
-                egui::Grid::new("FloatNumberGrid")
+                egui::Grid::new(format!("grid{}", i))
                     .num_columns(3)
                     .striped(true)
                     .min_col_width(ENTRY_GRID_WIDTH)
@@ -93,7 +93,7 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 }
             }
             WidgetEntry::WholeNumber(e) => {
-                egui::Grid::new("WholeNumberGrid")
+                egui::Grid::new(format!("grid{}", i))
                     .num_columns(3)
                     .striped(true)
                     .min_col_width(ENTRY_GRID_WIDTH)
@@ -130,7 +130,7 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 }
             }
             WidgetEntry::Colour(e) => {
-                egui::Grid::new("ColourGrid")
+                egui::Grid::new(format!("grid{}", i))
                     .num_columns(3)
                     .striped(true)
                     .min_col_width(ENTRY_GRID_WIDTH)
@@ -169,7 +169,7 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 }
             }
             WidgetEntry::Bool(e) => {
-                egui::Grid::new("BoolGrid")
+                egui::Grid::new(format!("grid{}", i))
                     .num_columns(3)
                     .striped(true)
                     .min_col_width(ENTRY_GRID_WIDTH)
@@ -208,7 +208,7 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 }
             }
             WidgetEntry::Empty(e) => {
-                egui::Grid::new("EmptyGrid")
+                egui::Grid::new(format!("grid{}", i))
                     .num_columns(3)
                     .striped(true)
                     .min_col_width(ENTRY_GRID_WIDTH)
@@ -235,7 +235,7 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 }
             }
             WidgetEntry::Point2D(e) => {
-                egui::Grid::new("Point2DGrid")
+                egui::Grid::new(format!("grid{}", i))
                     .num_columns(3)
                     .striped(true)
                     .min_col_width(ENTRY_GRID_WIDTH)
@@ -305,7 +305,7 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
                 }
             }
             WidgetEntry::Generic(e) => {
-                egui::Grid::new("JSONGrid")
+                egui::Grid::new(format!("grid{}", i))
                     .num_columns(3)
                     .striped(true)
                     .min_col_width(ENTRY_GRID_WIDTH)
