@@ -14,10 +14,10 @@ pub struct Insights {
 }
 
 impl Insights {
-    pub fn new(agent: &TetherAgent) -> Self {
+    pub fn new(agent: &TetherAgent, topic: &str) -> Self {
         if agent.is_connected() {
             let _monitor_plug = agent
-                .create_input_plug("monitor", None, Some("#"))
+                .create_input_plug("monitor", None, Some(topic))
                 .expect("failed to create monitor Input Plug");
         }
 
@@ -51,9 +51,18 @@ impl Insights {
 
             // Collect some stats...
             add_if_unique(message.topic(), &mut self.topics);
-            add_if_unique(parse_agent_role(message.topic()), &mut self.roles);
-            add_if_unique(parse_agent_id(message.topic()), &mut self.ids);
-            add_if_unique(parse_plug_name(message.topic()), &mut self.plugs);
+            add_if_unique(
+                parse_agent_role(message.topic()).unwrap_or("unknown"),
+                &mut self.roles,
+            );
+            add_if_unique(
+                parse_agent_id(message.topic()).unwrap_or("unknown"),
+                &mut self.ids,
+            );
+            add_if_unique(
+                parse_plug_name(message.topic()).unwrap_or("unknown"),
+                &mut self.plugs,
+            );
             updated = true;
         }
         updated

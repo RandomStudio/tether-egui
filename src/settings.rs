@@ -26,6 +26,9 @@ pub struct Cli {
     #[arg(long = "tether.password")]
     pub tether_password: Option<String>,
 
+    #[arg(long = "monitor.topic", default_value_t=String::from("#"))]
+    pub monitor_topic: String,
+
     /// Flag to enable "continuous mode" on startup; sometimes improves message log
     /// latency, at the cost of higher-than-normal CPU usage
     #[arg(long = "continuous")]

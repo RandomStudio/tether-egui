@@ -106,7 +106,7 @@ impl Default for Model {
             agent_id: id.into(),
             widgets: load_json.unwrap_or(Vec::new()),
             queue: Vec::new(),
-            insights: Insights::new(&tether_agent),
+            insights: Insights::new(&tether_agent, &cli.monitor_topic),
             tether_agent,
             continuous_mode: cli.continuous_mode,
             is_valid_json: true,

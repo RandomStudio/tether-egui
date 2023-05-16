@@ -704,9 +704,10 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     } else {
         ui.label(RichText::new("Not connected ✖").color(Color32::RED));
         if ui.button("Connect").clicked() {
+            // TODO: need to use username, password, monitor topic if set!
             match model.tether_agent.connect(None, None) {
                 Ok(()) => {
-                    model.insights = Insights::new(&model.tether_agent);
+                    model.insights = Insights::new(&model.tether_agent, "#");
                 }
                 Err(e) => {
                     error!("Tether Agent failed to connect: {}", e);
@@ -737,28 +738,35 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     ui.heading("Insights");
     ui.checkbox(&mut model.continuous_mode, "Continuous mode")
         .on_hover_text("Message log will update immediately; CPU usage may be higher");
-    ui.label(format!("Topics x{}", model.insights.topics().len()));
-    for t in model.insights.topics() {
-        ui.small(t);
-    }
-    ui.separator();
-    ui.label(format!("Plug Names x{}", model.insights.plugs().len()));
-    for t in model.insights.plugs() {
-        ui.small(t);
-    }
-    ui.separator();
-    ui.label(format!("Agent Roles x{}", model.insights.roles().len()));
-    for t in model.insights.roles() {
-        ui.small(t);
-    }
-    ui.separator();
-    ui.label(format!(
-        "Agent IDs (groups) x{}",
-        model.insights.ids().len()
-    ));
-    for t in model.insights.ids() {
-        ui.small(t);
-    }
+    ui.collapsing(format!("Topics x{}", model.insights.topics().len()), |ui| {
+        for t in model.insights.topics() {
+            ui.small(t);
+        }
+    });
+    ui.collapsing(
+        format!("Plug Names x{}", model.insights.plugs().len()),
+        |ui| {
+            for t in model.insights.plugs() {
+                ui.small(t);
+            }
+        },
+    );
+    ui.collapsing(
+        format!("Agent Roles x{}", model.insights.roles().len()),
+        |ui| {
+            for t in model.insights.roles() {
+                ui.small(t);
+            }
+        },
+    );
+    ui.collapsing(
+        format!("Agent IDs (groups) x{}", model.insights.ids().len()),
+        |ui| {
+            for t in model.insights.ids() {
+                ui.small(t);
+            }
+        },
+    );
 
     standard_spacer(ui);
     ui.separator();
