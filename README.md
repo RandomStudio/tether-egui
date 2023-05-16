@@ -9,7 +9,7 @@ By default, Tether Egui will try to connect to an MQTT broker running at `tcp://
 
 Launch without Tether (build your UI only) by passing `--tether.disable`
 
-Specify a different MQTT Broker: `--tether.host 192.168.2.4`
+Specify a different MQTT Broker, and optionally a username and password: `--tether.host 192.168.2.4 --tether.user username --tether.password passw0rd!`
 
 More options: `--help`
 ## Widgets available
