@@ -24,6 +24,8 @@ More options: `--help`
 ## TODO
 - [x] All Widgets should have Send button as well as "send on change" functionality (and send-on-change should be optionally disabled for all?)
 - [x] Add 2D point Widget
+- [ ] Should be able to edit Widgets after adding (not just remove and re-add)
+- [ ] JSON validation should only apply to currently-edited widget
 - [ ] Add 3D point Widget
 - [x] Add "empty" Widget
 - [x] Add editable "JSON string to MessagePack" Widget

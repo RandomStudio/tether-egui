@@ -18,6 +18,14 @@ pub struct Cli {
     #[arg(long = "tether.host", default_value_t=TETHER_HOST)]
     pub tether_host: std::net::IpAddr,
 
+    /// Optional username for MQTT Broker
+    #[arg(long = "tether.username")]
+    pub tether_username: Option<String>,
+
+    /// Optional password for MQTT Broker
+    #[arg(long = "tether.password")]
+    pub tether_password: Option<String>,
+
     /// Flag to enable "continuous mode" on startup; sometimes improves message log
     /// latency, at the cost of higher-than-normal CPU usage
     #[arg(long = "continuous")]

@@ -76,7 +76,7 @@ impl Default for Model {
         if cli.tether_disable {
             warn!("Tether disabled; please connect manually if required");
         } else {
-            match tether_agent.connect() {
+            match tether_agent.connect(cli.tether_username, cli.tether_password) {
                 Ok(()) => {
                     info!("Tether Agent connected successfully");
                 }

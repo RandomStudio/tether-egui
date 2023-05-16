@@ -704,7 +704,7 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     } else {
         ui.label(RichText::new("Not connected ✖").color(Color32::RED));
         if ui.button("Connect").clicked() {
-            match model.tether_agent.connect() {
+            match model.tether_agent.connect(None, None) {
                 Ok(()) => {
                     model.insights = Insights::new(&model.tether_agent);
                 }
