@@ -49,25 +49,31 @@ impl CustomWidget<bool> for BoolWidget {
 }
 
 impl View for BoolWidget {
-    fn render_in_use(&mut self, ctx: &egui::Context, index: usize) {
+    fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
         egui::Window::new("Bool")
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
                 common_in_use_heading(ui, self);
 
                 let checked = *self.value();
-                let checkbox = ui.checkbox(
-                    self.value_mut(),
-                    format!("State: {}", {
-                        if checked {
-                            "TRUE"
-                        } else {
-                            "FALSE "
-                        }
-                    }),
-                );
-
-                ui.button("Send");
+                if ui
+                    .checkbox(
+                        self.value_mut(),
+                        format!("State: {}", {
+                            if checked {
+                                "TRUE"
+                            } else {
+                                "FALSE "
+                            }
+                        }),
+                    )
+                    .clicked()
+                    || ui.button("Send").clicked()
+                {
+                    tether_agent
+                        .encode_and_publish(&self.common.plug, self.value)
+                        .expect("Failed to send bool message")
+                }
             });
     }
 

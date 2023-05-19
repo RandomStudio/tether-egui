@@ -184,7 +184,7 @@ pub fn widget_entries(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                 if e.is_edit_mode() {
                     e.render_editing(ctx, i);
                 } else {
-                    e.render_in_use(ctx, i);
+                    e.render_in_use(ctx, i, &model.tether_agent);
                 }
                 // if entry_remove(ui) {
                 //     model.queue.push(QueueItem::Remove(i));
@@ -194,7 +194,7 @@ pub fn widget_entries(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                 if e.is_edit_mode() {
                     e.render_editing(ctx, i);
                 } else {
-                    e.render_in_use(ctx, i);
+                    e.render_in_use(ctx, i, &model.tether_agent);
                 }
                 // if entry_remove(ui) {
                 //     model.queue.push(QueueItem::Remove(i));

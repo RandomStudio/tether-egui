@@ -46,13 +46,17 @@ impl CustomWidget<()> for EmptyWidget {
 }
 
 impl View for EmptyWidget {
-    fn render_in_use(&mut self, ctx: &egui::Context, index: usize) {
+    fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
         egui::Window::new("Empty Message")
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
                 common_in_use_heading(ui, self);
 
-                ui.button("Send");
+                if ui.button("Send").clicked() {
+                    tether_agent
+                        .publish(&self.common.plug, None)
+                        .expect("Failed to send empty message");
+                };
             });
     }
     fn render_editing(&mut self, ctx: &egui::Context, index: usize) {
