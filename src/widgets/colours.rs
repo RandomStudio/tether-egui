@@ -32,6 +32,9 @@ impl CustomWidget<ColourRGBA8> for ColourWidget<ColourRGBA8> {
     fn common(&self) -> &Common {
         &self.common
     }
+    fn common_mut(&mut self) -> &mut Common {
+        &mut self.common
+    }
     fn value(&self) -> &ColourRGBA8 {
         &self.value
     }

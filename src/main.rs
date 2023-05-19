@@ -167,22 +167,18 @@ impl eframe::App for Model {
                 general_agent_area(ui, self);
             });
 
-        egui::SidePanel::right("Custom UI")
+        egui::SidePanel::right("Available Widgets")
             .min_width(512.)
             .show(ctx, |ui| {
-                ui.heading("Entries");
+                ui.heading("Available Widgets");
 
                 standard_spacer(ui);
 
-                egui::ScrollArea::vertical()
-                    .auto_shrink([false; 2])
-                    .show(ui, |ui| {
-                        widget_entries(ui, self);
-                    });
+                available_widgets(ui, self);
             });
 
-        egui::CentralPanel::default().show(ctx, |_ui| {
-            available_widgets(ctx, self);
+        egui::CentralPanel::default().show(ctx, |ui| {
+            widget_entries(ctx, ui, self);
         });
     }
 }

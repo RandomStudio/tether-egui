@@ -39,6 +39,9 @@ impl<T: Numeric> CustomWidget<T> for NumberWidget<T> {
     fn common(&self) -> &Common {
         &self.common
     }
+    fn common_mut(&mut self) -> &mut Common {
+        &mut self.common
+    }
     fn value(&self) -> &T {
         &self.value
     }

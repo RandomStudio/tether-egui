@@ -29,6 +29,9 @@ impl CustomWidget<String> for GenericJSONWidget {
     fn common(&self) -> &Common {
         &self.common
     }
+    fn common_mut(&mut self) -> &mut Common {
+        &mut self.common
+    }
     fn value(&self) -> &String {
         &self.value
     }

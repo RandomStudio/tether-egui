@@ -1,5 +1,8 @@
+use egui::Ui;
 use serde::{Deserialize, Serialize};
 use tether_agent::{PlugDefinition, TetherAgent};
+
+use crate::Model;
 
 use self::{
     boolean::BoolWidget,
@@ -34,8 +37,12 @@ pub enum WidgetEntry {
 
 pub trait CustomWidget<T> {
     fn common(&self) -> &Common;
+    fn common_mut(&mut self) -> &mut Common;
     fn value(&self) -> &T;
     fn value_mut(&mut self) -> &mut T;
+    fn is_edit_mode(&self) -> bool {
+        self.common().is_edit_mode
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -45,6 +52,10 @@ pub struct Common {
     pub name: String,
     pub description: String,
     pub plug: PlugDefinition,
+    #[serde(skip)]
+    is_edit_mode: bool,
+    #[serde(skip)]
+    pub use_custom_topic: bool,
 }
 
 impl Common {
@@ -67,6 +78,21 @@ impl Common {
             plug: agent
                 .create_output_plug(plug_name, None, custom_topic)
                 .unwrap(),
+            is_edit_mode: true,
+            use_custom_topic: false,
         }
     }
+
+    pub fn is_edit_mode(&self) -> bool {
+        self.is_edit_mode
+    }
+
+    pub fn set_edit_mode(&mut self, value: bool) {
+        self.is_edit_mode = value
+    }
+}
+
+pub trait View {
+    fn render_in_use(&mut self, ctx: &egui::Context, index: usize);
+    fn render_editing(&mut self, ctx: &egui::Context, index: usize);
 }

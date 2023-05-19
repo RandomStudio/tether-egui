@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
-use super::{Common, CustomWidget};
+use crate::ui::{common_editable_values, common_widget_values, entry_heading};
+
+use super::{Common, CustomWidget, View};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,11 +31,33 @@ impl CustomWidget<()> for EmptyWidget {
     fn common(&self) -> &Common {
         &self.common
     }
+    fn common_mut(&mut self) -> &mut Common {
+        &mut self.common
+    }
     fn value(&self) -> &() {
         &self.value
     }
 
     fn value_mut(&mut self) -> &mut () {
         &mut self.value
+    }
+}
+
+impl View for EmptyWidget {
+    fn render_in_use(&mut self, ctx: &egui::Context, index: usize) {
+        egui::Window::new("Empty Message")
+            .id(format!("{}", index).into())
+            .show(ctx, |ui| {
+                entry_heading(ui, self);
+
+                ui.button("Send");
+            });
+    }
+    fn render_editing(&mut self, ctx: &egui::Context, index: usize) {
+        egui::Window::new("Empty Message")
+            .id(format!("{}", index).into())
+            .show(ctx, |ui| {
+                common_editable_values(ui, self.common_mut());
+            });
     }
 }

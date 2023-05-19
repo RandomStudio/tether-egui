@@ -5,7 +5,7 @@ use crate::{
     load_widgets_from_disk,
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
-        numbers::NumberWidget, point::Point2DWidget, CustomWidget,
+        numbers::NumberWidget, point::Point2DWidget, Common, CustomWidget, View,
     },
     QueueItem,
 };
@@ -16,7 +16,7 @@ use serde_json::Value;
 use crate::{Model, WidgetEntry};
 
 const PLOT_SIZE: f32 = 200.0;
-const ENTRY_GRID_WIDTH: f32 = 200.;
+pub const ENTRY_GRID_WIDTH: f32 = 200.;
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
@@ -46,312 +46,294 @@ fn entry_remove(ui: &mut Ui) -> bool {
     clicked
 }
 
-pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
-    ui.checkbox(&mut model.auto_send, "Auto send")
-        .on_hover_text(
-        "Trigger messages on any value change, where possible, instead of waiting for Send button",
-    );
-    standard_spacer(ui);
+pub fn widget_entries(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
+    // ui.checkbox(&mut model.auto_send, "Auto send")
+    //     .on_hover_text(
+    //     "Trigger messages on any value change, where possible, instead of waiting for Send button",
+    // );
+    // standard_spacer(ui);
 
-    for (i, entry) in model.widgets.iter_mut().enumerate() {
+    let widgets = &mut model.widgets;
+
+    for (i, entry) in widgets.iter_mut().enumerate() {
         match entry {
             WidgetEntry::FloatNumber(e) => {
-                egui::Grid::new(format!("grid{}", i))
-                    .num_columns(3)
-                    .striped(true)
-                    .min_col_width(ENTRY_GRID_WIDTH)
-                    .show(ui, |ui| {
-                        // Col1
-                        entry_heading(ui, e);
+                // egui::Grid::new(format!("grid{}", i))
+                //     .num_columns(3)
+                //     .striped(true)
+                //     .min_col_width(ENTRY_GRID_WIDTH)
+                //     .show(ui, |ui| {
+                //         // Col1
+                //         entry_heading(ui, e);
 
-                        // Col 2
-                        let res = ui.vertical(|ui| {
-                            let (min, max) = e.range();
-                            let s =
-                                ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
-                            ui.small(format!("Range: {}-{}", min, max));
-                            s
-                        });
+                //         // Col 2
+                //         let res = ui.vertical(|ui| {
+                //             let (min, max) = e.range();
+                //             let s =
+                //                 ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
+                //             ui.small(format!("Range: {}-{}", min, max));
+                //             s
+                //         });
 
-                        // Col 3
-                        ui.vertical(|ui| {
-                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                                || res.inner.changed() && model.auto_send
-                            {
-                                // println!("changed? {:?}", res.inner);
-                                model
-                                    .tether_agent
-                                    .encode_and_publish(&e.common().plug, e.value())
-                                    .expect("Failed to send number");
-                            }
-                            entry_topic(ui, e);
-                        })
-                    });
+                //         // Col 3
+                //         ui.vertical(|ui| {
+                //             if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                //                 || res.inner.changed() && model.auto_send
+                //             {
+                //                 // println!("changed? {:?}", res.inner);
+                //                 model
+                //                     .tether_agent
+                //                     .encode_and_publish(&e.common().plug, e.value())
+                //                     .expect("Failed to send number");
+                //             }
+                //             entry_topic(ui, e);
+                //         })
+                //     });
 
-                if entry_remove(ui) {
-                    model.queue.push(QueueItem::Remove(i));
-                }
+                // if entry_remove(ui) {
+                //     model.queue.push(QueueItem::Remove(i));
+                // }
             }
             WidgetEntry::WholeNumber(e) => {
-                egui::Grid::new(format!("grid{}", i))
-                    .num_columns(3)
-                    .striped(true)
-                    .min_col_width(ENTRY_GRID_WIDTH)
-                    .show(ui, |ui| {
-                        // Col1
-                        entry_heading(ui, e);
+                // egui::Grid::new(format!("grid{}", i))
+                //     .num_columns(3)
+                //     .striped(true)
+                //     .min_col_width(ENTRY_GRID_WIDTH)
+                //     .show(ui, |ui| {
+                //         // Col1
+                //         entry_heading(ui, e);
 
-                        // Col 2
-                        let res = ui.vertical(|ui| {
-                            let (min, max) = e.range();
-                            let s =
-                                ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
-                            ui.small(format!("Range: {}-{}", min, max));
-                            s
-                        });
+                //         // Col 2
+                //         let res = ui.vertical(|ui| {
+                //             let (min, max) = e.range();
+                //             let s =
+                //                 ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
+                //             ui.small(format!("Range: {}-{}", min, max));
+                //             s
+                //         });
 
-                        // Col 3
-                        ui.vertical(|ui| {
-                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                                || res.inner.changed() && model.auto_send
-                            {
-                                // println!("changed? {:?}", res.inner);
-                                model
-                                    .tether_agent
-                                    .encode_and_publish(&e.common().plug, e.value())
-                                    .expect("Failed to send number");
-                            }
-                            entry_topic(ui, e);
-                        })
-                    });
+                //         // Col 3
+                //         ui.vertical(|ui| {
+                //             if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                //                 || res.inner.changed() && model.auto_send
+                //             {
+                //                 // println!("changed? {:?}", res.inner);
+                //                 model
+                //                     .tether_agent
+                //                     .encode_and_publish(&e.common().plug, e.value())
+                //                     .expect("Failed to send number");
+                //             }
+                //             entry_topic(ui, e);
+                //         })
+                //     });
 
-                if entry_remove(ui) {
-                    model.queue.push(QueueItem::Remove(i));
-                }
+                // if entry_remove(ui) {
+                //     model.queue.push(QueueItem::Remove(i));
+                // }
             }
             WidgetEntry::Colour(e) => {
-                egui::Grid::new(format!("grid{}", i))
-                    .num_columns(3)
-                    .striped(true)
-                    .min_col_width(ENTRY_GRID_WIDTH)
-                    .show(ui, |ui| {
-                        // Col 1
-                        entry_heading(ui, e);
+                // egui::Grid::new(format!("grid{}", i))
+                //     .num_columns(3)
+                //     .striped(true)
+                //     .min_col_width(ENTRY_GRID_WIDTH)
+                //     .show(ui, |ui| {
+                //         // Col 1
+                //         entry_heading(ui, e);
 
-                        // Col 2
-                        let res = ui.vertical(|ui| {
-                            let color_picker =
-                                ui.color_edit_button_srgba_unmultiplied(e.value_mut());
-                            let srgba = e.value();
-                            ui.label(format!(
-                                "sRGBA: {} {} {} {}",
-                                srgba[0], srgba[1], srgba[2], srgba[3],
-                            ));
-                            color_picker
-                        });
+                //         // Col 2
+                //         let res = ui.vertical(|ui| {
+                //             let color_picker =
+                //                 ui.color_edit_button_srgba_unmultiplied(e.value_mut());
+                //             let srgba = e.value();
+                //             ui.label(format!(
+                //                 "sRGBA: {} {} {} {}",
+                //                 srgba[0], srgba[1], srgba[2], srgba[3],
+                //             ));
+                //             color_picker
+                //         });
 
-                        // Col 3
-                        ui.vertical(|ui| {
-                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                                || res.inner.changed() && model.auto_send
-                            {
-                                model
-                                    .tether_agent
-                                    .encode_and_publish(&e.common().plug, e.value())
-                                    .expect("Failed to send colour")
-                            }
-                            entry_topic(ui, e);
-                        });
-                    });
+                //         // Col 3
+                //         ui.vertical(|ui| {
+                //             if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                //                 || res.inner.changed() && model.auto_send
+                //             {
+                //                 model
+                //                     .tether_agent
+                //                     .encode_and_publish(&e.common().plug, e.value())
+                //                     .expect("Failed to send colour")
+                //             }
+                //             entry_topic(ui, e);
+                //         });
+                //     });
 
-                if entry_remove(ui) {
-                    model.queue.push(QueueItem::Remove(i));
-                }
+                // if entry_remove(ui) {
+                //     model.queue.push(QueueItem::Remove(i));
+                // }
             }
             WidgetEntry::Bool(e) => {
-                egui::Grid::new(format!("grid{}", i))
-                    .num_columns(3)
-                    .striped(true)
-                    .min_col_width(ENTRY_GRID_WIDTH)
-                    .show(ui, |ui| {
-                        // Col 1
-                        entry_heading(ui, e);
-
-                        // Col 2
-                        let checked = *e.value();
-                        let checkbox = ui.checkbox(
-                            e.value_mut(),
-                            format!("State: {}", {
-                                if checked {
-                                    "TRUE"
-                                } else {
-                                    "FALSE "
-                                }
-                            }),
-                        );
-
-                        // Col 3
-                        ui.vertical(|ui| {
-                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                                || checkbox.changed() && model.auto_send
-                            {
-                                model
-                                    .tether_agent
-                                    .encode_and_publish(&e.common().plug, e.value())
-                                    .expect("Failed to send boolean");
-                            }
-                            entry_topic(ui, e);
-                        })
-                    });
-                if entry_remove(ui) {
-                    model.queue.push(QueueItem::Remove(i));
+                if e.is_edit_mode() {
+                    e.render_editing(ctx, i);
+                } else {
+                    e.render_in_use(ctx, i);
                 }
+                // if entry_remove(ui) {
+                //     model.queue.push(QueueItem::Remove(i));
+                // }
             }
             WidgetEntry::Empty(e) => {
-                egui::Grid::new(format!("grid{}", i))
-                    .num_columns(3)
-                    .striped(true)
-                    .min_col_width(ENTRY_GRID_WIDTH)
-                    .show(ui, |ui| {
-                        // Col 1
-                        entry_heading(ui, e);
-
-                        // Col 2
-                        ui.label("Empty message body");
-
-                        // Col 3
-                        ui.vertical(|ui| {
-                            if model.tether_agent.is_connected() && ui.button("Send").clicked() {
-                                model
-                                    .tether_agent
-                                    .encode_and_publish(&e.common().plug, e.value())
-                                    .expect("Failed to send boolean");
-                            }
-                            entry_topic(ui, e);
-                        })
-                    });
-                if entry_remove(ui) {
-                    model.queue.push(QueueItem::Remove(i));
+                if e.is_edit_mode() {
+                    e.render_editing(ctx, i);
+                } else {
+                    e.render_in_use(ctx, i);
                 }
+                // if entry_remove(ui) {
+                //     model.queue.push(QueueItem::Remove(i));
+                // }
+
+                // egui::Grid::new(format!("grid{}", i))
+                //     .num_columns(3)
+                //     .striped(true)
+                //     .min_col_width(ENTRY_GRID_WIDTH)
+                //     .show(ui, |ui| {
+                //         // Col 1
+                //         entry_heading(ui, e);
+
+                //         // Col 2
+                //         ui.label("Empty message body");
+
+                //         // Col 3
+                //         ui.vertical(|ui| {
+                //             if model.tether_agent.is_connected() && ui.button("Send").clicked() {
+                //                 model
+                //                     .tether_agent
+                //                     .encode_and_publish(&e.common().plug, e.value())
+                //                     .expect("Failed to send boolean");
+                //             }
+                //             entry_topic(ui, e);
+                //         })
+                //     });
+                // if entry_remove(ui) {
+                //     model.queue.push(QueueItem::Remove(i));
+                // }
             }
             WidgetEntry::Point2D(e) => {
-                egui::Grid::new(format!("grid{}", i))
-                    .num_columns(3)
-                    .striped(true)
-                    .min_col_width(ENTRY_GRID_WIDTH)
-                    .show(ui, |ui| {
-                        // Col 1
-                        entry_heading(ui, e);
+                // egui::Grid::new(format!("grid{}", i))
+                //     .num_columns(3)
+                //     .striped(true)
+                //     .min_col_width(ENTRY_GRID_WIDTH)
+                //     .show(ui, |ui| {
+                //         // Col 1
+                //         entry_heading(ui, e);
 
-                        // Col 2
-                        let res = ui.vertical(|ui| {
-                            let plotter = egui::plot::Plot::new("tracking_plot")
-                                .width(PLOT_SIZE)
-                                .height(PLOT_SIZE)
-                                .data_aspect(1.0)
-                                .show(ui, |plot_ui| {
-                                    (
-                                        plot_ui.screen_from_plot(PlotPoint::new(0.0, 0.0)),
-                                        plot_ui.pointer_coordinate(),
-                                        plot_ui.pointer_coordinate_drag_delta(),
-                                        plot_ui.plot_bounds(),
-                                        plot_ui.plot_hovered(),
-                                    )
-                                });
-                                ui.collapsing("Instructions", |ui| {
-                                    ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
-                                    ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
-                                    if cfg!(target_arch = "wasm32") {
-                                        ui.label("Zoom with ctrl / ⌘ + pointer wheel, or with pinch gesture.");
-                                    } else if cfg!(target_os = "macos") {
-                                        ui.label("Zoom with ctrl / ⌘ + scroll.");
-                                    } else {
-                                        ui.label("Zoom with ctrl + scroll.");
-                                    }
-                                    ui.label("Reset view with double-click.");
-                                });
-                                plotter
-                        });
+                //         // Col 2
+                //         let res = ui.vertical(|ui| {
+                //             let plotter = egui::plot::Plot::new("tracking_plot")
+                //                 .width(PLOT_SIZE)
+                //                 .height(PLOT_SIZE)
+                //                 .data_aspect(1.0)
+                //                 .show(ui, |plot_ui| {
+                //                     (
+                //                         plot_ui.screen_from_plot(PlotPoint::new(0.0, 0.0)),
+                //                         plot_ui.pointer_coordinate(),
+                //                         plot_ui.pointer_coordinate_drag_delta(),
+                //                         plot_ui.plot_bounds(),
+                //                         plot_ui.plot_hovered(),
+                //                     )
+                //                 });
+                //                 ui.collapsing("Instructions", |ui| {
+                //                     ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
+                //                     ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
+                //                     if cfg!(target_arch = "wasm32") {
+                //                         ui.label("Zoom with ctrl / ⌘ + pointer wheel, or with pinch gesture.");
+                //                     } else if cfg!(target_os = "macos") {
+                //                         ui.label("Zoom with ctrl / ⌘ + scroll.");
+                //                     } else {
+                //                         ui.label("Zoom with ctrl + scroll.");
+                //                     }
+                //                     ui.label("Reset view with double-click.");
+                //                 });
+                //                 plotter
+                //         });
 
-                        let (
-                            _screen_pos,
-                            pointer_coordinate,
-                            _pointer_coordinate_drag_delta,
-                            _bounds,
-                            hovered,
-                        ) = res.inner.inner;
+                //         let (
+                //             _screen_pos,
+                //             pointer_coordinate,
+                //             _pointer_coordinate_drag_delta,
+                //             _bounds,
+                //             hovered,
+                //         ) = res.inner.inner;
 
-                        // Col 3
-                        ui.vertical(|ui| {
-                            if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                                || hovered && model.auto_send
-                            {
-                                if let Some(c) = pointer_coordinate {
-                                    // println!("Pointer coordinates: {:?}", c)
-                                    let PlotPoint { x, y } = c;
-                                    let p = [x, y];
-                                    model
-                                        .tether_agent
-                                        .encode_and_publish(&e.common().plug, p)
-                                        .expect("Failed to send Point2D message");
-                                }
-                            }
+                //         // Col 3
+                //         ui.vertical(|ui| {
+                //             if model.tether_agent.is_connected() && ui.button("Send").clicked()
+                //                 || hovered && model.auto_send
+                //             {
+                //                 if let Some(c) = pointer_coordinate {
+                //                     // println!("Pointer coordinates: {:?}", c)
+                //                     let PlotPoint { x, y } = c;
+                //                     let p = [x, y];
+                //                     model
+                //                         .tether_agent
+                //                         .encode_and_publish(&e.common().plug, p)
+                //                         .expect("Failed to send Point2D message");
+                //                 }
+                //             }
 
-                            entry_topic(ui, e);
-                        });
-                    });
-                if entry_remove(ui) {
-                    model.queue.push(QueueItem::Remove(i));
-                }
+                //             entry_topic(ui, e);
+                //         });
+                //     });
+                // if entry_remove(ui) {
+                //     model.queue.push(QueueItem::Remove(i));
+                // }
             }
             WidgetEntry::Generic(e) => {
-                egui::Grid::new(format!("grid{}", i))
-                    .num_columns(3)
-                    .striped(true)
-                    .min_col_width(ENTRY_GRID_WIDTH)
-                    .show(ui, |ui| {
-                        // Col 1
-                        entry_heading(ui, e);
+                // egui::Grid::new(format!("grid{}", i))
+                //     .num_columns(3)
+                //     .striped(true)
+                //     .min_col_width(ENTRY_GRID_WIDTH)
+                //     .show(ui, |ui| {
+                //         // Col 1
+                //         entry_heading(ui, e);
 
-                        // Col 2
-                        ui.vertical(|ui| {
-                            if ui.text_edit_multiline(e.value_mut()).changed() {
-                                if serde_json::from_str::<Value>(e.value()).is_err() {
-                                    model.is_valid_json = false;
-                                } else {
-                                    model.is_valid_json = true;
-                                }
-                            }
-                            if model.is_valid_json {
-                                ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");
-                            } else {
-                                ui.colored_label(Color32::RED, "Not valid JSON");
-                            }
-                        });
+                //         // Col 2
+                //         ui.vertical(|ui| {
+                //             if ui.text_edit_multiline(e.value_mut()).changed() {
+                //                 if serde_json::from_str::<Value>(e.value()).is_err() {
+                //                     model.is_valid_json = false;
+                //                 } else {
+                //                     model.is_valid_json = true;
+                //                 }
+                //             }
+                //             if model.is_valid_json {
+                //                 ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");
+                //             } else {
+                //                 ui.colored_label(Color32::RED, "Not valid JSON");
+                //             }
+                //         });
 
-                        // Col 3
-                        ui.vertical(|ui| {
-                            if model.tether_agent.is_connected() && ui.button("Send").clicked() {
-                                if let Ok(json) = serde_json::from_str::<Value>(e.value()) {
-                                    match rmp_serde::to_vec_named(&json) {
-                                        Ok(payload) => model
-                                            .tether_agent
-                                            .publish(&e.common().plug, Some(&payload))
-                                            .expect(
-                                                "Failed to send Generic JSON (encoded as messagepback) message",
-                                            ),
-                                        Err(e) => {
-                                            error!("Failed to encode MessagePack payload: {}", e);
-                                        }
-                                    }
-                                }
-                            }
-                            entry_topic(ui, e);
-                        });
-                    });
-                if entry_remove(ui) {
-                    model.queue.push(QueueItem::Remove(i));
-                }
+                //         // Col 3
+                //         ui.vertical(|ui| {
+                //             if model.tether_agent.is_connected() && ui.button("Send").clicked() {
+                //                 if let Ok(json) = serde_json::from_str::<Value>(e.value()) {
+                //                     match rmp_serde::to_vec_named(&json) {
+                //                         Ok(payload) => model
+                //                             .tether_agent
+                //                             .publish(&e.common().plug, Some(&payload))
+                //                             .expect(
+                //                                 "Failed to send Generic JSON (encoded as messagepback) message",
+                //                             ),
+                //                         Err(e) => {
+                //                             error!("Failed to encode MessagePack payload: {}", e);
+                //                         }
+                //                     }
+                //                 }
+                //             }
+                //             entry_topic(ui, e);
+                //         });
+                //     });
+                // if entry_remove(ui) {
+                //     model.queue.push(QueueItem::Remove(i));
+                // }
             }
         }
 
@@ -363,261 +345,304 @@ pub fn widget_entries(ui: &mut Ui, model: &mut Model) {
     }
 }
 
-pub fn available_widgets(ctx: &egui::Context, model: &mut Model) {
-    egui::Window::new("Floating-Point Number")
-        .default_open(false)
-        .show(ctx, |ui| {
-            egui::Grid::new("my_grid")
-                .num_columns(2)
-                .striped(true)
-                .show(ui, |ui| {
-                    common_widget_values(ui, model);
+pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
+    if ui.button("Boolean").clicked() {
+        model.widgets.push(WidgetEntry::Bool(BoolWidget::new(
+            &model.next_widget.name,
+            {
+                if model.next_widget.description.is_empty() {
+                    None
+                } else {
+                    Some(&model.next_widget.description)
+                }
+            },
+            &model.next_widget.plug.name,
+            {
+                if model.use_custom_topic {
+                    Some(&model.next_topic)
+                } else {
+                    None
+                }
+            },
+            false,
+            &model.tether_agent,
+        )));
+    }
+    if ui.button("Empty").clicked() {
+        model.widgets.push(WidgetEntry::Empty(EmptyWidget::new(
+            model.next_widget.name.as_str(),
+            {
+                if model.next_widget.description.is_empty() {
+                    None
+                } else {
+                    Some(&model.next_widget.description)
+                }
+            },
+            &model.next_widget.plug.name,
+            {
+                if model.use_custom_topic {
+                    Some(&model.next_topic)
+                } else {
+                    None
+                }
+            },
+            &model.tether_agent,
+        )));
+    }
+    // egui::Window::new("Floating-Point Number")
+    //     .default_open(false)
+    //     .show(ctx, |ui| {
+    //         egui::Grid::new("my_grid")
+    //             .num_columns(2)
+    //             .striped(true)
+    //             .show(ui, |ui| {
+    //                 common_widget_values(ui, model);
 
-                    standard_spacer(ui);
+    //                 standard_spacer(ui);
 
-                    number_widget_range(ui, model, 1.);
+    //                 number_widget_range(ui, model, 1.);
 
-                    if ui.button("✚ Add").clicked() {
-                        model
-                            .widgets
-                            .push(WidgetEntry::FloatNumber(NumberWidget::new(
-                                &model.next_widget.name,
-                                {
-                                    if model.next_widget.description.is_empty() {
-                                        None
-                                    } else {
-                                        Some(&model.next_widget.description)
-                                    }
-                                },
-                                &model.next_widget.plug.name,
-                                {
-                                    if model.use_custom_topic {
-                                        Some(&model.next_topic)
-                                    } else {
-                                        None
-                                    }
-                                },
-                                0.,
-                                model.next_range.0.into()..=model.next_range.1.into(),
-                                &model.tether_agent,
-                            )));
-                        model.prepare_next_entry();
-                    }
-                });
-        });
+    //                 if ui.button("✚ Add").clicked() {
+    //                     model
+    //                         .widgets
+    //                         .push(WidgetEntry::FloatNumber(NumberWidget::new(
+    //                             &model.next_widget.name,
+    //                             {
+    //                                 if model.next_widget.description.is_empty() {
+    //                                     None
+    //                                 } else {
+    //                                     Some(&model.next_widget.description)
+    //                                 }
+    //                             },
+    //                             &model.next_widget.plug.name,
+    //                             {
+    //                                 if model.use_custom_topic {
+    //                                     Some(&model.next_topic)
+    //                                 } else {
+    //                                     None
+    //                                 }
+    //                             },
+    //                             0.,
+    //                             model.next_range.0.into()..=model.next_range.1.into(),
+    //                             &model.tether_agent,
+    //                         )));
+    //                     model.prepare_next_entry();
+    //                 }
+    //             });
+    //     });
 
-    egui::Window::new("Whole Number")
-        .default_open(false)
-        .show(ctx, |ui| {
-            egui::Grid::new("my_grid")
-                .num_columns(2)
-                .striped(true)
-                .show(ui, |ui| {
-                    common_widget_values(ui, model);
+    // egui::Window::new("Whole Number")
+    //     .default_open(false)
+    //     .show(ctx, |ui| {
+    //         egui::Grid::new("my_grid")
+    //             .num_columns(2)
+    //             .striped(true)
+    //             .show(ui, |ui| {
+    //                 common_widget_values(ui, model);
 
-                    standard_spacer(ui);
+    //                 standard_spacer(ui);
 
-                    number_widget_range(ui, model, 100.);
+    //                 number_widget_range(ui, model, 100.);
 
-                    if ui.button("✚ Add").clicked() {
-                        let min = model.next_range.0 as i64;
-                        let max = model.next_range.1 as i64;
-                        model
-                            .widgets
-                            .push(WidgetEntry::WholeNumber(NumberWidget::new(
-                                &model.next_widget.name,
-                                {
-                                    if model.next_widget.description.is_empty() {
-                                        None
-                                    } else {
-                                        Some(&model.next_widget.description)
-                                    }
-                                },
-                                &model.next_widget.plug.name,
-                                {
-                                    if model.use_custom_topic {
-                                        Some(&model.next_topic)
-                                    } else {
-                                        None
-                                    }
-                                },
-                                0,
-                                min..=max,
-                                &model.tether_agent,
-                            )));
-                        model.prepare_next_entry();
-                    }
-                });
-        });
+    //                 if ui.button("✚ Add").clicked() {
+    //                     let min = model.next_range.0 as i64;
+    //                     let max = model.next_range.1 as i64;
+    //                     model
+    //                         .widgets
+    //                         .push(WidgetEntry::WholeNumber(NumberWidget::new(
+    //                             &model.next_widget.name,
+    //                             {
+    //                                 if model.next_widget.description.is_empty() {
+    //                                     None
+    //                                 } else {
+    //                                     Some(&model.next_widget.description)
+    //                                 }
+    //                             },
+    //                             &model.next_widget.plug.name,
+    //                             {
+    //                                 if model.use_custom_topic {
+    //                                     Some(&model.next_topic)
+    //                                 } else {
+    //                                     None
+    //                                 }
+    //                             },
+    //                             0,
+    //                             min..=max,
+    //                             &model.tether_agent,
+    //                         )));
+    //                     model.prepare_next_entry();
+    //                 }
+    //             });
+    //     });
 
-    egui::Window::new("Colour")
-        .default_open(false)
-        .show(ctx, |ui| {
-            egui::Grid::new("my_grid")
-                .num_columns(2)
-                .striped(true)
-                .show(ui, |ui| {
-                    common_widget_values(ui, model);
-                    if ui.button("✚ Add").clicked() {
-                        model.widgets.push(WidgetEntry::Colour(ColourWidget::new(
-                            model.next_widget.name.as_str(),
-                            {
-                                if model.next_widget.description.is_empty() {
-                                    None
-                                } else {
-                                    Some(&model.next_widget.description)
-                                }
-                            },
-                            &model.next_widget.plug.name,
-                            {
-                                if model.use_custom_topic {
-                                    Some(&model.next_topic)
-                                } else {
-                                    None
-                                }
-                            },
-                            [255, 255, 255, 255],
-                            &model.tether_agent,
-                        )));
-                        model.prepare_next_entry();
-                    }
-                });
-        });
+    // egui::Window::new("Colour")
+    //     .default_open(false)
+    //     .show(ctx, |ui| {
+    //         egui::Grid::new("my_grid")
+    //             .num_columns(2)
+    //             .striped(true)
+    //             .show(ui, |ui| {
+    //                 common_widget_values(ui, model);
+    //                 if ui.button("✚ Add").clicked() {
+    //                     model.widgets.push(WidgetEntry::Colour(ColourWidget::new(
+    //                         model.next_widget.name.as_str(),
+    //                         {
+    //                             if model.next_widget.description.is_empty() {
+    //                                 None
+    //                             } else {
+    //                                 Some(&model.next_widget.description)
+    //                             }
+    //                         },
+    //                         &model.next_widget.plug.name,
+    //                         {
+    //                             if model.use_custom_topic {
+    //                                 Some(&model.next_topic)
+    //                             } else {
+    //                                 None
+    //                             }
+    //                         },
+    //                         [255, 255, 255, 255],
+    //                         &model.tether_agent,
+    //                     )));
+    //                     model.prepare_next_entry();
+    //                 }
+    //             });
+    //     });
 
-    egui::Window::new("Boolean")
-        .default_open(false)
-        .show(ctx, |ui| {
-            egui::Grid::new("my_grid")
-                .num_columns(2)
-                .striped(true)
-                .show(ui, |ui| {
-                    common_widget_values(ui, model);
-                    if ui.button("✚ Add").clicked() {
-                        model.widgets.push(WidgetEntry::Bool(BoolWidget::new(
-                            model.next_widget.name.as_str(),
-                            {
-                                if model.next_widget.description.is_empty() {
-                                    None
-                                } else {
-                                    Some(&model.next_widget.description)
-                                }
-                            },
-                            &model.next_widget.plug.name,
-                            {
-                                if model.use_custom_topic {
-                                    Some(&model.next_topic)
-                                } else {
-                                    None
-                                }
-                            },
-                            false,
-                            &model.tether_agent,
-                        )));
-                        model.prepare_next_entry();
-                    }
-                });
-        });
+    // egui::Window::new("Boolean")
+    //     .default_open(false)
+    //     .show(ctx, |ui| {
+    //         egui::Grid::new("my_grid")
+    //             .num_columns(2)
+    //             .striped(true)
+    //             .show(ui, |ui| {
+    //                 common_widget_values(ui, model);
+    //                 if ui.button("✚ Add").clicked() {
+    //                     model.widgets.push(WidgetEntry::Bool(BoolWidget::new(
+    //                         model.next_widget.name.as_str(),
+    //                         {
+    //                             if model.next_widget.description.is_empty() {
+    //                                 None
+    //                             } else {
+    //                                 Some(&model.next_widget.description)
+    //                             }
+    //                         },
+    //                         &model.next_widget.plug.name,
+    //                         {
+    //                             if model.use_custom_topic {
+    //                                 Some(&model.next_topic)
+    //                             } else {
+    //                                 None
+    //                             }
+    //                         },
+    //                         false,
+    //                         &model.tether_agent,
+    //                     )));
+    //                     model.prepare_next_entry();
+    //                 }
+    //             });
+    //     });
 
-    egui::Window::new("Empty Message")
-        .default_open(false)
-        .show(ctx, |ui| {
-            egui::Grid::new("my_grid")
-                .num_columns(2)
-                .striped(true)
-                .show(ui, |ui| {
-                    common_widget_values(ui, model);
-                    if ui.button("✚ Add").clicked() {
-                        model.widgets.push(WidgetEntry::Empty(EmptyWidget::new(
-                            model.next_widget.name.as_str(),
-                            {
-                                if model.next_widget.description.is_empty() {
-                                    None
-                                } else {
-                                    Some(&model.next_widget.description)
-                                }
-                            },
-                            &model.next_widget.plug.name,
-                            {
-                                if model.use_custom_topic {
-                                    Some(&model.next_topic)
-                                } else {
-                                    None
-                                }
-                            },
-                            &model.tether_agent,
-                        )));
-                        model.prepare_next_entry();
-                    }
-                });
-        });
+    // egui::Window::new("Empty Message")
+    //     .default_open(false)
+    //     .show(ctx, |ui| {
+    //         egui::Grid::new("my_grid")
+    //             .num_columns(2)
+    //             .striped(true)
+    //             .show(ui, |ui| {
+    //                 common_widget_values(ui, model);
+    //                 if ui.button("✚ Add").clicked() {
+    //                     model.widgets.push(WidgetEntry::Empty(EmptyWidget::new(
+    //                         model.next_widget.name.as_str(),
+    //                         {
+    //                             if model.next_widget.description.is_empty() {
+    //                                 None
+    //                             } else {
+    //                                 Some(&model.next_widget.description)
+    //                             }
+    //                         },
+    //                         &model.next_widget.plug.name,
+    //                         {
+    //                             if model.use_custom_topic {
+    //                                 Some(&model.next_topic)
+    //                             } else {
+    //                                 None
+    //                             }
+    //                         },
+    //                         &model.tether_agent,
+    //                     )));
+    //                     model.prepare_next_entry();
+    //                 }
+    //             });
+    //     });
 
-    egui::Window::new("Point2D")
-        .default_open(false)
-        .show(ctx, |ui| {
-            egui::Grid::new("my_grid")
-                .num_columns(2)
-                .striped(true)
-                .show(ui, |ui| {
-                    common_widget_values(ui, model);
-                    if ui.button("✚ Add").clicked() {
-                        model.widgets.push(WidgetEntry::Point2D(Point2DWidget::new(
-                            model.next_widget.name.as_str(),
-                            {
-                                if model.next_widget.description.is_empty() {
-                                    None
-                                } else {
-                                    Some(&model.next_widget.description)
-                                }
-                            },
-                            &model.next_widget.plug.name,
-                            {
-                                if model.use_custom_topic {
-                                    Some(&model.next_topic)
-                                } else {
-                                    None
-                                }
-                            },
-                            &model.tether_agent,
-                        )));
-                        model.prepare_next_entry();
-                    }
-                });
-        });
+    // egui::Window::new("Point2D")
+    //     .default_open(false)
+    //     .show(ctx, |ui| {
+    //         egui::Grid::new("my_grid")
+    //             .num_columns(2)
+    //             .striped(true)
+    //             .show(ui, |ui| {
+    //                 common_widget_values(ui, model);
+    //                 if ui.button("✚ Add").clicked() {
+    //                     model.widgets.push(WidgetEntry::Point2D(Point2DWidget::new(
+    //                         model.next_widget.name.as_str(),
+    //                         {
+    //                             if model.next_widget.description.is_empty() {
+    //                                 None
+    //                             } else {
+    //                                 Some(&model.next_widget.description)
+    //                             }
+    //                         },
+    //                         &model.next_widget.plug.name,
+    //                         {
+    //                             if model.use_custom_topic {
+    //                                 Some(&model.next_topic)
+    //                             } else {
+    //                                 None
+    //                             }
+    //                         },
+    //                         &model.tether_agent,
+    //                     )));
+    //                     model.prepare_next_entry();
+    //                 }
+    //             });
+    //     });
 
-    egui::Window::new("Generic JSON data")
-        .default_open(false)
-        .show(ctx, |ui| {
-            egui::Grid::new("my_grid")
-                .num_columns(2)
-                .striped(true)
-                .show(ui, |ui| {
-                    common_widget_values(ui, model);
-                    if ui.button("✚ Add").clicked() {
-                        model
-                            .widgets
-                            .push(WidgetEntry::Generic(GenericJSONWidget::new(
-                                model.next_widget.name.as_str(),
-                                {
-                                    if model.next_widget.description.is_empty() {
-                                        None
-                                    } else {
-                                        Some(&model.next_widget.description)
-                                    }
-                                },
-                                &model.next_widget.plug.name,
-                                {
-                                    if model.use_custom_topic {
-                                        Some(&model.next_topic)
-                                    } else {
-                                        None
-                                    }
-                                },
-                                &model.tether_agent,
-                            )));
-                        model.prepare_next_entry();
-                    }
-                });
-        });
+    // egui::Window::new("Generic JSON data")
+    //     .default_open(false)
+    //     .show(ctx, |ui| {
+    //         egui::Grid::new("my_grid")
+    //             .num_columns(2)
+    //             .striped(true)
+    //             .show(ui, |ui| {
+    //                 common_widget_values(ui, model);
+    //                 if ui.button("✚ Add").clicked() {
+    //                     model
+    //                         .widgets
+    //                         .push(WidgetEntry::Generic(GenericJSONWidget::new(
+    //                             model.next_widget.name.as_str(),
+    //                             {
+    //                                 if model.next_widget.description.is_empty() {
+    //                                     None
+    //                                 } else {
+    //                                     Some(&model.next_widget.description)
+    //                                 }
+    //                             },
+    //                             &model.next_widget.plug.name,
+    //                             {
+    //                                 if model.use_custom_topic {
+    //                                     Some(&model.next_topic)
+    //                                 } else {
+    //                                     None
+    //                                 }
+    //                             },
+    //                             &model.tether_agent,
+    //                         )));
+    //                     model.prepare_next_entry();
+    //                 }
+    //             });
+    //     });
 }
 
 fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
@@ -782,6 +807,28 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                 ui.label(json);
             }
         });
+}
+
+pub fn common_editable_values(ui: &mut egui::Ui, common: &mut Common) {
+    ui.label("name");
+    if ui.text_edit_singleline(&mut common.name).changed() {
+        let shortened_name = String::from(common.name.replace(' ', "_").trim());
+        common.plug.name = shortened_name.clone();
+        // if !common.use_custom_topic {
+        //     let (role, id) = model.tether_agent.description();
+        //     common. = format!("{role}/{id}/{}", shortened_name);
+        // }
+    }
+
+    ui.label("Description");
+    ui.text_edit_multiline(&mut common.description);
+
+    ui.label("Plug Name");
+    if ui.text_edit_singleline(&mut common.plug.name).changed() && !common.use_custom_topic {
+        // let (role, id) = model.tether_agent.description();
+        // let plug_name = model.next_widget.plug.name.clone();
+        // model.next_topic = format!("{role}/{id}/{plug_name}");
+    }
 }
 
 pub fn common_widget_values(ui: &mut egui::Ui, model: &mut Model) {

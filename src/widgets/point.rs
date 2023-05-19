@@ -31,6 +31,9 @@ impl CustomWidget<Point2D> for Point2DWidget {
     fn common(&self) -> &Common {
         &self.common
     }
+    fn common_mut(&mut self) -> &mut Common {
+        &mut self.common
+    }
     fn value(&self) -> &Point2D {
         &self.value
     }
