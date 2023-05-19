@@ -49,9 +49,12 @@ pub fn common_send_button<T: Serialize>(
     ui: &mut egui::Ui,
     entry: &mut impl CustomWidget<T>,
 ) -> Response {
-    let res = ui.button("Send");
-    entry_topic(ui, entry);
-    res
+    let res = ui.horizontal(|ui| {
+        let res = ui.button("Send");
+        entry_topic(ui, entry);
+        res
+    });
+    res.inner
 }
 
 pub fn common_send<T: Serialize>(entry: &mut impl CustomWidget<T>, tether_agent: &TetherAgent) {
@@ -90,41 +93,6 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
-                // egui::Grid::new(format!("grid{}", i))
-                //     .num_columns(3)
-                //     .striped(true)
-                //     .min_col_width(ENTRY_GRID_WIDTH)
-                //     .show(ui, |ui| {
-                //         // Col1
-                //         entry_heading(ui, e);
-
-                //         // Col 2
-                //         let res = ui.vertical(|ui| {
-                //             let (min, max) = e.range();
-                //             let s =
-                //                 ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
-                //             ui.small(format!("Range: {}-{}", min, max));
-                //             s
-                //         });
-
-                //         // Col 3
-                //         ui.vertical(|ui| {
-                //             if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                //                 || res.inner.changed() && model.auto_send
-                //             {
-                //                 // println!("changed? {:?}", res.inner);
-                //                 model
-                //                     .tether_agent
-                //                     .encode_and_publish(&e.common().plug, e.value())
-                //                     .expect("Failed to send number");
-                //             }
-                //             entry_topic(ui, e);
-                //         })
-                //     });
-
-                // if entry_remove(ui) {
-                //     model.queue.push(QueueItem::Remove(i));
-                // }
             }
             WidgetEntry::WholeNumber(e) => {
                 if e.is_edit_mode() {
@@ -132,44 +100,13 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
-
-                // egui::Grid::new(format!("grid{}", i))
-                //     .num_columns(3)
-                //     .striped(true)
-                //     .min_col_width(ENTRY_GRID_WIDTH)
-                //     .show(ui, |ui| {
-                //         // Col1
-                //         entry_heading(ui, e);
-
-                //         // Col 2
-                //         let res = ui.vertical(|ui| {
-                //             let (min, max) = e.range();
-                //             let s =
-                //                 ui.add(Slider::new(e.value_mut(), min..=max).clamp_to_range(false));
-                //             ui.small(format!("Range: {}-{}", min, max));
-                //             s
-                //         });
-
-                //         // Col 3
-                //         ui.vertical(|ui| {
-                //             if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                //                 || res.inner.changed() && model.auto_send
-                //             {
-                //                 // println!("changed? {:?}", res.inner);
-                //                 model
-                //                     .tether_agent
-                //                     .encode_and_publish(&e.common().plug, e.value())
-                //                     .expect("Failed to send number");
-                //             }
-                //             entry_topic(ui, e);
-                //         })
-                //     });
-
-                // if entry_remove(ui) {
-                //     model.queue.push(QueueItem::Remove(i));
-                // }
             }
             WidgetEntry::Colour(e) => {
+                if e.is_edit_mode() {
+                    e.render_editing(ctx, i);
+                } else {
+                    e.render_in_use(ctx, i, &model.tether_agent);
+                }
                 // egui::Grid::new(format!("grid{}", i))
                 //     .num_columns(3)
                 //     .striped(true)
