@@ -193,13 +193,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             "Boolean Meassage",
             Some("A true or false value"),
             &model.next_widget.plug.name,
-            {
-                if model.use_custom_topic {
-                    Some(&model.next_topic)
-                } else {
-                    None
-                }
-            },
+            None,
             false,
             &model.tether_agent,
         )));
@@ -211,13 +205,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 "Floating Point Number",
                 Some("A single 64-bit floating point number"),
                 &model.next_widget.plug.name,
-                {
-                    if model.use_custom_topic {
-                        Some(&model.next_topic)
-                    } else {
-                        None
-                    }
-                },
+                None,
                 0.,
                 0. ..=1.0,
                 &model.tether_agent,
@@ -230,13 +218,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 "Whole Number",
                 Some("A single 64-bit whole number"),
                 &model.next_widget.plug.name,
-                {
-                    if model.use_custom_topic {
-                        Some(&model.next_topic)
-                    } else {
-                        None
-                    }
-                },
+                None,
                 0,
                 0..=100,
                 &model.tether_agent,
@@ -247,49 +229,10 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             "Point2D",
             Some("X and Y values"),
             &model.next_widget.plug.name,
-            {
-                if model.use_custom_topic {
-                    Some(&model.next_topic)
-                } else {
-                    None
-                }
-            },
+            None,
             &model.tether_agent,
         )))
     }
-
-    // egui::Window::new("Point2D")
-    //     .default_open(false)
-    //     .show(ctx, |ui| {
-    //         egui::Grid::new("my_grid")
-    //             .num_columns(2)
-    //             .striped(true)
-    //             .show(ui, |ui| {
-    //                 common_widget_values(ui, model);
-    //                 if ui.button("✚ Add").clicked() {
-    //                     model.widgets.push(WidgetEntry::Point2D(Point2DWidget::new(
-    //                         model.next_widget.name.as_str(),
-    //                         {
-    //                             if model.next_widget.description.is_empty() {
-    //                                 None
-    //                             } else {
-    //                                 Some(&model.next_widget.description)
-    //                             }
-    //                         },
-    //                         &model.next_widget.plug.name,
-    //                         {
-    //                             if model.use_custom_topic {
-    //                                 Some(&model.next_topic)
-    //                             } else {
-    //                                 None
-    //                             }
-    //                         },
-    //                         &model.tether_agent,
-    //                     )));
-    //                     model.prepare_next_entry();
-    //                 }
-    //             });
-    //     });
 
     // egui::Window::new("Generic JSON data")
     //     .default_open(false)
@@ -504,8 +447,10 @@ pub fn common_editable_values<T: Serialize>(
         let shortened_name = String::from(entry.common().name.replace(' ', "_").trim());
         entry.common_mut().plug.name = shortened_name.clone();
         if !entry.common().use_custom_topic {
-            let (role, id) = tether_agent.description();
-            entry.common_mut().plug.topic = format!("{role}/{id}/{}", shortened_name);
+            // Back to default (auto-generated) topic
+            entry.common_mut().plug = tether_agent
+                .create_output_plug(&entry.common().plug.name, None, None)
+                .expect("failed to create default plug");
         }
     }
 
@@ -518,54 +463,23 @@ pub fn common_editable_values<T: Serialize>(
         .changed()
         && !entry.common().use_custom_topic
     {
-        let (role, id) = tether_agent.description();
-        let plug_name = entry.common().plug.name.clone();
-        entry.common_mut().plug.topic = format!("{role}/{id}/{plug_name}");
+        // Back to default (auto-generated) topic
+        entry.common_mut().plug = tether_agent
+            .create_output_plug(&entry.common().plug.name, None, None)
+            .expect("failed to create default plug");
     }
-}
-
-pub fn common_widget_values(ui: &mut egui::Ui, model: &mut Model) {
-    ui.label("Name");
-    if ui
-        .text_edit_singleline(&mut model.next_widget.name)
-        .changed()
-    {
-        let shortened_name = String::from(model.next_widget.name.replace(' ', "_").trim());
-        model.next_widget.plug.name = shortened_name.clone();
-        if !model.use_custom_topic {
-            let (role, id) = model.tether_agent.description();
-            model.next_topic = format!("{role}/{id}/{}", shortened_name);
-        }
-    }
-    ui.end_row();
-
-    ui.label("Description");
-    ui.text_edit_multiline(&mut model.next_widget.description);
-    ui.end_row();
-
-    ui.label("Plug Name");
-    if ui
-        .text_edit_singleline(&mut model.next_widget.plug.name)
-        .changed()
-        && !model.use_custom_topic
-    {
-        let (role, id) = model.tether_agent.description();
-        let plug_name = model.next_widget.plug.name.clone();
-        model.next_topic = format!("{role}/{id}/{plug_name}");
-    }
-    ui.end_row();
 
     if ui
-        .checkbox(&mut model.use_custom_topic, "Use custom topic")
+        .checkbox(&mut entry.common_mut().use_custom_topic, "Use custom topic")
         .changed()
-        && !model.use_custom_topic
+        && !entry.common().use_custom_topic
     {
-        let (role, id) = model.tether_agent.description();
-        let plug_name = model.next_widget.plug.name.clone();
-        model.next_topic = format!("{role}/{id}/{plug_name}");
+        // Back to default (auto-generated) topic
+        entry.common_mut().plug = tether_agent
+            .create_output_plug(&entry.common().plug.name, None, None)
+            .expect("failed to create default plug");
     }
-    ui.add_enabled_ui(model.use_custom_topic, |ui| {
-        ui.text_edit_singleline(&mut model.next_topic);
+    ui.add_enabled_ui(entry.common().use_custom_topic, |ui| {
+        ui.text_edit_singleline(&mut entry.common_mut().plug.topic);
     });
-    ui.end_row();
 }

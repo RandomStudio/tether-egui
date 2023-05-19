@@ -3,7 +3,7 @@ use tether_agent::TetherAgent;
 
 use crate::ui::{
     common_editable_values, common_in_use_heading, common_save_button, common_send,
-    common_send_button, common_widget_values,
+    common_send_button,
 };
 
 use super::{Common, CustomWidget, View};
