@@ -4,20 +4,17 @@ use crate::{
     insights::Insights,
     load_widgets_from_disk,
     widgets::{
-        boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
-        numbers::NumberWidget, point::Point2DWidget, Common, CustomWidget, View,
+        boolean::BoolWidget, generic::GenericJSONWidget, numbers::NumberWidget,
+        point::Point2DWidget, CustomWidget, View,
     },
     QueueItem,
 };
-use egui::{plot::PlotPoint, Color32, Response, RichText, Slider, Ui};
+use egui::{Color32, Response, RichText, Ui};
 use log::{error, info};
 use serde::Serialize;
-use serde_json::Value;
 use tether_agent::TetherAgent;
 
 use crate::{Model, WidgetEntry};
-
-pub const ENTRY_GRID_WIDTH: f32 = 200.;
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
@@ -129,53 +126,11 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                 }
             }
             WidgetEntry::Generic(e) => {
-                // egui::Grid::new(format!("grid{}", i))
-                //     .num_columns(3)
-                //     .striped(true)
-                //     .min_col_width(ENTRY_GRID_WIDTH)
-                //     .show(ui, |ui| {
-                //         // Col 1
-                //         entry_heading(ui, e);
-
-                //         // Col 2
-                //         ui.vertical(|ui| {
-                //             if ui.text_edit_multiline(e.value_mut()).changed() {
-                //                 if serde_json::from_str::<Value>(e.value()).is_err() {
-                //                     model.is_valid_json = false;
-                //                 } else {
-                //                     model.is_valid_json = true;
-                //                 }
-                //             }
-                //             if model.is_valid_json {
-                //                 ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");
-                //             } else {
-                //                 ui.colored_label(Color32::RED, "Not valid JSON");
-                //             }
-                //         });
-
-                //         // Col 3
-                //         ui.vertical(|ui| {
-                //             if model.tether_agent.is_connected() && ui.button("Send").clicked() {
-                //                 if let Ok(json) = serde_json::from_str::<Value>(e.value()) {
-                //                     match rmp_serde::to_vec_named(&json) {
-                //                         Ok(payload) => model
-                //                             .tether_agent
-                //                             .publish(&e.common().plug, Some(&payload))
-                //                             .expect(
-                //                                 "Failed to send Generic JSON (encoded as messagepback) message",
-                //                             ),
-                //                         Err(e) => {
-                //                             error!("Failed to encode MessagePack payload: {}", e);
-                //                         }
-                //                     }
-                //                 }
-                //             }
-                //             entry_topic(ui, e);
-                //         });
-                //     });
-                // if entry_remove(ui) {
-                //     model.queue.push(QueueItem::Remove(i));
-                // }
+                if e.is_edit_mode() {
+                    e.render_editing(ctx, i, &model.tether_agent);
+                } else {
+                    e.render_in_use(ctx, i, &model.tether_agent);
+                }
             }
         }
 
@@ -231,7 +186,18 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             &model.next_widget.plug.name,
             None,
             &model.tether_agent,
-        )))
+        )));
+    }
+    if ui.button("Generic data").clicked() {
+        model
+            .widgets
+            .push(WidgetEntry::Generic(GenericJSONWidget::new(
+                "Generic JSON Data",
+                Some("Any generic data, in JSON format"),
+                &model.next_widget.plug.name,
+                None,
+                &model.tether_agent,
+            )));
     }
 
     // egui::Window::new("Generic JSON data")
@@ -439,7 +405,7 @@ pub fn common_editable_values<T: Serialize>(
     entry: &mut impl CustomWidget<T>,
     tether_agent: &TetherAgent,
 ) {
-    ui.label("name");
+    ui.label("Widget Name");
     if ui
         .text_edit_singleline(&mut entry.common_mut().name)
         .changed()
