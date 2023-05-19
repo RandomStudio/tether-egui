@@ -73,7 +73,7 @@ fn entry_remove(ui: &mut Ui) -> bool {
     clicked
 }
 
-pub fn widget_entries(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
+pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
     // ui.checkbox(&mut model.auto_send, "Auto send")
     //     .on_hover_text(
     //     "Trigger messages on any value change, where possible, instead of waiting for Send button",
@@ -127,6 +127,12 @@ pub fn widget_entries(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                 // }
             }
             WidgetEntry::WholeNumber(e) => {
+                if e.is_edit_mode() {
+                    e.render_editing(ctx, i);
+                } else {
+                    e.render_in_use(ctx, i, &model.tether_agent);
+                }
+
                 // egui::Grid::new(format!("grid{}", i))
                 //     .num_columns(3)
                 //     .striped(true)
@@ -428,7 +434,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                     }
                 },
                 0,
-                0..=1,
+                0..=100,
                 &model.tether_agent,
             )));
     }

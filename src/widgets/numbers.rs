@@ -1,6 +1,6 @@
-use egui::emath::Numeric;
+use egui::{emath::Numeric, Slider};
 use serde::{Deserialize, Serialize};
-use std::ops::RangeInclusive;
+use std::{fmt::Display, ops::RangeInclusive};
 use tether_agent::TetherAgent;
 
 use crate::ui::{
@@ -55,12 +55,16 @@ impl<T: Numeric + Serialize> CustomWidget<T> for NumberWidget<T> {
     }
 }
 
-impl<T: Numeric + Serialize> View for NumberWidget<T> {
+impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
     fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
         egui::Window::new(&self.common.name)
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
                 common_in_use_heading(ui, self);
+
+                let (min, max) = self.range();
+                ui.add(Slider::new(self.value_mut(), min..=max).clamp_to_range(false));
+                ui.small(format!("Range: {}-{}", min, max));
 
                 if common_send_button(ui, self).clicked() {
                     common_send(self, tether_agent);

@@ -3,7 +3,7 @@
 use clap::Parser;
 use settings::Cli;
 use std::fs;
-use ui::{available_widgets, general_agent_area, standard_spacer, widget_entries};
+use ui::{available_widgets, general_agent_area, standard_spacer, widgets_in_use};
 
 extern crate rmp_serde;
 extern crate rmpv;
@@ -178,7 +178,7 @@ impl eframe::App for Model {
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            widget_entries(ctx, ui, self);
+            widgets_in_use(ctx, ui, self);
         });
     }
 }
