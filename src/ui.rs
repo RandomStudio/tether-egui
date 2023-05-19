@@ -65,11 +65,8 @@ pub fn entry_topic<T: Serialize>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>
     );
 }
 
-fn entry_remove(ui: &mut Ui) -> bool {
-    let clicked = ui.button("❌ Remove").clicked();
-    ui.separator();
-    standard_spacer(ui);
-    clicked
+fn common_remove_button(ui: &mut Ui) -> bool {
+    ui.button("❌ Remove").clicked()
 }
 
 pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
@@ -84,53 +81,102 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
     for (i, entry) in widgets.iter_mut().enumerate() {
         match entry {
             WidgetEntry::FloatNumber(e) => {
-                if e.is_edit_mode() {
-                    e.render_editing(ctx, i, &model.tether_agent);
-                } else {
-                    e.render_in_use(ctx, i, &model.tether_agent);
-                }
+                egui::Window::new(&e.common().name)
+                    .id(format!("{}", i).into())
+                    .show(ctx, |ui| {
+                        if e.common().is_edit_mode() {
+                            e.render_editing(ui, i, &model.tether_agent);
+                            if common_remove_button(ui) {
+                                model.queue.push(QueueItem::Remove(i));
+                            }
+                        } else {
+                            e.render_in_use(ui, i, &model.tether_agent);
+                        }
+                    });
             }
             WidgetEntry::WholeNumber(e) => {
-                if e.is_edit_mode() {
-                    e.render_editing(ctx, i, &model.tether_agent);
-                } else {
-                    e.render_in_use(ctx, i, &model.tether_agent);
-                }
+                egui::Window::new(&e.common().name)
+                    .id(format!("{}", i).into())
+                    .show(ctx, |ui| {
+                        if e.common().is_edit_mode() {
+                            e.render_editing(ui, i, &model.tether_agent);
+                            if common_remove_button(ui) {
+                                model.queue.push(QueueItem::Remove(i));
+                            }
+                        } else {
+                            e.render_in_use(ui, i, &model.tether_agent);
+                        }
+                    });
             }
             WidgetEntry::Colour(e) => {
-                if e.is_edit_mode() {
-                    e.render_editing(ctx, i, &model.tether_agent);
-                } else {
-                    e.render_in_use(ctx, i, &model.tether_agent);
-                }
+                egui::Window::new(&e.common().name)
+                    .id(format!("{}", i).into())
+                    .show(ctx, |ui| {
+                        if e.common().is_edit_mode() {
+                            e.render_editing(ui, i, &model.tether_agent);
+                            if common_remove_button(ui) {
+                                model.queue.push(QueueItem::Remove(i));
+                            }
+                        } else {
+                            e.render_in_use(ui, i, &model.tether_agent);
+                        }
+                    });
             }
             WidgetEntry::Bool(e) => {
-                if e.is_edit_mode() {
-                    e.render_editing(ctx, i, &model.tether_agent);
-                } else {
-                    e.render_in_use(ctx, i, &model.tether_agent);
-                }
+                egui::Window::new(&e.common().name)
+                    .id(format!("{}", i).into())
+                    .show(ctx, |ui| {
+                        if e.common().is_edit_mode() {
+                            e.render_editing(ui, i, &model.tether_agent);
+                            if common_remove_button(ui) {
+                                model.queue.push(QueueItem::Remove(i));
+                            }
+                        } else {
+                            e.render_in_use(ui, i, &model.tether_agent);
+                        }
+                    });
             }
             WidgetEntry::Empty(e) => {
-                if e.is_edit_mode() {
-                    e.render_editing(ctx, i, &model.tether_agent);
-                } else {
-                    e.render_in_use(ctx, i, &model.tether_agent);
-                }
+                egui::Window::new(&e.common().name)
+                    .id(format!("{}", i).into())
+                    .show(ctx, |ui| {
+                        if e.common().is_edit_mode() {
+                            e.render_editing(ui, i, &model.tether_agent);
+                            if common_remove_button(ui) {
+                                model.queue.push(QueueItem::Remove(i));
+                            }
+                        } else {
+                            e.render_in_use(ui, i, &model.tether_agent);
+                        }
+                    });
             }
             WidgetEntry::Point2D(e) => {
-                if e.is_edit_mode() {
-                    e.render_editing(ctx, i, &model.tether_agent);
-                } else {
-                    e.render_in_use(ctx, i, &model.tether_agent);
-                }
+                egui::Window::new(&e.common().name)
+                    .id(format!("{}", i).into())
+                    .show(ctx, |ui| {
+                        if e.common().is_edit_mode() {
+                            e.render_editing(ui, i, &model.tether_agent);
+                            if common_remove_button(ui) {
+                                model.queue.push(QueueItem::Remove(i));
+                            }
+                        } else {
+                            e.render_in_use(ui, i, &model.tether_agent);
+                        }
+                    });
             }
             WidgetEntry::Generic(e) => {
-                if e.is_edit_mode() {
-                    e.render_editing(ctx, i, &model.tether_agent);
-                } else {
-                    e.render_in_use(ctx, i, &model.tether_agent);
-                }
+                egui::Window::new(&e.common().name)
+                    .id(format!("{}", i).into())
+                    .show(ctx, |ui| {
+                        if e.common().is_edit_mode() {
+                            e.render_editing(ui, i, &model.tether_agent);
+                            if common_remove_button(ui) {
+                                model.queue.push(QueueItem::Remove(i));
+                            }
+                        } else {
+                            e.render_in_use(ui, i, &model.tether_agent);
+                        }
+                    });
             }
         }
 
@@ -147,7 +193,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
         model.widgets.push(WidgetEntry::Bool(BoolWidget::new(
             "Boolean Meassage",
             Some("A true or false value"),
-            &model.next_widget.plug.name,
+            "bool",
             None,
             false,
             &model.tether_agent,
@@ -159,7 +205,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .push(WidgetEntry::FloatNumber(NumberWidget::new(
                 "Floating Point Number",
                 Some("A single 64-bit floating point number"),
-                &model.next_widget.plug.name,
+                "float",
                 None,
                 0.,
                 0. ..=1.0,
@@ -172,7 +218,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .push(WidgetEntry::WholeNumber(NumberWidget::new(
                 "Whole Number",
                 Some("A single 64-bit whole number"),
-                &model.next_widget.plug.name,
+                "number",
                 None,
                 0,
                 0..=100,
@@ -183,7 +229,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
         model.widgets.push(WidgetEntry::Point2D(Point2DWidget::new(
             "Point2D",
             Some("X and Y values"),
-            &model.next_widget.plug.name,
+            "point2d",
             None,
             &model.tether_agent,
         )));
@@ -194,73 +240,38 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .push(WidgetEntry::Generic(GenericJSONWidget::new(
                 "Generic JSON Data",
                 Some("Any generic data, in JSON format"),
-                &model.next_widget.plug.name,
+                "generic",
                 None,
                 &model.tether_agent,
             )));
     }
-
-    // egui::Window::new("Generic JSON data")
-    //     .default_open(false)
-    //     .show(ctx, |ui| {
-    //         egui::Grid::new("my_grid")
-    //             .num_columns(2)
-    //             .striped(true)
-    //             .show(ui, |ui| {
-    //                 common_widget_values(ui, model);
-    //                 if ui.button("✚ Add").clicked() {
-    //                     model
-    //                         .widgets
-    //                         .push(WidgetEntry::Generic(GenericJSONWidget::new(
-    //                             model.next_widget.name.as_str(),
-    //                             {
-    //                                 if model.next_widget.description.is_empty() {
-    //                                     None
-    //                                 } else {
-    //                                     Some(&model.next_widget.description)
-    //                                 }
-    //                             },
-    //                             &model.next_widget.plug.name,
-    //                             {
-    //                                 if model.use_custom_topic {
-    //                                     Some(&model.next_topic)
-    //                                 } else {
-    //                                     None
-    //                                 }
-    //                             },
-    //                             &model.tether_agent,
-    //                         )));
-    //                     model.prepare_next_entry();
-    //                 }
-    //             });
-    //     });
 }
 
-fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
-    let openness = ui
-        .collapsing("Range", |ui| {
-            ui.label("Range");
-            ui.vertical(|ui| {
-                ui.add(
-                    egui::Slider::new(&mut model.next_range.0, i16::MIN as f32..=i16::MAX as f32)
-                        .text("min"),
-                );
-                ui.add(
-                    egui::Slider::new(&mut model.next_range.1, i16::MIN as f32..=i16::MAX as f32)
-                        .text("max"),
-                );
-                if ui.small_button("Reset").clicked() {
-                    model.next_range = (0., default_max);
-                }
-            });
-        })
-        .openness;
+// fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
+//     let openness = ui
+//         .collapsing("Range", |ui| {
+//             ui.label("Range");
+//             ui.vertical(|ui| {
+//                 ui.add(
+//                     egui::Slider::new(&mut model.next_range.0, i16::MIN as f32..=i16::MAX as f32)
+//                         .text("min"),
+//                 );
+//                 ui.add(
+//                     egui::Slider::new(&mut model.next_range.1, i16::MIN as f32..=i16::MAX as f32)
+//                         .text("max"),
+//                 );
+//                 if ui.small_button("Reset").clicked() {
+//                     model.next_range = (0., default_max);
+//                 }
+//             });
+//         })
+//         .openness;
 
-    if openness > 0. && openness < 1.0 {
-        model.next_range = (0., default_max);
-    }
-    ui.end_row();
-}
+//     if openness > 0. && openness < 1.0 {
+//         model.next_range = (0., default_max);
+//     }
+//     ui.end_row();
+// }
 
 pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     ui.heading("Tether Agent");
@@ -338,14 +349,14 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         ui.label("Role");
         if ui.text_edit_singleline(&mut model.agent_role).changed() {
             model.tether_agent.set_role(&model.agent_role);
-            model.prepare_next_entry();
+            // model.prepare_next_entry();
         }
     });
     ui.horizontal(|ui| {
         ui.label("ID or Group");
         if ui.text_edit_singleline(&mut model.agent_id).changed() {
             model.tether_agent.set_id(&model.agent_id);
-            model.prepare_next_entry();
+            // model.prepare_next_entry();
         }
     });
 

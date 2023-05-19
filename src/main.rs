@@ -14,7 +14,7 @@ use env_logger::Env;
 use insights::Insights;
 use log::{error, info, warn};
 use tether_agent::TetherAgent;
-use widgets::{Common, WidgetEntry};
+use widgets::{CustomWidget, WidgetEntry};
 
 mod insights;
 mod settings;
@@ -40,11 +40,6 @@ fn main() -> Result<(), eframe::Error> {
 
 pub struct Model {
     json_file: Option<String>,
-    next_widget: Common,
-    next_range: (f32, f32),
-    is_valid_json: bool,
-    use_custom_topic: bool,
-    next_topic: String,
     agent_role: String,
     agent_id: String,
     widgets: Vec<WidgetEntry>,
@@ -52,16 +47,6 @@ pub struct Model {
     tether_agent: TetherAgent,
     insights: Insights,
     continuous_mode: bool,
-    auto_send: bool,
-}
-
-fn get_next_name(count: usize) -> String {
-    format!("plug{}", count + 1)
-}
-
-fn create_next_widget(index: usize, agent: &TetherAgent) -> Common {
-    let default_name = get_next_name(index);
-    Common::new(&default_name, None, &default_name, None, agent)
 }
 
 impl Default for Model {
@@ -70,8 +55,6 @@ impl Default for Model {
 
         let tether_agent = TetherAgent::new("gui", None, Some(cli.tether_host));
         let (role, id) = tether_agent.description();
-        let next_widget = create_next_widget(0, &tether_agent);
-        let next_topic = next_widget.plug.topic.clone();
 
         if cli.tether_disable {
             warn!("Tether disabled; please connect manually if required");
@@ -98,10 +81,6 @@ impl Default for Model {
                     Some(json_file)
                 }
             },
-            next_widget,
-            next_range: (0., 1.0),
-            use_custom_topic: false,
-            next_topic,
             agent_role: role.into(),
             agent_id: id.into(),
             widgets: load_json.unwrap_or(Vec::new()),
@@ -109,8 +88,6 @@ impl Default for Model {
             insights: Insights::new(&tether_agent, &cli.monitor_topic),
             tether_agent,
             continuous_mode: cli.continuous_mode,
-            is_valid_json: true,
-            auto_send: true,
         }
     }
 }
@@ -133,15 +110,15 @@ fn load_widgets_from_disk(file_path: &str) -> Result<Vec<WidgetEntry>, ()> {
     }
 }
 
-impl Model {
-    fn prepare_next_entry(&mut self) {
-        self.next_widget = create_next_widget(self.widgets.len(), &self.tether_agent);
-        let (role, id) = self.tether_agent.description();
-        let plug_name = self.next_widget.plug.name.clone();
-        self.next_topic = format!("{role}/{id}/{plug_name}");
-        self.use_custom_topic = false;
-    }
-}
+// impl Model {
+//     fn prepare_next_entry(&mut self) {
+//         self.next_widget = create_next_widget(self.widgets.len(), &self.tether_agent);
+//         let (role, id) = self.tether_agent.description();
+//         let plug_name = self.next_widget.plug.name.clone();
+//         self.next_topic = format!("{role}/{id}/{plug_name}");
+//         self.use_custom_topic = false;
+//     }
+// }
 
 enum QueueItem {
     Remove(usize),

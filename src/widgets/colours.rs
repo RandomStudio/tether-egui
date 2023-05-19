@@ -1,3 +1,4 @@
+use egui::Ui;
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
@@ -50,28 +51,20 @@ impl CustomWidget<ColourRGBA8> for ColourWidget<ColourRGBA8> {
 }
 
 impl View for ColourWidget<ColourRGBA8> {
-    fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
-        egui::Window::new(&self.common.name)
-            .id(format!("{}", index).into())
-            .show(ctx, |ui| {
-                common_in_use_heading(ui, self);
+    fn render_in_use(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+        common_in_use_heading(ui, self);
 
-                if ui
-                    .color_edit_button_srgba_unmultiplied(self.value_mut())
-                    .changed()
-                    || common_send_button(ui, self).clicked()
-                {
-                    common_send(self, tether_agent);
-                }
-            });
+        if ui
+            .color_edit_button_srgba_unmultiplied(self.value_mut())
+            .changed()
+            || common_send_button(ui, self).clicked()
+        {
+            common_send(self, tether_agent);
+        }
     }
 
-    fn render_editing(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
-        egui::Window::new(&self.common.name)
-            .id(format!("{}", index).into())
-            .show(ctx, |ui| {
-                common_editable_values(ui, self, tether_agent);
-                common_save_button(ui, self);
-            });
+    fn render_editing(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+        common_editable_values(ui, self, tether_agent);
+        common_save_button(ui, self);
     }
 }

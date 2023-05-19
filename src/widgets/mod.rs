@@ -1,4 +1,3 @@
-use egui::Ui;
 use serde::{Deserialize, Serialize};
 use tether_agent::{PlugDefinition, TetherAgent};
 
@@ -38,9 +37,6 @@ pub trait CustomWidget<T: Serialize> {
     fn common_mut(&mut self) -> &mut Common;
     fn value(&self) -> &T;
     fn value_mut(&mut self) -> &mut T;
-    fn is_edit_mode(&self) -> bool {
-        self.common().is_edit_mode
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -91,6 +87,6 @@ impl Common {
 }
 
 pub trait View {
-    fn render_editing(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent);
-    fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent);
+    fn render_editing(&mut self, ui: &mut egui::Ui, index: usize, tether_agent: &TetherAgent);
+    fn render_in_use(&mut self, ui: &mut egui::Ui, index: usize, tether_agent: &TetherAgent);
 }

@@ -1,4 +1,4 @@
-use egui::{emath::Numeric, Slider};
+use egui::{emath::Numeric, Slider, Ui};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, ops::RangeInclusive};
 use tether_agent::TetherAgent;
@@ -56,32 +56,25 @@ impl<T: Numeric + Serialize> CustomWidget<T> for NumberWidget<T> {
 }
 
 impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
-    fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
-        egui::Window::new(&self.common.name)
-            .id(format!("{}", index).into())
-            .show(ctx, |ui| {
-                common_in_use_heading(ui, self);
+    fn render_in_use(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+        common_in_use_heading(ui, self);
 
-                let (min, max) = self.range();
-                if ui
-                    .add(Slider::new(self.value_mut(), min..=max).clamp_to_range(false))
-                    .changed()
-                {
-                    common_send(self, tether_agent);
-                };
-                ui.small(format!("Range: {}-{}", min, max));
+        let (min, max) = self.range();
+        if ui
+            .add(Slider::new(self.value_mut(), min..=max).clamp_to_range(false))
+            .changed()
+        {
+            common_send(self, tether_agent);
+        };
+        ui.small(format!("Range: {}-{}", min, max));
 
-                if common_send_button(ui, self).clicked() {
-                    common_send(self, tether_agent);
-                };
-            });
+        if common_send_button(ui, self).clicked() {
+            common_send(self, tether_agent);
+        };
     }
-    fn render_editing(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
-        egui::Window::new(&self.common.name)
-            .id(format!("{}", index).into())
-            .show(ctx, |ui| {
-                common_editable_values(ui, self, tether_agent);
-                common_save_button(ui, self);
-            });
+
+    fn render_editing(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+        common_editable_values(ui, self, tether_agent);
+        common_save_button(ui, self);
     }
 }

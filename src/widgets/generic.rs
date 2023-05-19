@@ -1,4 +1,4 @@
-use egui::Color32;
+use egui::{Color32, Ui};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tether_agent::TetherAgent;
@@ -19,6 +19,8 @@ pub struct GenericJSONWidget {
     is_valid_json: bool,
 }
 
+/// Since valid state is not known on "load", we will
+/// assume JSON is valid until parsed otherwise
 fn assume_valid() -> bool {
     true
 }
@@ -56,37 +58,29 @@ impl CustomWidget<String> for GenericJSONWidget {
 }
 
 impl View for GenericJSONWidget {
-    fn render_editing(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
-        egui::Window::new(&self.common.name)
-            .id(format!("{}", index).into())
-            .show(ctx, |ui| {
-                common_editable_values(ui, self, tether_agent);
-                common_save_button(ui, self);
-            });
+    fn render_editing(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+        common_editable_values(ui, self, tether_agent);
+        common_save_button(ui, self);
     }
 
-    fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
-        egui::Window::new(&self.common.name)
-            .id(format!("{}", index).into())
-            .show(ctx, |ui| {
-                common_in_use_heading(ui, self);
+    fn render_in_use(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+        common_in_use_heading(ui, self);
 
-                if ui.text_edit_multiline(self.value_mut()).changed() {
-                    if serde_json::from_str::<Value>(self.value()).is_err() {
-                        self.is_valid_json = false;
-                    } else {
-                        self.is_valid_json = true;
-                    }
-                }
-                if self.is_valid_json {
-                    ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");
-                } else {
-                    ui.colored_label(Color32::RED, "Not valid JSON");
-                }
+        if ui.text_edit_multiline(self.value_mut()).changed() {
+            if serde_json::from_str::<Value>(self.value()).is_err() {
+                self.is_valid_json = false;
+            } else {
+                self.is_valid_json = true;
+            }
+        }
+        if self.is_valid_json {
+            ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");
+        } else {
+            ui.colored_label(Color32::RED, "Not valid JSON");
+        }
 
-                if common_send_button(ui, self).clicked() {
-                    common_send(self, tether_agent);
-                }
-            });
+        if common_send_button(ui, self).clicked() {
+            common_send(self, tether_agent);
+        }
     }
 }
