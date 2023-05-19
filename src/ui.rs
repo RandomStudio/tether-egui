@@ -37,6 +37,12 @@ pub fn common_in_use_heading<T>(ui: &mut egui::Ui, entry: &mut impl CustomWidget
     ui.separator();
 }
 
+pub fn common_save_button<T>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
+    if ui.button("Save").clicked() {
+        entry.common_mut().set_edit_mode(false);
+    }
+}
+
 pub fn entry_topic<T>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
     ui.label(
         RichText::new(format!("Topic: {}", entry.common().plug.topic)).color(Color32::LIGHT_BLUE),

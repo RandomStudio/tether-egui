@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
-use crate::ui::{common_editable_values, common_in_use_heading, common_widget_values};
+use crate::ui::{
+    common_editable_values, common_in_use_heading, common_save_button, common_widget_values,
+};
 
 use super::{Common, CustomWidget, View};
 
@@ -58,9 +60,7 @@ impl View for EmptyWidget {
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
                 common_editable_values(ui, self);
-                if ui.button("Save").clicked() {
-                    self.common_mut().set_edit_mode(false);
-                }
+                common_save_button(ui, self);
             });
     }
 }
