@@ -3,7 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::ops::RangeInclusive;
 use tether_agent::TetherAgent;
 
-use super::{Common, CustomWidget};
+use crate::ui::{
+    common_editable_values, common_in_use_heading, common_save_button, common_send,
+    common_send_button,
+};
+
+use super::{Common, CustomWidget, View};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,7 +40,7 @@ impl<T: Numeric> NumberWidget<T> {
     }
 }
 
-impl<T: Numeric> CustomWidget<T> for NumberWidget<T> {
+impl<T: Numeric + Serialize> CustomWidget<T> for NumberWidget<T> {
     fn common(&self) -> &Common {
         &self.common
     }
@@ -47,5 +52,27 @@ impl<T: Numeric> CustomWidget<T> for NumberWidget<T> {
     }
     fn value_mut(&mut self) -> &mut T {
         &mut self.value
+    }
+}
+
+impl<T: Numeric + Serialize> View for NumberWidget<T> {
+    fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
+        egui::Window::new(&self.common.name)
+            .id(format!("{}", index).into())
+            .show(ctx, |ui| {
+                common_in_use_heading(ui, self);
+
+                if common_send_button(ui, self).clicked() {
+                    common_send(self, tether_agent);
+                };
+            });
+    }
+    fn render_editing(&mut self, ctx: &egui::Context, index: usize) {
+        egui::Window::new(&self.common.name)
+            .id(format!("{}", index).into())
+            .show(ctx, |ui| {
+                common_editable_values(ui, self);
+                common_save_button(ui, self);
+            });
     }
 }

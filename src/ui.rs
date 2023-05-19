@@ -9,9 +9,11 @@ use crate::{
     },
     QueueItem,
 };
-use egui::{plot::PlotPoint, Color32, RichText, Slider, Ui};
+use egui::{plot::PlotPoint, Color32, Response, RichText, Slider, Ui};
 use log::{error, info};
+use serde::Serialize;
 use serde_json::Value;
+use tether_agent::TetherAgent;
 
 use crate::{Model, WidgetEntry};
 
@@ -22,7 +24,7 @@ pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
 }
 
-pub fn common_in_use_heading<T>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
+pub fn common_in_use_heading<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
     ui.horizontal(|ui| {
         ui.label(
             RichText::new(&entry.common().name)
@@ -37,13 +39,28 @@ pub fn common_in_use_heading<T>(ui: &mut egui::Ui, entry: &mut impl CustomWidget
     ui.separator();
 }
 
-pub fn common_save_button<T>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
+pub fn common_save_button<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
     if ui.button("Save").clicked() {
         entry.common_mut().set_edit_mode(false);
     }
 }
 
-pub fn entry_topic<T>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
+pub fn common_send_button<T: Serialize>(
+    ui: &mut egui::Ui,
+    entry: &mut impl CustomWidget<T>,
+) -> Response {
+    let res = ui.button("Send");
+    entry_topic(ui, entry);
+    res
+}
+
+pub fn common_send<T: Serialize>(entry: &mut impl CustomWidget<T>, tether_agent: &TetherAgent) {
+    tether_agent
+        .encode_and_publish(&entry.common().plug, &entry.value())
+        .expect("Failed to send message");
+}
+
+pub fn entry_topic<T: Serialize>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
     ui.label(
         RichText::new(format!("Topic: {}", entry.common().plug.topic)).color(Color32::LIGHT_BLUE),
     );
@@ -68,6 +85,11 @@ pub fn widget_entries(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
     for (i, entry) in widgets.iter_mut().enumerate() {
         match entry {
             WidgetEntry::FloatNumber(e) => {
+                if e.is_edit_mode() {
+                    e.render_editing(ctx, i);
+                } else {
+                    e.render_in_use(ctx, i, &model.tether_agent);
+                }
                 // egui::Grid::new(format!("grid{}", i))
                 //     .num_columns(3)
                 //     .striped(true)
@@ -358,14 +380,8 @@ pub fn widget_entries(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
 pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
     if ui.button("Boolean").clicked() {
         model.widgets.push(WidgetEntry::Bool(BoolWidget::new(
-            &model.next_widget.name,
-            {
-                if model.next_widget.description.is_empty() {
-                    None
-                } else {
-                    Some(&model.next_widget.description)
-                }
-            },
+            "Boolean Meassage",
+            Some("A true or false value"),
             &model.next_widget.plug.name,
             {
                 if model.use_custom_topic {
@@ -378,26 +394,43 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             &model.tether_agent,
         )));
     }
-    if ui.button("Empty").clicked() {
-        model.widgets.push(WidgetEntry::Empty(EmptyWidget::new(
-            model.next_widget.name.as_str(),
-            {
-                if model.next_widget.description.is_empty() {
-                    None
-                } else {
-                    Some(&model.next_widget.description)
-                }
-            },
-            &model.next_widget.plug.name,
-            {
-                if model.use_custom_topic {
-                    Some(&model.next_topic)
-                } else {
-                    None
-                }
-            },
-            &model.tether_agent,
-        )));
+    if ui.button("Floating Point").clicked() {
+        model
+            .widgets
+            .push(WidgetEntry::FloatNumber(NumberWidget::new(
+                "Floating Point Number",
+                Some("A single 64-bit floating point number"),
+                &model.next_widget.plug.name,
+                {
+                    if model.use_custom_topic {
+                        Some(&model.next_topic)
+                    } else {
+                        None
+                    }
+                },
+                0.,
+                0. ..=1.0,
+                &model.tether_agent,
+            )));
+    }
+    if ui.button("Whole Number").clicked() {
+        model
+            .widgets
+            .push(WidgetEntry::WholeNumber(NumberWidget::new(
+                "Whole Number",
+                Some("A single 64-bit whole number"),
+                &model.next_widget.plug.name,
+                {
+                    if model.use_custom_topic {
+                        Some(&model.next_topic)
+                    } else {
+                        None
+                    }
+                },
+                0,
+                0..=1,
+                &model.tether_agent,
+            )));
     }
     // egui::Window::new("Floating-Point Number")
     //     .default_open(false)
@@ -819,7 +852,7 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         });
 }
 
-pub fn common_editable_values<T>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
+pub fn common_editable_values<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
     ui.label("name");
     if ui
         .text_edit_singleline(&mut entry.common_mut().name)

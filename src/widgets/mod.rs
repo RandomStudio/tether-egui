@@ -2,8 +2,6 @@ use egui::Ui;
 use serde::{Deserialize, Serialize};
 use tether_agent::{PlugDefinition, TetherAgent};
 
-use crate::Model;
-
 use self::{
     boolean::BoolWidget,
     colours::{ColourRGBA8, ColourWidget},
@@ -35,7 +33,7 @@ pub enum WidgetEntry {
     Generic(GenericJSONWidget),
 }
 
-pub trait CustomWidget<T> {
+pub trait CustomWidget<T: Serialize> {
     fn common(&self) -> &Common;
     fn common_mut(&mut self) -> &mut Common;
     fn value(&self) -> &T;

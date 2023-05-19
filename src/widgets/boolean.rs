@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
 use crate::ui::{
-    common_editable_values, common_in_use_heading, common_save_button, common_widget_values,
-    ENTRY_GRID_WIDTH,
+    common_editable_values, common_in_use_heading, common_save_button, common_send,
+    common_send_button, common_widget_values, ENTRY_GRID_WIDTH,
 };
 
 use super::{Common, CustomWidget, View};
@@ -50,7 +50,7 @@ impl CustomWidget<bool> for BoolWidget {
 
 impl View for BoolWidget {
     fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
-        egui::Window::new("Bool")
+        egui::Window::new(&self.common.name)
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
                 common_in_use_heading(ui, self);
@@ -68,17 +68,15 @@ impl View for BoolWidget {
                         }),
                     )
                     .clicked()
-                    || ui.button("Send").clicked()
+                    || common_send_button(ui, self).clicked()
                 {
-                    tether_agent
-                        .encode_and_publish(&self.common.plug, self.value)
-                        .expect("Failed to send bool message")
+                    common_send(self, tether_agent);
                 }
             });
     }
 
     fn render_editing(&mut self, ctx: &egui::Context, index: usize) {
-        egui::Window::new("Boolean")
+        egui::Window::new(&self.common.name)
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
                 common_editable_values(ui, self);
