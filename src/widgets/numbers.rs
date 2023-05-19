@@ -76,11 +76,11 @@ impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
                 };
             });
     }
-    fn render_editing(&mut self, ctx: &egui::Context, index: usize) {
+    fn render_editing(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
         egui::Window::new(&self.common.name)
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
-                common_editable_values(ui, self);
+                common_editable_values(ui, self, tether_agent);
                 common_save_button(ui, self);
             });
     }

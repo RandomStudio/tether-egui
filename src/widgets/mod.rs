@@ -91,6 +91,6 @@ impl Common {
 }
 
 pub trait View {
+    fn render_editing(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent);
     fn render_in_use(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent);
-    fn render_editing(&mut self, ctx: &egui::Context, index: usize);
 }

@@ -168,7 +168,7 @@ impl eframe::App for Model {
             });
 
         egui::SidePanel::right("Available Widgets")
-            .min_width(512.)
+            .min_width(128.)
             .show(ctx, |ui| {
                 ui.heading("Available Widgets");
 

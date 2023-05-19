@@ -2,7 +2,9 @@ use egui::plot::{Plot, PlotPoint};
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
-use crate::ui::{common_editable_values, common_save_button, common_send_button};
+use crate::ui::{
+    common_editable_values, common_in_use_heading, common_save_button, common_send_button,
+};
 
 use super::{Common, CustomWidget, View};
 
@@ -49,11 +51,11 @@ impl CustomWidget<Point2D> for Point2DWidget {
 const PLOT_SIZE: f32 = 200.0;
 
 impl View for Point2DWidget {
-    fn render_editing(&mut self, ctx: &egui::Context, index: usize) {
+    fn render_editing(&mut self, ctx: &egui::Context, index: usize, tether_agent: &TetherAgent) {
         egui::Window::new(&self.common.name)
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
-                common_editable_values(ui, self);
+                common_editable_values(ui, self, tether_agent);
                 common_save_button(ui, self);
             });
     }
@@ -62,6 +64,8 @@ impl View for Point2DWidget {
         egui::Window::new(&self.common.name)
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
+                common_in_use_heading(ui, self);
+
                 let plot = Plot::new("tracking_plot")
                     .width(PLOT_SIZE)
                     .height(PLOT_SIZE)

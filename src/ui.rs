@@ -88,42 +88,42 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
         match entry {
             WidgetEntry::FloatNumber(e) => {
                 if e.is_edit_mode() {
-                    e.render_editing(ctx, i);
+                    e.render_editing(ctx, i, &model.tether_agent);
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
             }
             WidgetEntry::WholeNumber(e) => {
                 if e.is_edit_mode() {
-                    e.render_editing(ctx, i);
+                    e.render_editing(ctx, i, &model.tether_agent);
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
             }
             WidgetEntry::Colour(e) => {
                 if e.is_edit_mode() {
-                    e.render_editing(ctx, i);
+                    e.render_editing(ctx, i, &model.tether_agent);
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
             }
             WidgetEntry::Bool(e) => {
                 if e.is_edit_mode() {
-                    e.render_editing(ctx, i);
+                    e.render_editing(ctx, i, &model.tether_agent);
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
             }
             WidgetEntry::Empty(e) => {
                 if e.is_edit_mode() {
-                    e.render_editing(ctx, i);
+                    e.render_editing(ctx, i, &model.tether_agent);
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
             }
             WidgetEntry::Point2D(e) => {
                 if e.is_edit_mode() {
-                    e.render_editing(ctx, i);
+                    e.render_editing(ctx, i, &model.tether_agent);
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
@@ -491,7 +491,11 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         });
 }
 
-pub fn common_editable_values<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
+pub fn common_editable_values<T: Serialize>(
+    ui: &mut egui::Ui,
+    entry: &mut impl CustomWidget<T>,
+    tether_agent: &TetherAgent,
+) {
     ui.label("name");
     if ui
         .text_edit_singleline(&mut entry.common_mut().name)
@@ -499,10 +503,10 @@ pub fn common_editable_values<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl 
     {
         let shortened_name = String::from(entry.common().name.replace(' ', "_").trim());
         entry.common_mut().plug.name = shortened_name.clone();
-        // if !common.use_custom_topic {
-        //     let (role, id) = model.tether_agent.description();
-        //     common. = format!("{role}/{id}/{}", shortened_name);
-        // }
+        if !entry.common().use_custom_topic {
+            let (role, id) = tether_agent.description();
+            entry.common_mut().plug.topic = format!("{role}/{id}/{}", shortened_name);
+        }
     }
 
     ui.label("Description");
@@ -514,9 +518,9 @@ pub fn common_editable_values<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl 
         .changed()
         && !entry.common().use_custom_topic
     {
-        // let (role, id) = model.tether_agent.description();
-        // let plug_name = model.next_widget.plug.name.clone();
-        // model.next_topic = format!("{role}/{id}/{plug_name}");
+        let (role, id) = tether_agent.description();
+        let plug_name = entry.common().plug.name.clone();
+        entry.common_mut().plug.topic = format!("{role}/{id}/{plug_name}");
     }
 }
 
