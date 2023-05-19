@@ -14,7 +14,7 @@ use env_logger::Env;
 use insights::Insights;
 use log::{error, info, warn};
 use tether_agent::TetherAgent;
-use widgets::{CustomWidget, WidgetEntry};
+use widgets::WidgetEntry;
 
 mod insights;
 mod settings;

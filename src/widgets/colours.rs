@@ -24,12 +24,11 @@ impl ColourWidget<ColourRGBA8> {
         description: Option<&str>,
         plug_name: &str,
         custom_topic: Option<&str>,
-        rgba: ColourRGBA8,
         agent: &TetherAgent,
     ) -> Self {
         ColourWidget {
             common: Common::new(widget_name, description, plug_name, custom_topic, agent),
-            value: rgba,
+            value: [255, 255, 255, 255],
         }
     }
 }
@@ -51,7 +50,7 @@ impl CustomWidget<ColourRGBA8> for ColourWidget<ColourRGBA8> {
 }
 
 impl View for ColourWidget<ColourRGBA8> {
-    fn render_in_use(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
 
         if ui
@@ -63,7 +62,7 @@ impl View for ColourWidget<ColourRGBA8> {
         }
     }
 
-    fn render_editing(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         common_save_button(ui, self);
     }

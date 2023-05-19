@@ -58,12 +58,12 @@ impl CustomWidget<String> for GenericJSONWidget {
 }
 
 impl View for GenericJSONWidget {
-    fn render_editing(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         common_save_button(ui, self);
     }
 
-    fn render_in_use(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
 
         if ui.text_edit_multiline(self.value_mut()).changed() {

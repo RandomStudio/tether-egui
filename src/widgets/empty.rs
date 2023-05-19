@@ -48,14 +48,14 @@ impl CustomWidget<()> for EmptyWidget {
 }
 
 impl View for EmptyWidget {
-    fn render_in_use(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
 
         if common_send_button(ui, self).clicked() {
             common_send(self, tether_agent);
         };
     }
-    fn render_editing(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         common_save_button(ui, self);
     }

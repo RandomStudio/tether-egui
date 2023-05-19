@@ -56,7 +56,7 @@ impl<T: Numeric + Serialize> CustomWidget<T> for NumberWidget<T> {
 }
 
 impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
-    fn render_in_use(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
 
         let (min, max) = self.range();
@@ -73,7 +73,7 @@ impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
         };
     }
 
-    fn render_editing(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         common_save_button(ui, self);
     }

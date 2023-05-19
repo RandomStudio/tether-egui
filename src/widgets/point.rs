@@ -54,12 +54,12 @@ impl CustomWidget<Point2D> for Point2DWidget {
 const PLOT_SIZE: f32 = 200.0;
 
 impl View for Point2DWidget {
-    fn render_editing(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         common_save_button(ui, self);
     }
 
-    fn render_in_use(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
 
         let plot = Plot::new("tracking_plot")

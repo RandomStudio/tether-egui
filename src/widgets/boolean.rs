@@ -49,7 +49,7 @@ impl CustomWidget<bool> for BoolWidget {
 }
 
 impl View for BoolWidget {
-    fn render_in_use(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
 
         let checked = *self.value();
@@ -71,7 +71,7 @@ impl View for BoolWidget {
         }
     }
 
-    fn render_editing(&mut self, ui: &mut Ui, index: usize, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         common_save_button(ui, self);
     }
