@@ -22,15 +22,19 @@ pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
 }
 
-pub fn entry_heading<T>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
-    ui.vertical(|ui| {
+pub fn common_in_use_heading<T>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
+    ui.horizontal(|ui| {
         ui.label(
             RichText::new(&entry.common().name)
                 .color(Color32::WHITE)
                 .size(18.),
         );
-        ui.small(&entry.common().description);
+        if ui.button("edit").clicked() {
+            entry.common_mut().set_edit_mode(true);
+        }
     });
+    ui.small(&entry.common().description);
+    ui.separator();
 }
 
 pub fn entry_topic<T>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
@@ -809,11 +813,14 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         });
 }
 
-pub fn common_editable_values(ui: &mut egui::Ui, common: &mut Common) {
+pub fn common_editable_values<T>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
     ui.label("name");
-    if ui.text_edit_singleline(&mut common.name).changed() {
-        let shortened_name = String::from(common.name.replace(' ', "_").trim());
-        common.plug.name = shortened_name.clone();
+    if ui
+        .text_edit_singleline(&mut entry.common_mut().name)
+        .changed()
+    {
+        let shortened_name = String::from(entry.common().name.replace(' ', "_").trim());
+        entry.common_mut().plug.name = shortened_name.clone();
         // if !common.use_custom_topic {
         //     let (role, id) = model.tether_agent.description();
         //     common. = format!("{role}/{id}/{}", shortened_name);
@@ -821,10 +828,14 @@ pub fn common_editable_values(ui: &mut egui::Ui, common: &mut Common) {
     }
 
     ui.label("Description");
-    ui.text_edit_multiline(&mut common.description);
+    ui.text_edit_multiline(&mut entry.common_mut().description);
 
     ui.label("Plug Name");
-    if ui.text_edit_singleline(&mut common.plug.name).changed() && !common.use_custom_topic {
+    if ui
+        .text_edit_singleline(&mut entry.common_mut().plug.name)
+        .changed()
+        && !entry.common().use_custom_topic
+    {
         // let (role, id) = model.tether_agent.description();
         // let plug_name = model.next_widget.plug.name.clone();
         // model.next_topic = format!("{role}/{id}/{plug_name}");

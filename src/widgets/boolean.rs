@@ -2,7 +2,9 @@ use egui::Ui;
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
-use crate::ui::{common_editable_values, common_widget_values, entry_heading, ENTRY_GRID_WIDTH};
+use crate::ui::{
+    common_editable_values, common_in_use_heading, common_widget_values, ENTRY_GRID_WIDTH,
+};
 
 use super::{Common, CustomWidget, View};
 
@@ -50,7 +52,7 @@ impl View for BoolWidget {
         egui::Window::new("Bool")
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
-                entry_heading(ui, self);
+                common_in_use_heading(ui, self);
 
                 let checked = *self.value();
                 let checkbox = ui.checkbox(
@@ -69,10 +71,13 @@ impl View for BoolWidget {
     }
 
     fn render_editing(&mut self, ctx: &egui::Context, index: usize) {
-        egui::Window::new("Bool")
+        egui::Window::new("Boolean")
             .id(format!("{}", index).into())
             .show(ctx, |ui| {
-                common_editable_values(ui, self.common_mut());
+                common_editable_values(ui, self);
+                if ui.button("Save").clicked() {
+                    self.common_mut().set_edit_mode(false);
+                }
             });
     }
 }
