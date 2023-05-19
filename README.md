@@ -25,15 +25,15 @@ More options: `--help`
 - [x] All Widgets should have Send button as well as "send on change" functionality (and send-on-change should be optionally disabled for all?)
 - [x] Add 2D point Widget
 - [ ] Should be able to edit Widgets after adding (not just remove and re-add)
+- [ ] Include sensible default descriptions per Widget type when adding
 - [ ] JSON validation should only apply to currently-edited widget
+- [ ] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
 - [ ] Add 3D point Widget
 - [x] Add "empty" Widget
 - [x] Add editable "JSON string to MessagePack" Widget
 - [ ] JSON editor should use egui syntax highlighting
-- [ ] Include sensible default descriptions per Widget type when adding
 - [ ] Pass function/closure to Widgets to render their own GUI?
 - [x] Tether host can be specified in CLI
-- [ ] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
 - [x] List plug names, agent IDs, roles as per "topics" cli
 - [ ] Tether Agent on separate thread
 - [ ] Stats (messages per second) for each topic
