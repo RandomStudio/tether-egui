@@ -17,7 +17,6 @@ use tether_agent::TetherAgent;
 
 use crate::{Model, WidgetEntry};
 
-const PLOT_SIZE: f32 = 200.0;
 pub const ENTRY_GRID_WIDTH: f32 = 200.;
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
@@ -107,43 +106,6 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
-                // egui::Grid::new(format!("grid{}", i))
-                //     .num_columns(3)
-                //     .striped(true)
-                //     .min_col_width(ENTRY_GRID_WIDTH)
-                //     .show(ui, |ui| {
-                //         // Col 1
-                //         entry_heading(ui, e);
-
-                //         // Col 2
-                //         let res = ui.vertical(|ui| {
-                //             let color_picker =
-                //                 ui.color_edit_button_srgba_unmultiplied(e.value_mut());
-                //             let srgba = e.value();
-                //             ui.label(format!(
-                //                 "sRGBA: {} {} {} {}",
-                //                 srgba[0], srgba[1], srgba[2], srgba[3],
-                //             ));
-                //             color_picker
-                //         });
-
-                //         // Col 3
-                //         ui.vertical(|ui| {
-                //             if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                //                 || res.inner.changed() && model.auto_send
-                //             {
-                //                 model
-                //                     .tether_agent
-                //                     .encode_and_publish(&e.common().plug, e.value())
-                //                     .expect("Failed to send colour")
-                //             }
-                //             entry_topic(ui, e);
-                //         });
-                //     });
-
-                // if entry_remove(ui) {
-                //     model.queue.push(QueueItem::Remove(i));
-                // }
             }
             WidgetEntry::Bool(e) => {
                 if e.is_edit_mode() {
@@ -151,9 +113,6 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
-                // if entry_remove(ui) {
-                //     model.queue.push(QueueItem::Remove(i));
-                // }
             }
             WidgetEntry::Empty(e) => {
                 if e.is_edit_mode() {
@@ -161,105 +120,13 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                 } else {
                     e.render_in_use(ctx, i, &model.tether_agent);
                 }
-                // if entry_remove(ui) {
-                //     model.queue.push(QueueItem::Remove(i));
-                // }
-
-                // egui::Grid::new(format!("grid{}", i))
-                //     .num_columns(3)
-                //     .striped(true)
-                //     .min_col_width(ENTRY_GRID_WIDTH)
-                //     .show(ui, |ui| {
-                //         // Col 1
-                //         entry_heading(ui, e);
-
-                //         // Col 2
-                //         ui.label("Empty message body");
-
-                //         // Col 3
-                //         ui.vertical(|ui| {
-                //             if model.tether_agent.is_connected() && ui.button("Send").clicked() {
-                //                 model
-                //                     .tether_agent
-                //                     .encode_and_publish(&e.common().plug, e.value())
-                //                     .expect("Failed to send boolean");
-                //             }
-                //             entry_topic(ui, e);
-                //         })
-                //     });
-                // if entry_remove(ui) {
-                //     model.queue.push(QueueItem::Remove(i));
-                // }
             }
             WidgetEntry::Point2D(e) => {
-                // egui::Grid::new(format!("grid{}", i))
-                //     .num_columns(3)
-                //     .striped(true)
-                //     .min_col_width(ENTRY_GRID_WIDTH)
-                //     .show(ui, |ui| {
-                //         // Col 1
-                //         entry_heading(ui, e);
-
-                //         // Col 2
-                //         let res = ui.vertical(|ui| {
-                //             let plotter = egui::plot::Plot::new("tracking_plot")
-                //                 .width(PLOT_SIZE)
-                //                 .height(PLOT_SIZE)
-                //                 .data_aspect(1.0)
-                //                 .show(ui, |plot_ui| {
-                //                     (
-                //                         plot_ui.screen_from_plot(PlotPoint::new(0.0, 0.0)),
-                //                         plot_ui.pointer_coordinate(),
-                //                         plot_ui.pointer_coordinate_drag_delta(),
-                //                         plot_ui.plot_bounds(),
-                //                         plot_ui.plot_hovered(),
-                //                     )
-                //                 });
-                //                 ui.collapsing("Instructions", |ui| {
-                //                     ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
-                //                     ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
-                //                     if cfg!(target_arch = "wasm32") {
-                //                         ui.label("Zoom with ctrl / ⌘ + pointer wheel, or with pinch gesture.");
-                //                     } else if cfg!(target_os = "macos") {
-                //                         ui.label("Zoom with ctrl / ⌘ + scroll.");
-                //                     } else {
-                //                         ui.label("Zoom with ctrl + scroll.");
-                //                     }
-                //                     ui.label("Reset view with double-click.");
-                //                 });
-                //                 plotter
-                //         });
-
-                //         let (
-                //             _screen_pos,
-                //             pointer_coordinate,
-                //             _pointer_coordinate_drag_delta,
-                //             _bounds,
-                //             hovered,
-                //         ) = res.inner.inner;
-
-                //         // Col 3
-                //         ui.vertical(|ui| {
-                //             if model.tether_agent.is_connected() && ui.button("Send").clicked()
-                //                 || hovered && model.auto_send
-                //             {
-                //                 if let Some(c) = pointer_coordinate {
-                //                     // println!("Pointer coordinates: {:?}", c)
-                //                     let PlotPoint { x, y } = c;
-                //                     let p = [x, y];
-                //                     model
-                //                         .tether_agent
-                //                         .encode_and_publish(&e.common().plug, p)
-                //                         .expect("Failed to send Point2D message");
-                //                 }
-                //             }
-
-                //             entry_topic(ui, e);
-                //         });
-                //     });
-                // if entry_remove(ui) {
-                //     model.queue.push(QueueItem::Remove(i));
-                // }
+                if e.is_edit_mode() {
+                    e.render_editing(ctx, i);
+                } else {
+                    e.render_in_use(ctx, i, &model.tether_agent);
+                }
             }
             WidgetEntry::Generic(e) => {
                 // egui::Grid::new(format!("grid{}", i))
@@ -375,192 +242,21 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 &model.tether_agent,
             )));
     }
-    // egui::Window::new("Floating-Point Number")
-    //     .default_open(false)
-    //     .show(ctx, |ui| {
-    //         egui::Grid::new("my_grid")
-    //             .num_columns(2)
-    //             .striped(true)
-    //             .show(ui, |ui| {
-    //                 common_widget_values(ui, model);
-
-    //                 standard_spacer(ui);
-
-    //                 number_widget_range(ui, model, 1.);
-
-    //                 if ui.button("✚ Add").clicked() {
-    //                     model
-    //                         .widgets
-    //                         .push(WidgetEntry::FloatNumber(NumberWidget::new(
-    //                             &model.next_widget.name,
-    //                             {
-    //                                 if model.next_widget.description.is_empty() {
-    //                                     None
-    //                                 } else {
-    //                                     Some(&model.next_widget.description)
-    //                                 }
-    //                             },
-    //                             &model.next_widget.plug.name,
-    //                             {
-    //                                 if model.use_custom_topic {
-    //                                     Some(&model.next_topic)
-    //                                 } else {
-    //                                     None
-    //                                 }
-    //                             },
-    //                             0.,
-    //                             model.next_range.0.into()..=model.next_range.1.into(),
-    //                             &model.tether_agent,
-    //                         )));
-    //                     model.prepare_next_entry();
-    //                 }
-    //             });
-    //     });
-
-    // egui::Window::new("Whole Number")
-    //     .default_open(false)
-    //     .show(ctx, |ui| {
-    //         egui::Grid::new("my_grid")
-    //             .num_columns(2)
-    //             .striped(true)
-    //             .show(ui, |ui| {
-    //                 common_widget_values(ui, model);
-
-    //                 standard_spacer(ui);
-
-    //                 number_widget_range(ui, model, 100.);
-
-    //                 if ui.button("✚ Add").clicked() {
-    //                     let min = model.next_range.0 as i64;
-    //                     let max = model.next_range.1 as i64;
-    //                     model
-    //                         .widgets
-    //                         .push(WidgetEntry::WholeNumber(NumberWidget::new(
-    //                             &model.next_widget.name,
-    //                             {
-    //                                 if model.next_widget.description.is_empty() {
-    //                                     None
-    //                                 } else {
-    //                                     Some(&model.next_widget.description)
-    //                                 }
-    //                             },
-    //                             &model.next_widget.plug.name,
-    //                             {
-    //                                 if model.use_custom_topic {
-    //                                     Some(&model.next_topic)
-    //                                 } else {
-    //                                     None
-    //                                 }
-    //                             },
-    //                             0,
-    //                             min..=max,
-    //                             &model.tether_agent,
-    //                         )));
-    //                     model.prepare_next_entry();
-    //                 }
-    //             });
-    //     });
-
-    // egui::Window::new("Colour")
-    //     .default_open(false)
-    //     .show(ctx, |ui| {
-    //         egui::Grid::new("my_grid")
-    //             .num_columns(2)
-    //             .striped(true)
-    //             .show(ui, |ui| {
-    //                 common_widget_values(ui, model);
-    //                 if ui.button("✚ Add").clicked() {
-    //                     model.widgets.push(WidgetEntry::Colour(ColourWidget::new(
-    //                         model.next_widget.name.as_str(),
-    //                         {
-    //                             if model.next_widget.description.is_empty() {
-    //                                 None
-    //                             } else {
-    //                                 Some(&model.next_widget.description)
-    //                             }
-    //                         },
-    //                         &model.next_widget.plug.name,
-    //                         {
-    //                             if model.use_custom_topic {
-    //                                 Some(&model.next_topic)
-    //                             } else {
-    //                                 None
-    //                             }
-    //                         },
-    //                         [255, 255, 255, 255],
-    //                         &model.tether_agent,
-    //                     )));
-    //                     model.prepare_next_entry();
-    //                 }
-    //             });
-    //     });
-
-    // egui::Window::new("Boolean")
-    //     .default_open(false)
-    //     .show(ctx, |ui| {
-    //         egui::Grid::new("my_grid")
-    //             .num_columns(2)
-    //             .striped(true)
-    //             .show(ui, |ui| {
-    //                 common_widget_values(ui, model);
-    //                 if ui.button("✚ Add").clicked() {
-    //                     model.widgets.push(WidgetEntry::Bool(BoolWidget::new(
-    //                         model.next_widget.name.as_str(),
-    //                         {
-    //                             if model.next_widget.description.is_empty() {
-    //                                 None
-    //                             } else {
-    //                                 Some(&model.next_widget.description)
-    //                             }
-    //                         },
-    //                         &model.next_widget.plug.name,
-    //                         {
-    //                             if model.use_custom_topic {
-    //                                 Some(&model.next_topic)
-    //                             } else {
-    //                                 None
-    //                             }
-    //                         },
-    //                         false,
-    //                         &model.tether_agent,
-    //                     )));
-    //                     model.prepare_next_entry();
-    //                 }
-    //             });
-    //     });
-
-    // egui::Window::new("Empty Message")
-    //     .default_open(false)
-    //     .show(ctx, |ui| {
-    //         egui::Grid::new("my_grid")
-    //             .num_columns(2)
-    //             .striped(true)
-    //             .show(ui, |ui| {
-    //                 common_widget_values(ui, model);
-    //                 if ui.button("✚ Add").clicked() {
-    //                     model.widgets.push(WidgetEntry::Empty(EmptyWidget::new(
-    //                         model.next_widget.name.as_str(),
-    //                         {
-    //                             if model.next_widget.description.is_empty() {
-    //                                 None
-    //                             } else {
-    //                                 Some(&model.next_widget.description)
-    //                             }
-    //                         },
-    //                         &model.next_widget.plug.name,
-    //                         {
-    //                             if model.use_custom_topic {
-    //                                 Some(&model.next_topic)
-    //                             } else {
-    //                                 None
-    //                             }
-    //                         },
-    //                         &model.tether_agent,
-    //                     )));
-    //                     model.prepare_next_entry();
-    //                 }
-    //             });
-    //     });
+    if ui.button("Point2D").clicked() {
+        model.widgets.push(WidgetEntry::Point2D(Point2DWidget::new(
+            "Point2D",
+            Some("X and Y values"),
+            &model.next_widget.plug.name,
+            {
+                if model.use_custom_topic {
+                    Some(&model.next_topic)
+                } else {
+                    None
+                }
+            },
+            &model.tether_agent,
+        )))
+    }
 
     // egui::Window::new("Point2D")
     //     .default_open(false)
