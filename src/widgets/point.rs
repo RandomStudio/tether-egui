@@ -91,7 +91,7 @@ impl View for Point2DWidget {
         let (_screen_pos, pointer_coordinate, _pointer_coordinate_drag_delta, _bounds, hovered) =
             plot.inner;
 
-        if common_send_button(ui, self).clicked() || hovered {
+        if common_send_button(ui, self, true).clicked() || hovered && self.common().auto_send {
             if let Some(c) = pointer_coordinate {
                 // println!("Pointer coordinates: {:?}", c)
                 let PlotPoint { x, y } = c;

@@ -65,7 +65,8 @@ impl View for BoolWidget {
                 }),
             )
             .clicked()
-            || common_send_button(ui, self).clicked()
+            && self.common().auto_send
+            || common_send_button(ui, self, true).clicked()
         {
             common_send(self, tether_agent);
         }

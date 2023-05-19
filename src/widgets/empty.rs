@@ -51,7 +51,7 @@ impl View for EmptyWidget {
     fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
 
-        if common_send_button(ui, self).clicked() {
+        if common_send_button(ui, self, false).clicked() {
             common_send(self, tether_agent);
         };
     }

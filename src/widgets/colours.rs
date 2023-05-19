@@ -56,7 +56,8 @@ impl View for ColourWidget<ColourRGBA8> {
         if ui
             .color_edit_button_srgba_unmultiplied(self.value_mut())
             .changed()
-            || common_send_button(ui, self).clicked()
+            && self.common().auto_send
+            || common_send_button(ui, self, true).clicked()
         {
             common_send(self, tether_agent);
         }

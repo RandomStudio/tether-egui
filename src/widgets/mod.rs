@@ -46,10 +46,19 @@ pub struct Common {
     pub name: String,
     pub description: String,
     pub plug: PlugDefinition,
+
+    // The fields below are never used in on-disk versions,
+    // only in-memory state
     #[serde(skip)]
     is_edit_mode: bool,
     #[serde(skip)]
     pub use_custom_topic: bool,
+    #[serde(skip, default = "default_auto_send")]
+    pub auto_send: bool,
+}
+
+fn default_auto_send() -> bool {
+    true
 }
 
 impl Common {
@@ -74,6 +83,7 @@ impl Common {
                 .unwrap(),
             is_edit_mode: true,
             use_custom_topic: false,
+            auto_send: true,
         }
     }
 

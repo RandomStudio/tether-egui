@@ -63,12 +63,13 @@ impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
         if ui
             .add(Slider::new(self.value_mut(), min..=max).clamp_to_range(false))
             .changed()
+            && self.common().auto_send
         {
             common_send(self, tether_agent);
         };
         ui.small(format!("Range: {}-{}", min, max));
 
-        if common_send_button(ui, self).clicked() {
+        if common_send_button(ui, self, true).clicked() {
             common_send(self, tether_agent);
         };
     }

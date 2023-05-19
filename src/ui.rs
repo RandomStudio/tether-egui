@@ -44,10 +44,14 @@ pub fn common_save_button<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl Cust
 pub fn common_send_button<T: Serialize>(
     ui: &mut egui::Ui,
     entry: &mut impl CustomWidget<T>,
+    allow_auto_send: bool,
 ) -> Response {
     let res = ui.horizontal(|ui| {
         let res = ui.button("Send");
         entry_topic(ui, entry);
+        if allow_auto_send {
+            ui.checkbox(&mut entry.common_mut().auto_send, "Auto send");
+        }
         res
     });
     res.inner

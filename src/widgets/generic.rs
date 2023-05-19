@@ -79,7 +79,7 @@ impl View for GenericJSONWidget {
             ui.colored_label(Color32::RED, "Not valid JSON");
         }
 
-        if common_send_button(ui, self).clicked() {
+        if common_send_button(ui, self, false).clicked() {
             common_send(self, tether_agent);
         }
     }
