@@ -8,7 +8,9 @@ use crate::widgets::WidgetEntry;
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TetherSettings {
-    pub tether_host: IpAddr,
+    pub host: Option<IpAddr>,
+    pub username: Option<String>,
+    pub password: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -16,7 +16,7 @@ use log::{error, info, warn};
 use tether_agent::TetherAgent;
 use widgets::WidgetEntry;
 
-use crate::project::Project;
+use crate::project::{Project, TetherSettings};
 
 mod insights;
 mod project;
@@ -63,19 +63,19 @@ impl Default for Model {
 
         let project_loaded = project.load(&json_path);
 
-        let project_tether_settings = project.tether_settings.clone();
-        let tether_host = match project_tether_settings {
-            Some(settings) => settings.tether_host,
-            None => cli.tether_host,
-        };
+        let tether_settings = project.tether_settings.clone().unwrap_or(TetherSettings {
+            host: Some(cli.tether_host),
+            username: cli.tether_username,
+            password: cli.tether_password,
+        });
 
-        let tether_agent = TetherAgent::new("gui", None, Some(tether_host));
+        let tether_agent = TetherAgent::new("gui", None, tether_settings.host);
         let (role, id) = tether_agent.description();
 
         if cli.tether_disable {
             warn!("Tether disabled; please connect manually if required");
         } else {
-            match tether_agent.connect(cli.tether_username, cli.tether_password) {
+            match tether_agent.connect(tether_settings.username, tether_settings.password) {
                 Ok(()) => {
                     info!("Tether Agent connected successfully");
                 }
