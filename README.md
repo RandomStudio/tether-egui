@@ -22,12 +22,14 @@ More options: `--help`
 - Generic Data (Parse string as JSON -> MessagePack)
 
 ## TODO
+- [ ] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
+- [ ] Add moving head light Widget (colour, orientation, brightness?)
+- [ ] Should be able to adjust range on number values
 - [x] All Widgets should have Send button as well as "send on change" functionality (and send-on-change should be optionally disabled for all?)
 - [x] Add 2D point Widget
 - [x] Should be able to edit Widgets after adding (not just remove and re-add)
 - [x] Include sensible default descriptions per Widget type when adding
 - [x] JSON validation should only apply to currently-edited widget
-- [ ] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
 - [ ] Add 3D point Widget
 - [x] Add "empty" Widget
 - [x] Add editable "JSON string to MessagePack" Widget
