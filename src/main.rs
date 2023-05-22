@@ -16,7 +16,10 @@ use log::{error, info, warn};
 use tether_agent::TetherAgent;
 use widgets::WidgetEntry;
 
+use crate::project::Project;
+
 mod insights;
+mod project;
 mod settings;
 mod ui;
 mod widgets;
@@ -42,7 +45,7 @@ pub struct Model {
     json_file: Option<String>,
     agent_role: String,
     agent_id: String,
-    widgets: Vec<WidgetEntry>,
+    project: Project,
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
     insights: Insights,
@@ -53,7 +56,20 @@ impl Default for Model {
     fn default() -> Self {
         let cli = Cli::parse();
 
-        let tether_agent = TetherAgent::new("gui", None, Some(cli.tether_host));
+        let mut project = Project::default();
+
+        let json_path: String = cli.json_load.unwrap_or(String::from("./project.json"));
+        info!("Will attempt to load JSON from {} ...", &json_path);
+
+        let project_loaded = project.load(&json_path);
+
+        let project_tether_settings = project.tether_settings.clone();
+        let tether_host = match project_tether_settings {
+            Some(settings) => settings.tether_host,
+            None => cli.tether_host,
+        };
+
+        let tether_agent = TetherAgent::new("gui", None, Some(tether_host));
         let (role, id) = tether_agent.description();
 
         if cli.tether_disable {
@@ -69,43 +85,21 @@ impl Default for Model {
             }
         }
 
-        let json_file: String = cli.json_load.unwrap_or(String::from("./widgets.json"));
-        info!("Will attempt to load JSON from {} ...", &json_file);
-        let load_json = load_widgets_from_disk(&json_file);
-
         Self {
             json_file: {
-                if load_json.is_err() {
+                if project_loaded.is_err() {
                     None
                 } else {
-                    Some(json_file)
+                    Some(json_path)
                 }
             },
             agent_role: role.into(),
             agent_id: id.into(),
-            widgets: load_json.unwrap_or(Vec::new()),
+            project,
             queue: Vec::new(),
             insights: Insights::new(&tether_agent, &cli.monitor_topic),
             tether_agent,
             continuous_mode: cli.continuous_mode,
-        }
-    }
-}
-
-fn load_widgets_from_disk(file_path: &str) -> Result<Vec<WidgetEntry>, ()> {
-    let text = fs::read_to_string(file_path);
-    match text {
-        Ok(d) => {
-            info!("Found widget data file; parsing...");
-            let widgets =
-                serde_json::from_str::<Vec<WidgetEntry>>(&d).expect("failed to parse widget list");
-            info!("... loaded {} widgets OK", widgets.len());
-            // TODO: optionally "broadcast" all values from loaded Widgets
-            Ok(widgets)
-        }
-        Err(e) => {
-            error!("Failed to load widgets from disk: {:?}", e);
-            Err(())
         }
     }
 }
@@ -133,7 +127,7 @@ impl eframe::App for Model {
         while let Some(q) = self.queue.pop() {
             match q {
                 QueueItem::Remove(index) => {
-                    self.widgets.remove(index);
+                    self.project.widgets.remove(index);
                 }
             }
         }

@@ -2,7 +2,6 @@ use std::fs;
 
 use crate::{
     insights::Insights,
-    load_widgets_from_disk,
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
         numbers::NumberWidget, point::Point2DWidget, CustomWidget, View,
@@ -80,7 +79,7 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
     // );
     // standard_spacer(ui);
 
-    let widgets = &mut model.widgets;
+    let widgets = &mut model.project.widgets;
 
     for (i, entry) in widgets.iter_mut().enumerate() {
         match entry {
@@ -194,27 +193,34 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
 
 pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
     if ui.button("Boolean").clicked() {
-        model.widgets.push(WidgetEntry::Bool(BoolWidget::new(
-            "Boolean Meassage",
-            Some("A true or false value"),
-            "booleans",
-            None,
-            false,
-            &model.tether_agent,
-        )));
+        model
+            .project
+            .widgets
+            .push(WidgetEntry::Bool(BoolWidget::new(
+                "Boolean Meassage",
+                Some("A true or false value"),
+                "booleans",
+                None,
+                false,
+                &model.tether_agent,
+            )));
     }
     if ui.button("Empty").clicked() {
-        model.widgets.push(WidgetEntry::Empty(EmptyWidget::new(
-            "Empty Meassage",
-            Some("A message with no payload"),
-            "events",
-            None,
-            &model.tether_agent,
-        )));
+        model
+            .project
+            .widgets
+            .push(WidgetEntry::Empty(EmptyWidget::new(
+                "Empty Meassage",
+                Some("A message with no payload"),
+                "events",
+                None,
+                &model.tether_agent,
+            )));
     }
 
     if ui.button("Floating Point").clicked() {
         model
+            .project
             .widgets
             .push(WidgetEntry::FloatNumber(NumberWidget::new(
                 "Floating Point Number",
@@ -228,6 +234,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
     }
     if ui.button("Whole Number").clicked() {
         model
+            .project
             .widgets
             .push(WidgetEntry::WholeNumber(NumberWidget::new(
                 "Whole Number",
@@ -240,16 +247,20 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             )));
     }
     if ui.button("Point2D").clicked() {
-        model.widgets.push(WidgetEntry::Point2D(Point2DWidget::new(
-            "Point2D",
-            Some("X and Y values"),
-            "point2d",
-            None,
-            &model.tether_agent,
-        )));
+        model
+            .project
+            .widgets
+            .push(WidgetEntry::Point2D(Point2DWidget::new(
+                "Point2D",
+                Some("X and Y values"),
+                "point2d",
+                None,
+                &model.tether_agent,
+            )));
     }
     if ui.button("Generic data").clicked() {
         model
+            .project
             .widgets
             .push(WidgetEntry::Generic(GenericJSONWidget::new(
                 "Generic JSON Data",
@@ -260,13 +271,16 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             )));
     }
     if ui.button("Colour").clicked() {
-        model.widgets.push(WidgetEntry::Colour(ColourWidget::new(
-            "Colour",
-            Some("8-bit colour including alpha"),
-            "colours",
-            None,
-            &model.tether_agent,
-        )))
+        model
+            .project
+            .widgets
+            .push(WidgetEntry::Colour(ColourWidget::new(
+                "Colour",
+                Some("8-bit colour including alpha"),
+                "colours",
+                None,
+                &model.tether_agent,
+            )))
     }
 }
 
@@ -314,7 +328,7 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                 .save_file()
             {
                 let path_string = path.display().to_string();
-                let text = serde_json::to_string_pretty(&model.widgets)
+                let text = serde_json::to_string_pretty(&model.project)
                     .expect("failed to serialise widget data");
                 match fs::write(path_string, text) {
                     Ok(()) => {
@@ -332,13 +346,14 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                 .pick_file()
             {
                 let path_string = path.display().to_string();
-                model.widgets =
-                    load_widgets_from_disk(&path_string).expect("failed to load widgets");
+                // model.project.widgets =
+                //     load_widgets_from_disk(&path_string).expect("failed to load widgets");
+                model.project.load(&path_string);
                 model.json_file = Some(path_string);
             }
         }
         if ui.button("Clear").clicked() {
-            model.widgets.clear();
+            model.project.widgets.clear();
             model.json_file = None;
         }
     });
