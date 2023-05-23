@@ -24,6 +24,7 @@ use crate::{
 mod insights;
 mod project;
 mod settings;
+mod tether_utils;
 mod ui;
 mod widgets;
 
@@ -48,6 +49,7 @@ pub struct Model {
     json_file: Option<String>,
     agent_role: String,
     agent_id: String,
+    monitor_topic: String,
     project: Project,
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
@@ -103,6 +105,7 @@ impl Default for Model {
             },
             agent_role: role.into(),
             agent_id: id.into(),
+            monitor_topic: cli.monitor_topic.clone(),
             project,
             queue: Vec::new(),
             insights: Insights::new(&tether_agent, &cli.monitor_topic),
