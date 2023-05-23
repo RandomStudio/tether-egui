@@ -10,12 +10,16 @@ use crate::ui::{
 
 use super::{Common, CustomWidget, View};
 
+const SENSIBLE_MIN: f64 = -100000.;
+const SENSIBLE_MAX: f64 = 100000.;
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NumberWidget<T> {
     common: Common,
     value: T,
-    range: RangeInclusive<T>,
+    range_min: T,
+    range_max: T,
 }
 
 impl<T: Numeric> NumberWidget<T> {
@@ -31,12 +35,13 @@ impl<T: Numeric> NumberWidget<T> {
         NumberWidget {
             common: Common::new(name, description, plug_name, custom_topic, agent),
             value,
-            range,
+            range_min: *range.start(),
+            range_max: *range.end(),
         }
     }
 
-    pub fn range(&self) -> (T, T) {
-        (*self.range.start(), *self.range.end())
+    pub fn range(&self) -> RangeInclusive<T> {
+        self.range_min..=self.range_max
     }
 }
 
@@ -59,15 +64,21 @@ impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
     fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
 
-        let (min, max) = self.range();
+        let &min = self.range().start();
+        let &max = self.range().end();
+
         if ui
-            .add(Slider::new(self.value_mut(), min..=max).clamp_to_range(false))
+            .add(Slider::new(&mut self.value, min..=max).clamp_to_range(false))
             .changed()
             && self.common().auto_send
         {
             common_send(self, tether_agent);
         };
-        ui.small(format!("Range: {}-{}", min, max));
+        ui.small(format!(
+            "Range: {}-{}",
+            self.range().start(),
+            self.range().end()
+        ));
 
         if common_send_button(ui, self, true).clicked() {
             common_send(self, tether_agent);
@@ -76,6 +87,19 @@ impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
 
     fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_editable_values(ui, self, tether_agent);
+        ui.collapsing("Range", |ui| {
+            // This trickery is needed so that we artifically restrict slider ranges to
+            // a sensible range while preserving types
+            let (min, max) = (T::from_f64(SENSIBLE_MIN), T::from_f64(SENSIBLE_MAX));
+
+            ui.label("Min");
+            if ui
+                .add(Slider::new(&mut self.range_min, min..=max))
+                .changed()
+            {};
+            ui.label("Max");
+            ui.add(Slider::new(&mut self.range_max, min..=max));
+        });
         common_save_button(ui, self);
     }
 }
