@@ -22,7 +22,7 @@ More options: `--help`
 - Generic Data (Parse string as JSON -> MessagePack)
 
 ## TODO
-- [ ] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
+- [x] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
 - [ ] Add moving head light Widget (colour, orientation, brightness?)
 - [ ] Should be able to adjust range on number values
 - [x] All Widgets should have Send button as well as "send on change" functionality (and send-on-change should be optionally disabled for all?)
