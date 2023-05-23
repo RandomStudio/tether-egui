@@ -2,6 +2,8 @@ use std::fs;
 
 use crate::{
     insights::Insights,
+    project::TetherSettings,
+    settings::LOCALHOST,
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
         numbers::NumberWidget, point::Point2DWidget, CustomWidget, View,
@@ -311,7 +313,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
 // }
 
 pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
-    ui.heading("Tether Agent");
+    ui.heading("Project");
 
     standard_spacer(ui);
     ui.separator();
@@ -327,6 +329,22 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                 .add_filter("text", &["json"])
                 .save_file()
             {
+                if model.editable_tether_settings.was_changed {
+                    info!("Tether Settings were edited; saving these to project");
+                    model.project.tether_settings = Some(TetherSettings {
+                        host: model.editable_tether_settings.host.clone(),
+                        username: if model.editable_tether_settings.username == "" {
+                            None
+                        } else {
+                            Some(model.editable_tether_settings.username.clone())
+                        },
+                        password: if model.editable_tether_settings.password == "" {
+                            None
+                        } else {
+                            Some(model.editable_tether_settings.password.clone())
+                        },
+                    })
+                };
                 let path_string = path.display().to_string();
                 let text = serde_json::to_string_pretty(&model.project)
                     .expect("failed to serialise widget data");
@@ -346,9 +364,10 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                 .pick_file()
             {
                 let path_string = path.display().to_string();
-                // model.project.widgets =
-                //     load_widgets_from_disk(&path_string).expect("failed to load widgets");
-                model.project.load(&path_string);
+                model
+                    .project
+                    .load(&path_string)
+                    .expect("failed to load project from file");
                 model.json_file = Some(path_string);
             }
         }
@@ -362,7 +381,63 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     ui.separator();
     ui.heading("Agent");
 
-    ui.label(model.tether_agent.broker_uri());
+    if model.editable_tether_settings.is_editing {
+        ui.horizontal(|ui| {
+            ui.label("IP Address");
+            ui.text_edit_singleline(&mut model.editable_tether_settings.host);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Username");
+            ui.text_edit_singleline(&mut model.editable_tether_settings.username);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Password");
+            ui.text_edit_singleline(&mut model.editable_tether_settings.password);
+        });
+        if ui.button("Apply").clicked() {
+            model.editable_tether_settings.is_editing = false;
+            info!("Re(creating) Tether Agent with new settings...");
+            let tether_agent = TetherAgent::new(
+                &model.agent_role,
+                Some(&model.agent_id),
+                Some(
+                    model
+                        .editable_tether_settings
+                        .host
+                        .parse()
+                        .unwrap_or(LOCALHOST),
+                ),
+            );
+            let username = if model.editable_tether_settings.username == "" {
+                None
+            } else {
+                Some(model.editable_tether_settings.username.clone())
+            };
+            let password = if model.editable_tether_settings.password == "" {
+                None
+            } else {
+                Some(model.editable_tether_settings.password.clone())
+            };
+            match tether_agent.connect(username, password) {
+                Ok(()) => {
+                    info!("Connected OK");
+                    model.tether_agent = tether_agent;
+                    model.editable_tether_settings.was_changed = true;
+                }
+                Err(e) => {
+                    error!("Failed to connect with new settings: {}", e);
+                    model.editable_tether_settings.is_editing = false;
+                    model.editable_tether_settings.was_changed = false;
+                }
+            }
+        }
+    } else {
+        ui.label(model.tether_agent.broker_uri());
+
+        if ui.button("Edit").clicked() {
+            model.editable_tether_settings.is_editing = true;
+        }
+    }
 
     if model.tether_agent.is_connected() {
         ui.label(RichText::new("Connected ☑").color(Color32::GREEN));

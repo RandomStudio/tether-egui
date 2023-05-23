@@ -1,16 +1,46 @@
-use std::{fs, net::IpAddr};
+use std::fs;
 
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 
-use crate::widgets::WidgetEntry;
+use crate::{settings::LOCALHOST, widgets::WidgetEntry};
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TetherSettings {
-    pub host: Option<IpAddr>,
+    pub host: String,
     pub username: Option<String>,
     pub password: Option<String>,
+}
+
+impl Default for TetherSettings {
+    fn default() -> Self {
+        TetherSettings {
+            host: LOCALHOST.to_string(),
+            username: None,
+            password: None,
+        }
+    }
+}
+
+pub struct EditableTetherSettings {
+    pub is_editing: bool,
+    pub was_changed: bool,
+    pub host: String,
+    pub username: String,
+    pub password: String,
+}
+
+impl Default for EditableTetherSettings {
+    fn default() -> Self {
+        EditableTetherSettings {
+            is_editing: false,
+            was_changed: false,
+            host: "127.0.0.1".into(),
+            username: "".into(),
+            password: "".into(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]

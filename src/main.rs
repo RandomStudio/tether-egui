@@ -1,8 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use clap::Parser;
+use project::EditableTetherSettings;
 use settings::Cli;
-use std::fs;
 use ui::{available_widgets, general_agent_area, standard_spacer, widgets_in_use};
 
 extern crate rmp_serde;
@@ -16,7 +16,10 @@ use log::{error, info, warn};
 use tether_agent::TetherAgent;
 use widgets::WidgetEntry;
 
-use crate::project::{Project, TetherSettings};
+use crate::{
+    project::{Project, TetherSettings},
+    settings::LOCALHOST,
+};
 
 mod insights;
 mod project;
@@ -50,6 +53,7 @@ pub struct Model {
     tether_agent: TetherAgent,
     insights: Insights,
     continuous_mode: bool,
+    editable_tether_settings: EditableTetherSettings,
 }
 
 impl Default for Model {
@@ -64,12 +68,16 @@ impl Default for Model {
         let project_loaded = project.load(&json_path);
 
         let tether_settings = project.tether_settings.clone().unwrap_or(TetherSettings {
-            host: Some(cli.tether_host),
+            host: cli.tether_host.to_string(),
             username: cli.tether_username,
             password: cli.tether_password,
         });
 
-        let tether_agent = TetherAgent::new("gui", None, tether_settings.host);
+        let tether_agent = TetherAgent::new(
+            "gui",
+            None,
+            Some(tether_settings.host.parse().unwrap_or(LOCALHOST)),
+        );
         let (role, id) = tether_agent.description();
 
         if cli.tether_disable {
@@ -100,6 +108,7 @@ impl Default for Model {
             insights: Insights::new(&tether_agent, &cli.monitor_topic),
             tether_agent,
             continuous_mode: cli.continuous_mode,
+            editable_tether_settings: EditableTetherSettings::default(),
         }
     }
 }
