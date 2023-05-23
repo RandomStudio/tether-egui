@@ -24,7 +24,7 @@ More options: `--help`
 ## TODO
 - [x] Tether host can be saved in widgets.json, optionally overriden via CLI or GUI
 - [ ] Add moving head light Widget (colour, orientation, brightness?)
-- [ ] Should be able to adjust range on number values
+- [x] Should be able to adjust range on number values
 - [x] All Widgets should have Send button as well as "send on change" functionality (and send-on-change should be optionally disabled for all?)
 - [x] Add 2D point Widget
 - [x] Should be able to edit Widgets after adding (not just remove and re-add)
