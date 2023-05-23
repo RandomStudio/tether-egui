@@ -2,8 +2,8 @@ use std::fs;
 
 use crate::{
     insights::Insights,
-    project::TetherSettings,
-    settings::LOCALHOST,
+    project::{EditableTetherSettings, TetherSettings},
+    tether_utils::attempt_new_tether_connection,
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
         numbers::NumberWidget, point::Point2DWidget, CustomWidget, View,
@@ -364,11 +364,39 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                 .pick_file()
             {
                 let path_string = path.display().to_string();
-                model
-                    .project
-                    .load(&path_string)
-                    .expect("failed to load project from file");
-                model.json_file = Some(path_string);
+                match model.project.load(&path_string) {
+                    Ok(()) => {
+                        info!("Loaded project file OK");
+                        model.json_file = Some(path_string);
+                        if let Some(tether_settings) = &model.project.tether_settings {
+                            info!("Project file had custom Tether settings; attempt to apply and connect...");
+                            let tether_settings = EditableTetherSettings {
+                                is_editing: false,
+                                was_changed: true,
+                                host: tether_settings.host.clone(),
+                                username: tether_settings.username.clone().unwrap_or("".into()),
+                                password: tether_settings.password.clone().unwrap_or("".into()),
+                            };
+                            match attempt_new_tether_connection(
+                                &tether_settings,
+                                &model.agent_role,
+                                &model.agent_id,
+                            ) {
+                                Ok(tether_agent) => {
+                                    model.tether_agent = tether_agent;
+                                    model.insights =
+                                        Insights::new(&model.tether_agent, &model.monitor_topic);
+                                }
+                                Err(_) => {
+                                    error!("Failed to connect using these settings; ignore");
+                                }
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        error!("Failed to load project file");
+                    }
+                }
             }
         }
         if ui.button("Clear").clicked() {
@@ -397,35 +425,20 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         if ui.button("Apply").clicked() {
             model.editable_tether_settings.is_editing = false;
             info!("Re(creating) Tether Agent with new settings...");
-            let tether_agent = TetherAgent::new(
+
+            match attempt_new_tether_connection(
+                &model.editable_tether_settings,
                 &model.agent_role,
-                Some(&model.agent_id),
-                Some(
-                    model
-                        .editable_tether_settings
-                        .host
-                        .parse()
-                        .unwrap_or(LOCALHOST),
-                ),
-            );
-            let username = if model.editable_tether_settings.username == "" {
-                None
-            } else {
-                Some(model.editable_tether_settings.username.clone())
-            };
-            let password = if model.editable_tether_settings.password == "" {
-                None
-            } else {
-                Some(model.editable_tether_settings.password.clone())
-            };
-            match tether_agent.connect(username, password) {
-                Ok(()) => {
+                &model.agent_id,
+            ) {
+                Ok(tether_agent) => {
                     info!("Connected OK");
                     model.tether_agent = tether_agent;
                     model.editable_tether_settings.was_changed = true;
+                    model.insights = Insights::new(&model.tether_agent, &model.monitor_topic);
                 }
-                Err(e) => {
-                    error!("Failed to connect with new settings: {}", e);
+                Err(_) => {
+                    error!("Failed to connect with new settings; discard");
                     model.editable_tether_settings.is_editing = false;
                     model.editable_tether_settings.was_changed = false;
                 }
@@ -444,13 +457,17 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     } else {
         ui.label(RichText::new("Not connected ✖").color(Color32::RED));
         if ui.button("Connect").clicked() {
-            // TODO: need to use username, password, monitor topic if set!
-            match model.tether_agent.connect(None, None) {
-                Ok(()) => {
-                    model.insights = Insights::new(&model.tether_agent, "#");
+            match attempt_new_tether_connection(
+                &model.editable_tether_settings,
+                &model.agent_role,
+                &model.agent_id,
+            ) {
+                Ok(tether_agent) => {
+                    model.tether_agent = tether_agent;
+                    model.insights = Insights::new(&model.tether_agent, &model.monitor_topic);
                 }
-                Err(e) => {
-                    error!("Tether Agent failed to connect: {}", e);
+                Err(_) => {
+                    error!("Failed to connect");
                 }
             }
         }
