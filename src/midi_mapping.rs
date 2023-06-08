@@ -82,7 +82,7 @@ pub fn update_widget_if_controllable<T: Serialize + Numeric + Real>(
                 if mapping.channel == *channel && mapping.controller == *controller {
                     debug!("Message matches MIDI mapping, should update");
                     let output_range = entry.range();
-                    let input_range = to_numeric::<T>(0.)..=to_numeric(127.0);
+                    let input_range = T::from_f64(0.)..=T::from_f64(127.0);
                     let midi_value_number = T::from_f64(*value as f64);
                     let remapped_value = remap(midi_value_number, input_range, output_range);
                     let v = entry.value_mut();
@@ -91,8 +91,4 @@ pub fn update_widget_if_controllable<T: Serialize + Numeric + Real>(
             }
         }
     }
-}
-
-fn to_numeric<T: Numeric>(value: f64) -> T {
-    T::from_f64(value)
 }
