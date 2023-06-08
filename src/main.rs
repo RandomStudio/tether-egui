@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use clap::Parser;
+use midi_mapping::MidiSubscriber;
 use project::EditableTetherSettings;
 use settings::Cli;
 use ui::{available_widgets, general_agent_area, standard_spacer, widgets_in_use};
@@ -12,11 +13,12 @@ extern crate serde_json;
 use eframe::egui;
 use env_logger::Env;
 use insights::Insights;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use tether_agent::TetherAgent;
 use widgets::WidgetEntry;
 
 use crate::{
+    midi_mapping::update_widget_if_controllable,
     project::{Project, TetherSettings},
     settings::LOCALHOST,
 };
@@ -55,6 +57,7 @@ pub struct Model {
     queue: Vec<QueueItem>,
     tether_agent: TetherAgent,
     insights: Insights,
+    midi_handler: MidiSubscriber,
     continuous_mode: bool,
     editable_tether_settings: EditableTetherSettings,
 }
@@ -110,6 +113,7 @@ impl Default for Model {
             project,
             queue: Vec::new(),
             insights: Insights::new(&tether_agent, &cli.monitor_topic),
+            midi_handler: MidiSubscriber::new(&tether_agent),
             tether_agent,
             continuous_mode: cli.continuous_mode,
             editable_tether_settings: EditableTetherSettings::default(),
@@ -135,6 +139,19 @@ impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if let Some((plug_name, message)) = &self.tether_agent.check_messages() {
             self.insights.update(plug_name, message);
+            if let Some(control_change_message) =
+                self.midi_handler.get_controller_message(plug_name, message)
+            {
+                debug!("Got ControlChange message: {:?}", &control_change_message);
+                for widget in self.project.widgets.iter_mut() {
+                    match widget {
+                        WidgetEntry::FloatNumber(e) => {
+                            update_widget_if_controllable(e, &control_change_message)
+                        }
+                        _ => {}
+                    }
+                }
+            }
         }
 
         if self.continuous_mode {

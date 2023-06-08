@@ -14,6 +14,7 @@ pub struct Insights {
 }
 
 impl Insights {
+    /// Create one plug that subscribes to all channels defined by topic; typically `#`
     pub fn new(agent: &TetherAgent, topic: &str) -> Self {
         if agent.is_connected() {
             let _monitor_plug = agent

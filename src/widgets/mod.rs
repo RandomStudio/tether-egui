@@ -41,7 +41,7 @@ pub trait CustomWidget<T: Serialize> {
     fn value_mut(&mut self) -> &mut T;
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Common {
     pub name: String,
