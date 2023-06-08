@@ -3,9 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Display, ops::RangeInclusive};
 use tether_agent::TetherAgent;
 
-use crate::ui::{
-    common_editable_values, common_in_use_heading, common_save_button, common_send,
-    common_send_button,
+use crate::{
+    midi_mapping::MidiMapping,
+    ui::{
+        common_editable_values, common_in_use_heading, common_save_button, common_send,
+        common_send_button,
+    },
 };
 
 use super::{Common, CustomWidget, View};
@@ -100,6 +103,22 @@ impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
             ui.label("Max");
             ui.add(Slider::new(&mut self.range_max, min..=max));
         });
+
+        // TODO move this into generic "common_midi" function
+        if ui.button("Learn MIDI mapping").clicked() {
+            self.common_mut().midi_mapping = Some(MidiMapping::Learning);
+        }
+        if let Some(midi) = &self.common().midi_mapping {
+            match midi {
+                MidiMapping::Learning => {
+                    ui.label("Learning...");
+                }
+                MidiMapping::Set(mapping) => {
+                    ui.label(format!("{:?}", mapping));
+                }
+            }
+        }
+
         common_save_button(ui, self);
     }
 }

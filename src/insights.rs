@@ -1,5 +1,5 @@
 use circular_buffer::CircularBuffer;
-use tether_agent::{parse_agent_id, parse_agent_role, parse_plug_name, TetherAgent};
+use tether_agent::{mqtt::Message, parse_agent_id, parse_agent_role, parse_plug_name, TetherAgent};
 
 pub const MONITOR_LOG_LENGTH: usize = 256;
 
@@ -31,41 +31,33 @@ impl Insights {
         }
     }
 
-    pub fn update(&mut self, agent: &TetherAgent) -> bool {
-        if !agent.is_connected() {
-            return false;
+    pub fn update(&mut self, _plug_name: &String, message: &Message) {
+        self.message_count += 1;
+        let bytes = message.payload();
+        if bytes.is_empty() {
+            self.message_log
+                .push_back((message.topic().into(), "[EMPTY_MESSAGE]".into()));
+        } else {
+            let value: rmpv::Value =
+                rmp_serde::from_slice(bytes).expect("failed to decode msgpack");
+            let json = serde_json::to_string(&value).expect("failed to stringify JSON");
+            self.message_log.push_back((message.topic().into(), json));
         }
-        let mut updated = false;
-        while let Some((_plug_name, message)) = agent.check_messages() {
-            self.message_count += 1;
-            let bytes = message.payload();
-            if bytes.is_empty() {
-                self.message_log
-                    .push_back((message.topic().into(), "[EMPTY_MESSAGE]".into()));
-            } else {
-                let value: rmpv::Value =
-                    rmp_serde::from_slice(bytes).expect("failed to decode msgpack");
-                let json = serde_json::to_string(&value).expect("failed to stringify JSON");
-                self.message_log.push_back((message.topic().into(), json));
-            }
 
-            // Collect some stats...
-            add_if_unique(message.topic(), &mut self.topics);
-            add_if_unique(
-                parse_agent_role(message.topic()).unwrap_or("unknown"),
-                &mut self.roles,
-            );
-            add_if_unique(
-                parse_agent_id(message.topic()).unwrap_or("unknown"),
-                &mut self.ids,
-            );
-            add_if_unique(
-                parse_plug_name(message.topic()).unwrap_or("unknown"),
-                &mut self.plugs,
-            );
-            updated = true;
-        }
-        updated
+        // Collect some stats...
+        add_if_unique(message.topic(), &mut self.topics);
+        add_if_unique(
+            parse_agent_role(message.topic()).unwrap_or("unknown"),
+            &mut self.roles,
+        );
+        add_if_unique(
+            parse_agent_id(message.topic()).unwrap_or("unknown"),
+            &mut self.ids,
+        );
+        add_if_unique(
+            parse_plug_name(message.topic()).unwrap_or("unknown"),
+            &mut self.plugs,
+        );
     }
 
     pub fn message_log(&self) -> &CircularBuffer<MONITOR_LOG_LENGTH, MessageLogEntry> {

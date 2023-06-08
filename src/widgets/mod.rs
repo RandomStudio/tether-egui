@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use tether_agent::{PlugDefinition, TetherAgent};
 
+use crate::midi_mapping::MidiMapping;
+
 use self::{
     boolean::BoolWidget,
     colours::{ColourRGBA8, ColourWidget},
@@ -41,11 +43,11 @@ pub trait CustomWidget<T: Serialize> {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-
 pub struct Common {
     pub name: String,
     pub description: String,
     pub plug: PlugDefinition,
+    pub midi_mapping: Option<MidiMapping>,
 
     // The fields below are never used in on-disk versions,
     // only in-memory state
@@ -84,6 +86,7 @@ impl Common {
             is_edit_mode: true,
             use_custom_topic: false,
             auto_send: true,
+            midi_mapping: None,
         }
     }
 
@@ -100,3 +103,7 @@ pub trait View {
     fn render_editing(&mut self, ui: &mut egui::Ui, tether_agent: &TetherAgent);
     fn render_in_use(&mut self, ui: &mut egui::Ui, tether_agent: &TetherAgent);
 }
+
+// pub trait MidiControllable {
+//     fn handle_midi_message(&mut self, )
+// }

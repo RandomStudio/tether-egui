@@ -22,6 +22,7 @@ use crate::{
 };
 
 mod insights;
+mod midi_mapping;
 mod project;
 mod settings;
 mod tether_utils;
@@ -132,7 +133,11 @@ enum QueueItem {
 
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if self.insights.update(&self.tether_agent) || self.continuous_mode {
+        if let Some((plug_name, message)) = &self.tether_agent.check_messages() {
+            self.insights.update(plug_name, message);
+        }
+
+        if self.continuous_mode {
             ctx.request_repaint();
         }
 
