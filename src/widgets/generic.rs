@@ -1,4 +1,5 @@
 use egui::{Color32, Ui};
+use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tether_agent::TetherAgent;
@@ -79,14 +80,18 @@ impl View for GenericJSONWidget {
         }
 
         if common_send_button(ui, self, false).clicked() {
-            let encoded: serde_json::Value =
-                serde_json::from_str(&self.value).expect("failed to encode JSON from string");
-            let payload = rmp_serde::to_vec_named(&encoded).expect("failed to encode msgpack");
-            tether_agent
-                .publish(&self.common().plug, Some(&payload))
-                .expect("failed to publish from generic data widget");
-
-            // common_send(self, tether_agent);
+            match serde_json::from_str::<serde_json::Value>(&self.value) {
+                Ok(encoded) => {
+                    let payload =
+                        rmp_serde::to_vec_named(&encoded).expect("failed to encode msgpack");
+                    tether_agent
+                        .publish(&self.common().plug, Some(&payload))
+                        .expect("failed to publish from generic data widget");
+                }
+                Err(e) => {
+                    error!("Could not serialised String -> JSON; error: {}", e);
+                }
+            }
         }
     }
 }
