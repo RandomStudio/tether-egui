@@ -12,12 +12,12 @@ pub fn attempt_new_tether_connection(
         Some(id),
         Some(editable_settings.host.parse().unwrap_or(LOCALHOST)),
     );
-    let username = if editable_settings.username == "" {
+    let username = if editable_settings.username.is_empty() {
         None
     } else {
         Some(editable_settings.username.clone())
     };
-    let password = if editable_settings.password == "" {
+    let password = if editable_settings.password.is_empty() {
         None
     } else {
         Some(editable_settings.password.clone())

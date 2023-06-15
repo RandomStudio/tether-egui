@@ -333,12 +333,12 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                     info!("Tether Settings were edited; saving these to project");
                     model.project.tether_settings = Some(TetherSettings {
                         host: model.editable_tether_settings.host.clone(),
-                        username: if model.editable_tether_settings.username == "" {
+                        username: if model.editable_tether_settings.username.is_empty() {
                             None
                         } else {
                             Some(model.editable_tether_settings.username.clone())
                         },
-                        password: if model.editable_tether_settings.password == "" {
+                        password: if model.editable_tether_settings.password.is_empty() {
                             None
                         } else {
                             Some(model.editable_tether_settings.password.clone())

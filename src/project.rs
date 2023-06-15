@@ -43,7 +43,7 @@ impl Default for EditableTetherSettings {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
     pub widgets: Vec<WidgetEntry>,
@@ -67,15 +67,6 @@ impl Project {
                 error!("Failed to load widgets from disk: {:?}", e);
                 Err(())
             }
-        }
-    }
-}
-
-impl Default for Project {
-    fn default() -> Self {
-        Project {
-            widgets: Vec::new(),
-            tether_settings: None,
         }
     }
 }
