@@ -1,4 +1,5 @@
 use egui::{emath::Numeric, Slider, Ui};
+use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, ops::RangeInclusive};
 use tether_agent::TetherAgent;
@@ -75,6 +76,7 @@ impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
             .changed()
             && self.common().auto_send
         {
+            debug!("Changed; send");
             common_send(self, tether_agent);
         };
         ui.small(format!(

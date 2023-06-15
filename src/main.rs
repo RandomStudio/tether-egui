@@ -21,6 +21,7 @@ use crate::{
     midi_mapping::update_widget_if_controllable,
     project::{Project, TetherSettings},
     settings::LOCALHOST,
+    ui::common_send,
 };
 
 mod insights;
@@ -146,7 +147,9 @@ impl eframe::App for Model {
                 for widget in self.project.widgets.iter_mut() {
                     match widget {
                         WidgetEntry::FloatNumber(e) => {
-                            update_widget_if_controllable(e, &control_change_message)
+                            if update_widget_if_controllable(e, &control_change_message) {
+                                common_send(e, &self.tether_agent);
+                            }
                         }
                         _ => {}
                     }
