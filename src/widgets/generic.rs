@@ -89,7 +89,7 @@ impl View for GenericJSONWidget {
                         .expect("failed to publish from generic data widget");
                 }
                 Err(e) => {
-                    error!("Could not serialised String -> JSON; error: {}", e);
+                    error!("Could not serialise String -> JSON; error: {}", e);
                 }
             }
         }
