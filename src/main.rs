@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use clap::Parser;
-use midi_mapping::MidiSubscriber;
+use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
 use project::EditableTetherSettings;
 use settings::Cli;
 use ui::{available_widgets, general_agent_area, standard_spacer, widgets_in_use};
@@ -18,7 +18,7 @@ use tether_agent::TetherAgent;
 use widgets::WidgetEntry;
 
 use crate::{
-    midi_mapping::update_widget_if_controllable,
+    midi_mapping::{send_if_midi_note, update_widget_if_controllable},
     project::{Project, TetherSettings},
     settings::LOCALHOST,
     ui::common_send,
@@ -36,7 +36,11 @@ fn main() -> Result<(), eframe::Error> {
     let cli = Cli::parse();
 
     // Initialize the logger from the environment
-    env_logger::Builder::from_env(Env::default().default_filter_or(&cli.log_level)).init();
+    env_logger::Builder::from_env(Env::default().default_filter_or(&cli.log_level))
+        .filter_module("paho_mqtt", log::LevelFilter::Warn)
+        .filter_module("winit", log::LevelFilter::Warn)
+        .filter_module("eframe", log::LevelFilter::Warn)
+        .init();
 
     let options = eframe::NativeOptions {
         initial_window_size: Some(egui::vec2(1280.0, 960.0)),
@@ -140,25 +144,43 @@ impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         while let Some((plug_name, message)) = &self.tether_agent.check_messages() {
             self.insights.update(plug_name, message);
-            if let Some(control_change_message) =
-                self.midi_handler.get_controller_message(plug_name, message)
-            {
-                debug!("Got ControlChange message: {:?}", &control_change_message);
-                for widget in self.project.widgets.iter_mut() {
-                    match widget {
-                        WidgetEntry::FloatNumber(e) => {
-                            if update_widget_if_controllable(e, &control_change_message) {
-                                common_send(e, &self.tether_agent);
+            match self.midi_handler.get_midi_message(plug_name, message) {
+                Some(MidiMessage::ControlChange(cc_message)) => {
+                    for widget in self.project.widgets.iter_mut() {
+                        match widget {
+                            WidgetEntry::FloatNumber(e) => {
+                                update_widget_if_controllable(e, &cc_message, &self.tether_agent);
                             }
-                        }
-                        WidgetEntry::WholeNumber(e) => {
-                            if update_widget_if_controllable(e, &control_change_message) {
-                                common_send(e, &self.tether_agent);
+                            WidgetEntry::WholeNumber(e) => {
+                                update_widget_if_controllable(e, &cc_message, &self.tether_agent);
                             }
+                            _ => {}
                         }
-                        _ => {}
                     }
                 }
+                Some(MidiMessage::Note(note_message)) => {
+                    for widget in self.project.widgets.iter_mut() {
+                        match widget {
+                            WidgetEntry::Bool(e) => {
+                                toggle_if_midi_note(e, &note_message, &self.tether_agent)
+                            }
+                            WidgetEntry::Empty(e) => {
+                                send_if_midi_note(e, &note_message, &self.tether_agent);
+                            }
+                            WidgetEntry::Generic(e) => {
+                                send_if_midi_note(e, &note_message, &self.tether_agent);
+                            }
+                            WidgetEntry::Colour(e) => {
+                                send_if_midi_note(e, &note_message, &self.tether_agent);
+                            }
+                            WidgetEntry::Point2D(e) => {
+                                send_if_midi_note(e, &note_message, &self.tether_agent);
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                None => {}
             }
         }
 

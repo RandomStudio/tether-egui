@@ -108,7 +108,7 @@ impl View for NumberWidget {
                     MidiMapping::Set(mapping) => {
                         ui.label(format!(
                             "MIDI mapped: ch {} cc {}",
-                            mapping.channel, mapping.controller
+                            mapping.channel, mapping.controller_or_note
                         ));
                     }
                 }
@@ -141,21 +141,6 @@ impl View for NumberWidget {
                 SENSIBLE_MIN..=SENSIBLE_MAX,
             ));
         });
-
-        // TODO move this into generic "common_midi" function
-        if ui.button("Learn MIDI mapping").clicked() {
-            self.common_mut().midi_mapping = Some(MidiMapping::Learning);
-        }
-        if let Some(midi) = &self.common().midi_mapping {
-            match midi {
-                MidiMapping::Learning => {
-                    ui.label("Learning...");
-                }
-                MidiMapping::Set(mapping) => {
-                    ui.label(format!("{:?}", mapping));
-                }
-            }
-        }
 
         common_save_button(ui, self);
     }

@@ -2,9 +2,12 @@ use egui::Ui;
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
-use crate::ui::{
-    common_editable_values, common_in_use_heading, common_save_button, common_send,
-    common_send_button,
+use crate::{
+    midi_mapping::MidiMapping,
+    ui::{
+        common_editable_values, common_in_use_heading, common_save_button, common_send,
+        common_send_button,
+    },
 };
 
 use super::{Common, CustomWidget, View};
@@ -50,6 +53,18 @@ impl CustomWidget<()> for EmptyWidget {
 impl View for EmptyWidget {
     fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
+
+        if let Some(midi) = &self.common().midi_mapping {
+            match midi {
+                MidiMapping::Learning => {}
+                MidiMapping::Set(mapping) => {
+                    ui.label(format!(
+                        "MIDI mapped: send on ch {} note {}",
+                        mapping.channel, mapping.controller_or_note
+                    ));
+                }
+            }
+        }
 
         if common_send_button(ui, self, false).clicked() {
             common_send(self, tether_agent);

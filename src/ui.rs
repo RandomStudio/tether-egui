@@ -2,6 +2,7 @@ use std::fs;
 
 use crate::{
     insights::Insights,
+    midi_mapping::MidiMapping,
     project::{EditableTetherSettings, TetherSettings},
     tether_utils::attempt_new_tether_connection,
     widgets::{
@@ -591,4 +592,22 @@ pub fn common_editable_values<T: Serialize>(
     ui.add_enabled_ui(entry.common().use_custom_topic, |ui| {
         ui.text_edit_singleline(&mut entry.common_mut().plug.topic);
     });
+
+    common_edit_midi_mapping(ui, entry);
+}
+
+pub fn common_edit_midi_mapping<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
+    if ui.button("Learn MIDI mapping").clicked() {
+        entry.common_mut().midi_mapping = Some(MidiMapping::Learning);
+    }
+    if let Some(midi) = &entry.common().midi_mapping {
+        match midi {
+            MidiMapping::Learning => {
+                ui.label("Learning...");
+            }
+            MidiMapping::Set(mapping) => {
+                ui.label(format!("{:?}", mapping));
+            }
+        }
+    }
 }

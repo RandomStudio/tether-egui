@@ -3,13 +3,16 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use tether_agent::{mqtt::Message, TetherAgent};
 
-use crate::widgets::{numbers::NumberWidget, CustomWidget};
+use crate::{
+    ui::common_send,
+    widgets::{boolean::BoolWidget, numbers::NumberWidget, CustomWidget},
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct MidiMapped {
     pub channel: u8,
-    pub controller: u8,
+    pub controller_or_note: u8,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -17,6 +20,18 @@ pub struct TetherControlChangePayload {
     pub channel: u8,
     pub controller: u8,
     pub value: u8,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TetherNotePayload {
+    pub channel: u8,
+    pub note: u8,
+    pub velocity: u8,
+}
+
+pub enum MidiMessage {
+    ControlChange(TetherControlChangePayload),
+    Note(TetherNotePayload),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -32,28 +47,35 @@ impl MidiSubscriber {
     /// Subscribe to all Tether MIDI control change messages
     pub fn new(agent: &TetherAgent) -> Self {
         if agent.is_connected() {
-            let _midi_controllers_plug =
-                agent.create_input_plug("controlChange", None, Some("+/+/controlChange"));
+            let _midi_controllers_plug = agent.create_input_plug("controlChange", None, None);
+            let _midi_notes_plug = agent.create_input_plug("notesOn", None, None);
         }
         MidiSubscriber {}
     }
 
-    pub fn get_controller_message(
-        &self,
-        plug_name: &String,
-        message: &Message,
-    ) -> Option<TetherControlChangePayload> {
-        if plug_name == "controlChange" {
-            debug!(
-                "this is a Tether MIDI control change message: {} :: {:?}",
-                plug_name, message
-            );
-            let bytes = message.payload();
-            let payload: TetherControlChangePayload =
-                rmp_serde::from_slice(bytes).expect("failed to decode payload");
-            Some(payload)
-        } else {
-            None
+    pub fn get_midi_message(&self, plug_name: &String, message: &Message) -> Option<MidiMessage> {
+        match plug_name.as_str() {
+            "controlChange" => {
+                debug!(
+                    "This is a Tether MIDI control change message: {} :: {:?}",
+                    plug_name, message
+                );
+                let bytes = message.payload();
+                let payload: TetherControlChangePayload =
+                    rmp_serde::from_slice(bytes).expect("failed to decode payload");
+                Some(MidiMessage::ControlChange(payload))
+            }
+            "notesOn" => {
+                debug!(
+                    "This is a Tether MIDI note on message: {} :: {:?}",
+                    plug_name, message
+                );
+                let bytes = message.payload();
+                let payload: TetherNotePayload =
+                    rmp_serde::from_slice(bytes).expect("failed to decode payload");
+                Some(MidiMessage::Note(payload))
+            }
+            _ => None,
         }
     }
 }
@@ -61,7 +83,8 @@ impl MidiSubscriber {
 pub fn update_widget_if_controllable(
     entry: &mut NumberWidget,
     cc_message: &TetherControlChangePayload,
-) -> bool {
+    tether_agent: &TetherAgent,
+) {
     if let Some(midi_mapping) = &entry.common().midi_mapping {
         let TetherControlChangePayload {
             channel,
@@ -72,12 +95,11 @@ pub fn update_widget_if_controllable(
             MidiMapping::Learning => {
                 entry.common_mut().midi_mapping = Some(MidiMapping::Set(MidiMapped {
                     channel: *channel,
-                    controller: *controller,
+                    controller_or_note: *controller,
                 }));
-                false
             }
             MidiMapping::Set(mapping) => {
-                if mapping.channel == *channel && mapping.controller == *controller {
+                if mapping.channel == *channel && mapping.controller_or_note == *controller {
                     debug!("Message matches MIDI mapping, should update");
                     let output_range = entry.range();
                     let should_round = entry.should_round();
@@ -91,13 +113,64 @@ pub fn update_widget_if_controllable(
                     } else {
                         remapped_value
                     };
-                    true
-                } else {
-                    false
+                    common_send(entry, tether_agent);
                 }
             }
         }
-    } else {
-        false
+    }
+}
+
+pub fn send_if_midi_note<T: Serialize>(
+    entry: &mut impl CustomWidget<T>,
+    note_message: &TetherNotePayload,
+    tether_agent: &TetherAgent,
+) {
+    if let Some(midi_mapping) = &entry.common().midi_mapping {
+        let TetherNotePayload {
+            channel,
+            note,
+            velocity: _,
+        } = note_message;
+        match midi_mapping {
+            MidiMapping::Learning => {
+                entry.common_mut().midi_mapping = Some(MidiMapping::Set(MidiMapped {
+                    channel: *channel,
+                    controller_or_note: *note,
+                }));
+            }
+            MidiMapping::Set(mapping) => {
+                if mapping.channel == *channel && mapping.controller_or_note == *note {
+                    common_send(entry, tether_agent);
+                }
+            }
+        }
+    }
+}
+
+pub fn toggle_if_midi_note(
+    entry: &mut BoolWidget,
+    note_message: &TetherNotePayload,
+    tether_agent: &TetherAgent,
+) {
+    if let Some(midi_mapping) = &entry.common().midi_mapping {
+        let TetherNotePayload {
+            channel,
+            note,
+            velocity: _,
+        } = note_message;
+        match midi_mapping {
+            MidiMapping::Learning => {
+                entry.common_mut().midi_mapping = Some(MidiMapping::Set(MidiMapped {
+                    channel: *channel,
+                    controller_or_note: *note,
+                }));
+            }
+            MidiMapping::Set(mapping) => {
+                if mapping.channel == *channel && mapping.controller_or_note == *note {
+                    *entry.value_mut() = !*entry.value();
+                    common_send(entry, tether_agent);
+                }
+            }
+        }
     }
 }
