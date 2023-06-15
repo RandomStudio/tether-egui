@@ -4,8 +4,7 @@ use serde_json::Value;
 use tether_agent::TetherAgent;
 
 use crate::ui::{
-    common_editable_values, common_in_use_heading, common_save_button, common_send,
-    common_send_button,
+    common_editable_values, common_in_use_heading, common_save_button, common_send_button,
 };
 
 use super::{Common, CustomWidget, View};
@@ -80,7 +79,14 @@ impl View for GenericJSONWidget {
         }
 
         if common_send_button(ui, self, false).clicked() {
-            common_send(self, tether_agent);
+            let encoded: serde_json::Value =
+                serde_json::from_str(&self.value).expect("failed to encode JSON from string");
+            let payload = rmp_serde::to_vec_named(&encoded).expect("failed to encode msgpack");
+            tether_agent
+                .publish(&self.common().plug, Some(&payload))
+                .expect("failed to publish from generic data widget");
+
+            // common_send(self, tether_agent);
         }
     }
 }
