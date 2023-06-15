@@ -13,7 +13,7 @@ extern crate serde_json;
 use eframe::egui;
 use env_logger::Env;
 use insights::Insights;
-use log::{debug, error, info, warn};
+use log::{error, info, warn};
 use tether_agent::TetherAgent;
 use widgets::WidgetEntry;
 
@@ -162,19 +162,27 @@ impl eframe::App for Model {
                     for widget in self.project.widgets.iter_mut() {
                         match widget {
                             WidgetEntry::Bool(e) => {
-                                toggle_if_midi_note(e, &note_message, &self.tether_agent)
+                                toggle_if_midi_note(e, &note_message, &self.tether_agent);
                             }
                             WidgetEntry::Empty(e) => {
-                                send_if_midi_note(e, &note_message, &self.tether_agent);
+                                if send_if_midi_note(e, &note_message) {
+                                    common_send(e, &self.tether_agent);
+                                }
                             }
                             WidgetEntry::Generic(e) => {
-                                send_if_midi_note(e, &note_message, &self.tether_agent);
+                                if send_if_midi_note(e, &note_message) {
+                                    e.publish_from_json_string(&self.tether_agent);
+                                }
                             }
                             WidgetEntry::Colour(e) => {
-                                send_if_midi_note(e, &note_message, &self.tether_agent);
+                                if send_if_midi_note(e, &note_message) {
+                                    common_send(e, &self.tether_agent);
+                                }
                             }
                             WidgetEntry::Point2D(e) => {
-                                send_if_midi_note(e, &note_message, &self.tether_agent);
+                                if send_if_midi_note(e, &note_message) {
+                                    common_send(e, &self.tether_agent);
+                                }
                             }
                             _ => {}
                         }

@@ -40,6 +40,20 @@ impl GenericJSONWidget {
             is_valid_json: true,
         }
     }
+
+    pub fn publish_from_json_string(&self, tether_agent: &TetherAgent) {
+        match serde_json::from_str::<serde_json::Value>(&self.value) {
+            Ok(encoded) => {
+                let payload = rmp_serde::to_vec_named(&encoded).expect("failed to encode msgpack");
+                tether_agent
+                    .publish(&self.common().plug, Some(&payload))
+                    .expect("failed to publish from generic data widget");
+            }
+            Err(e) => {
+                error!("Could not serialise String -> JSON; error: {}", e);
+            }
+        }
+    }
 }
 
 impl CustomWidget<String> for GenericJSONWidget {
@@ -93,18 +107,7 @@ impl View for GenericJSONWidget {
         }
 
         if common_send_button(ui, self, false).clicked() {
-            match serde_json::from_str::<serde_json::Value>(&self.value) {
-                Ok(encoded) => {
-                    let payload =
-                        rmp_serde::to_vec_named(&encoded).expect("failed to encode msgpack");
-                    tether_agent
-                        .publish(&self.common().plug, Some(&payload))
-                        .expect("failed to publish from generic data widget");
-                }
-                Err(e) => {
-                    error!("Could not serialise String -> JSON; error: {}", e);
-                }
-            }
+            self.publish_from_json_string(tether_agent);
         }
     }
 }

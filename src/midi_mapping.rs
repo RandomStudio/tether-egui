@@ -123,8 +123,7 @@ pub fn update_widget_if_controllable(
 pub fn send_if_midi_note<T: Serialize>(
     entry: &mut impl CustomWidget<T>,
     note_message: &TetherNotePayload,
-    tether_agent: &TetherAgent,
-) {
+) -> bool {
     if let Some(midi_mapping) = &entry.common().midi_mapping {
         let TetherNotePayload {
             channel,
@@ -137,13 +136,14 @@ pub fn send_if_midi_note<T: Serialize>(
                     channel: *channel,
                     controller_or_note: *note,
                 }));
+                false
             }
             MidiMapping::Set(mapping) => {
-                if mapping.channel == *channel && mapping.controller_or_note == *note {
-                    common_send(entry, tether_agent);
-                }
+                mapping.channel == *channel && mapping.controller_or_note == *note
             }
         }
+    } else {
+        false
     }
 }
 
