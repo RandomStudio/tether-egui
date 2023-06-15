@@ -61,8 +61,8 @@ impl MidiSubscriber {
     }
 }
 
-pub fn update_widget_if_controllable<T: Serialize + Numeric + Real>(
-    entry: &mut NumberWidget<T>,
+pub fn update_widget_if_controllable(
+    entry: &mut NumberWidget,
     cc_message: &TetherControlChangePayload,
 ) -> bool {
     if let Some(midi_mapping) = &entry.common().midi_mapping {
@@ -83,8 +83,9 @@ pub fn update_widget_if_controllable<T: Serialize + Numeric + Real>(
                 if mapping.channel == *channel && mapping.controller == *controller {
                     debug!("Message matches MIDI mapping, should update");
                     let output_range = entry.range();
-                    let input_range = T::from_f64(0.)..=T::from_f64(127.0);
-                    let midi_value_number = T::from_f64(*value as f64);
+                    // let input_range = T::from_f64(0.)..=T::from_f64(127.0);
+                    let input_range = 0. ..=127.;
+                    let midi_value_number = *value as f64;
                     let remapped_value = remap(midi_value_number, input_range, output_range);
                     let v = entry.value_mut();
                     *v = remapped_value;

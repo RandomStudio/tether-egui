@@ -25,8 +25,8 @@ pub mod point;
 /// The different possible Widget entries. Serialisable because
 /// these can be saved/loaded to/from disk
 pub enum WidgetEntry {
-    FloatNumber(NumberWidget<f64>),
-    WholeNumber(NumberWidget<i64>),
+    FloatNumber(NumberWidget),
+    WholeNumber(NumberWidget),
     Colour(ColourWidget<ColourRGBA8>),
     Bool(BoolWidget),
     Empty(EmptyWidget),

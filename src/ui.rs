@@ -231,6 +231,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 None,
                 0.,
                 0. ..=1.0,
+                false,
                 &model.tether_agent,
             )));
     }
@@ -243,8 +244,9 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 Some("A single 64-bit whole number"),
                 "numbers",
                 None,
-                0,
-                0..=100,
+                0.,
+                0. ..=100.,
+                true,
                 &model.tether_agent,
             )));
     }

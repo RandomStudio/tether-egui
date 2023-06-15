@@ -19,21 +19,23 @@ const SENSIBLE_MAX: f64 = 100000.;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct NumberWidget<T> {
+pub struct NumberWidget {
     common: Common,
-    value: T,
-    range_min: T,
-    range_max: T,
+    value: f64,
+    range_min: f64,
+    range_max: f64,
+    round_off: bool,
 }
 
-impl<T: Numeric> NumberWidget<T> {
+impl NumberWidget {
     pub fn new(
         name: &str,
         description: Option<&str>,
         plug_name: &str,
         custom_topic: Option<&str>,
-        value: T,
-        range: RangeInclusive<T>,
+        value: f64,
+        range: RangeInclusive<f64>,
+        round_off: bool,
         agent: &TetherAgent,
     ) -> Self {
         NumberWidget {
@@ -41,30 +43,31 @@ impl<T: Numeric> NumberWidget<T> {
             value,
             range_min: *range.start(),
             range_max: *range.end(),
+            round_off,
         }
     }
 
-    pub fn range(&self) -> RangeInclusive<T> {
+    pub fn range(&self) -> RangeInclusive<f64> {
         self.range_min..=self.range_max
     }
 }
 
-impl<T: Numeric + Serialize> CustomWidget<T> for NumberWidget<T> {
+impl CustomWidget<f64> for NumberWidget {
     fn common(&self) -> &Common {
         &self.common
     }
     fn common_mut(&mut self) -> &mut Common {
         &mut self.common
     }
-    fn value(&self) -> &T {
+    fn value(&self) -> &f64 {
         &self.value
     }
-    fn value_mut(&mut self) -> &mut T {
+    fn value_mut(&mut self) -> &mut f64 {
         &mut self.value
     }
 }
 
-impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
+impl View for NumberWidget {
     fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_in_use_heading(ui, self);
 
@@ -76,14 +79,38 @@ impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
             .changed()
             && self.common().auto_send
         {
-            debug!("Changed; send");
-            common_send(self, tether_agent);
+            if self.round_off {
+                // Round off the value (internally f64)
+                *self.value_mut() = self.value().round();
+                // Make sure we convert to integer explicity before sending
+                let value = *self.value() as i64;
+                let payload = rmp_serde::to_vec(&value).expect("failed to serialised");
+                tether_agent
+                    .publish(&self.common().plug, Some(&payload))
+                    .expect("failed to publish");
+            } else {
+                // No rounding, just encode and publish
+                common_send(self, tether_agent);
+            }
         };
-        ui.small(format!(
-            "Range: {}-{}",
-            self.range().start(),
-            self.range().end()
-        ));
+        ui.horizontal(|ui| {
+            ui.small(format!(
+                "Range: {}-{}",
+                self.range().start(),
+                self.range().end()
+            ));
+            if let Some(midi) = &self.common().midi_mapping {
+                match midi {
+                    MidiMapping::Learning => {}
+                    MidiMapping::Set(mapping) => {
+                        ui.label(format!(
+                            "MIDI mapped: ch {} cc {}",
+                            mapping.channel, mapping.controller
+                        ));
+                    }
+                }
+            }
+        });
 
         if common_send_button(ui, self, true).clicked() {
             common_send(self, tether_agent);
@@ -95,15 +122,21 @@ impl<T: Numeric + Serialize + Display> View for NumberWidget<T> {
         ui.collapsing("Range", |ui| {
             // This trickery is needed so that we artifically restrict slider ranges to
             // a sensible range while preserving types
-            let (min, max) = (T::from_f64(SENSIBLE_MIN), T::from_f64(SENSIBLE_MAX));
+            // let (min, max) = (T::from_f64(SENSIBLE_MIN), T::from_f64(SENSIBLE_MAX));
 
             ui.label("Min");
             if ui
-                .add(Slider::new(&mut self.range_min, min..=max))
+                .add(Slider::new(
+                    &mut self.range_min,
+                    SENSIBLE_MIN..=SENSIBLE_MAX,
+                ))
                 .changed()
             {};
             ui.label("Max");
-            ui.add(Slider::new(&mut self.range_max, min..=max));
+            ui.add(Slider::new(
+                &mut self.range_max,
+                SENSIBLE_MIN..=SENSIBLE_MAX,
+            ));
         });
 
         // TODO move this into generic "common_midi" function

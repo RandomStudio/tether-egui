@@ -151,6 +151,11 @@ impl eframe::App for Model {
                                 common_send(e, &self.tether_agent);
                             }
                         }
+                        // WidgetEntry::WholeNumber(e) => {
+                        //     if update_widget_if_controllable(e, &control_change_message) {
+                        //         common_send(e, &self.tether_agent);
+                        //     }
+                        // }
                         _ => {}
                     }
                 }
