@@ -1,11 +1,11 @@
 use egui::{Color32, Ui};
+use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tether_agent::TetherAgent;
 
 use crate::ui::{
-    common_editable_values, common_in_use_heading, common_save_button, common_send,
-    common_send_button,
+    common_editable_values, common_in_use_heading, common_save_button, common_send_button,
 };
 
 use super::{Common, CustomWidget, View};
@@ -80,7 +80,18 @@ impl View for GenericJSONWidget {
         }
 
         if common_send_button(ui, self, false).clicked() {
-            common_send(self, tether_agent);
+            match serde_json::from_str::<serde_json::Value>(&self.value) {
+                Ok(encoded) => {
+                    let payload =
+                        rmp_serde::to_vec_named(&encoded).expect("failed to encode msgpack");
+                    tether_agent
+                        .publish(&self.common().plug, Some(&payload))
+                        .expect("failed to publish from generic data widget");
+                }
+                Err(e) => {
+                    error!("Could not serialise String -> JSON; error: {}", e);
+                }
+            }
         }
     }
 }
