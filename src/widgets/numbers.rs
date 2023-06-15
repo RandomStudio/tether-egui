@@ -1,7 +1,6 @@
-use egui::{emath::Numeric, Slider, Ui};
-use log::debug;
+use egui::{Slider, Ui};
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, ops::RangeInclusive};
+use std::ops::RangeInclusive;
 use tether_agent::TetherAgent;
 
 use crate::{
@@ -24,7 +23,7 @@ pub struct NumberWidget {
     value: f64,
     range_min: f64,
     range_max: f64,
-    round_off: bool,
+    should_round: bool,
 }
 
 impl NumberWidget {
@@ -43,12 +42,16 @@ impl NumberWidget {
             value,
             range_min: *range.start(),
             range_max: *range.end(),
-            round_off,
+            should_round: round_off,
         }
     }
 
     pub fn range(&self) -> RangeInclusive<f64> {
         self.range_min..=self.range_max
+    }
+
+    pub fn should_round(&self) -> bool {
+        self.should_round
     }
 }
 
@@ -79,7 +82,7 @@ impl View for NumberWidget {
             .changed()
             && self.common().auto_send
         {
-            if self.round_off {
+            if self.should_round {
                 // Round off the value (internally f64)
                 *self.value_mut() = self.value().round();
                 // Make sure we convert to integer explicity before sending

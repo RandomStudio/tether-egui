@@ -1,7 +1,4 @@
-use egui::{
-    emath::{Numeric, Real},
-    remap,
-};
+use egui::remap;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use tether_agent::{mqtt::Message, TetherAgent};
@@ -83,12 +80,17 @@ pub fn update_widget_if_controllable(
                 if mapping.channel == *channel && mapping.controller == *controller {
                     debug!("Message matches MIDI mapping, should update");
                     let output_range = entry.range();
+                    let should_round = entry.should_round();
                     // let input_range = T::from_f64(0.)..=T::from_f64(127.0);
                     let input_range = 0. ..=127.;
                     let midi_value_number = *value as f64;
                     let remapped_value = remap(midi_value_number, input_range, output_range);
                     let v = entry.value_mut();
-                    *v = remapped_value;
+                    *v = if should_round {
+                        remapped_value.round()
+                    } else {
+                        remapped_value
+                    };
                     true
                 } else {
                     false
