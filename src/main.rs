@@ -137,7 +137,7 @@ enum QueueItem {
 
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if let Some((plug_name, message)) = &self.tether_agent.check_messages() {
+        while let Some((plug_name, message)) = &self.tether_agent.check_messages() {
             self.insights.update(plug_name, message);
             if let Some(control_change_message) =
                 self.midi_handler.get_controller_message(plug_name, message)
