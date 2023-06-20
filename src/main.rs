@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::time::Duration;
+
 use clap::Parser;
 use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
 use project::EditableTetherSettings;
@@ -142,7 +144,9 @@ enum QueueItem {
 
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let mut work_done = false;
         while let Some((plug_name, message)) = &self.tether_agent.check_messages() {
+            work_done = true;
             self.insights.update(plug_name, message);
             match self.midi_handler.get_midi_message(plug_name, message) {
                 Some(MidiMessage::ControlChange(cc_message)) => {
@@ -190,6 +194,9 @@ impl eframe::App for Model {
                 }
                 None => {}
             }
+        }
+        if !work_done {
+            std::thread::sleep(Duration::from_millis(1));
         }
 
         if self.continuous_mode {
