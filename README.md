@@ -4,7 +4,10 @@ A tiny desktop app for remote-controlling Tether-controlled systems, simulating 
 
 ![GUI screenshot](tether-egui.gif)
 
-## Launch with or without Tether Host
+## Easy start
+Download the latest [release](https://github.com/RandomStudio/tether-egui/releases) for your OS and run it.
+
+## Command-line options
 By default, Tether Egui will try to connect to an MQTT broker running at `tcp://localhost:1883`
 
 Launch without Tether (build your UI only) by passing `--tether.disable`
