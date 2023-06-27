@@ -1,6 +1,6 @@
 use tether_agent::TetherAgent;
 
-use crate::{project::EditableTetherSettings, settings::LOCALHOST};
+use crate::project::EditableTetherSettings;
 
 pub fn attempt_new_tether_connection(
     editable_settings: &EditableTetherSettings,
@@ -10,7 +10,7 @@ pub fn attempt_new_tether_connection(
     let tether_agent = TetherAgent::new(
         role,
         Some(id),
-        Some(editable_settings.host.parse().unwrap_or(LOCALHOST)),
+        Some(editable_settings.host.parse().unwrap_or("127.0.0.1".into())),
     );
     let username = if editable_settings.username.is_empty() {
         None

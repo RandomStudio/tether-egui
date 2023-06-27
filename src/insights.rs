@@ -32,7 +32,7 @@ impl Insights {
         }
     }
 
-    pub fn update(&mut self, _plug_name: &String, message: &Message) {
+    pub fn update(&mut self, _plug_name: &str, message: &Message) {
         self.message_count += 1;
         let bytes = message.payload();
         if bytes.is_empty() {

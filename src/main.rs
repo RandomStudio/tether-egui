@@ -22,7 +22,6 @@ use widgets::WidgetEntry;
 use crate::{
     midi_mapping::{send_if_midi_note, update_widget_if_controllable},
     project::{Project, TetherSettings},
-    settings::LOCALHOST,
     ui::common_send,
 };
 
@@ -74,7 +73,6 @@ impl Default for Model {
         let cli = Cli::parse();
 
         let mut project = Project::default();
-
         let json_path: String = cli.json_load.unwrap_or(String::from("./project.json"));
         info!("Will attempt to load JSON from {} ...", &json_path);
 
@@ -89,7 +87,7 @@ impl Default for Model {
         let tether_agent = TetherAgent::new(
             "gui",
             None,
-            Some(tether_settings.host.parse().unwrap_or(LOCALHOST)),
+            Some(tether_settings.host.parse().unwrap_or("127.0.0.1".into())),
         );
         let (role, id) = tether_agent.description();
 

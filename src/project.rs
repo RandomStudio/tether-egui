@@ -3,7 +3,7 @@ use std::fs;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 
-use crate::{settings::LOCALHOST, widgets::WidgetEntry};
+use crate::widgets::WidgetEntry;
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -16,7 +16,7 @@ pub struct TetherSettings {
 impl Default for TetherSettings {
     fn default() -> Self {
         TetherSettings {
-            host: LOCALHOST.to_string(),
+            host: "127.0.0.1".into(),
             username: None,
             password: None,
         }
