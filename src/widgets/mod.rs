@@ -81,7 +81,7 @@ impl Common {
                 }
             },
             plug: agent
-                .create_output_plug(plug_name, None, custom_topic)
+                .create_output_plug(plug_name, None, None, custom_topic)
                 .unwrap(),
             is_edit_mode: true,
             use_custom_topic: false,

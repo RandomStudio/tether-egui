@@ -563,7 +563,7 @@ pub fn common_editable_values<T: Serialize>(
         if !entry.common().use_custom_topic {
             // Back to default (auto-generated) topic
             entry.common_mut().plug = tether_agent
-                .create_output_plug(&entry.common().plug.name, None, None)
+                .create_output_plug(&entry.common().plug.name, None, None, None)
                 .expect("failed to create default plug");
         }
     }
@@ -579,7 +579,7 @@ pub fn common_editable_values<T: Serialize>(
     {
         // Back to default (auto-generated) topic
         entry.common_mut().plug = tether_agent
-            .create_output_plug(&entry.common().plug.name, None, None)
+            .create_output_plug(&entry.common().plug.name, None, None, None)
             .expect("failed to create default plug");
     }
 
@@ -590,7 +590,7 @@ pub fn common_editable_values<T: Serialize>(
     {
         // Back to default (auto-generated) topic
         entry.common_mut().plug = tether_agent
-            .create_output_plug(&entry.common().plug.name, None, None)
+            .create_output_plug(&entry.common().plug.name, None, None, None)
             .expect("failed to create default plug");
     }
     ui.add_enabled_ui(entry.common().use_custom_topic, |ui| {
