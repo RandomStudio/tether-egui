@@ -12,7 +12,7 @@ use crate::{
     QueueItem,
 };
 use egui::{Color32, Response, RichText, Ui};
-use log::{error, info};
+use log::{debug, error, info};
 use serde::Serialize;
 use tether_agent::TetherAgent;
 
@@ -60,9 +60,13 @@ pub fn common_send_button<T: Serialize>(
 }
 
 pub fn common_send<T: Serialize>(entry: &mut impl CustomWidget<T>, tether_agent: &TetherAgent) {
-    tether_agent
-        .encode_and_publish(&entry.common().plug, entry.value())
-        .expect("Failed to send message");
+    match tether_agent.encode_and_publish(&entry.common().plug, entry.value()) {
+        Ok(()) => debug!("Send OK"),
+        Err(_) => error!(
+            "Failed to send via Tether; connected? {}",
+            tether_agent.is_connected()
+        ),
+    }
 }
 
 pub fn entry_topic<T: Serialize>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
