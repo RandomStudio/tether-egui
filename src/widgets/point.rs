@@ -2,6 +2,7 @@ use egui::{
     plot::{Plot, PlotPoint},
     Ui,
 };
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
@@ -109,9 +110,10 @@ impl View for Point2DWidget {
                 // println!("Pointer coordinates: {:?}", c)
                 let PlotPoint { x, y } = c;
                 let p = [x, y];
-                tether_agent
-                    .encode_and_publish(&self.common().plug, p)
-                    .expect("Failed to send Point2D message");
+                match tether_agent.encode_and_publish(&self.common().plug, p) {
+                    Ok(()) => debug!("Send OK"),
+                    Err(_) => error!("Failed to send; connected? {}", tether_agent.is_connected()),
+                }
             }
         }
     }
