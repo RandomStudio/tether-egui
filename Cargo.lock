@@ -2407,7 +2407,7 @@ dependencies = [
 
 [[package]]
 name = "tether-egui"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
  "circular-buffer",
  "clap",
