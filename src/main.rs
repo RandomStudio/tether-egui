@@ -77,7 +77,7 @@ impl Default for Model {
 
         let project_loaded = project.load(&json_path);
 
-        let tether_settings = match &project.tether_settings {
+        let tether_settings_from_project = match &project.tether_settings {
             Some(settings) => TetherAgentOptionsBuilder::from(settings),
             None => TetherAgentOptionsBuilder::from(&TetherSettingsInProject::default()),
         };
@@ -87,12 +87,12 @@ impl Default for Model {
             None => EditableTetherSettings::default(),
         };
 
-        let tether_agent = init_new_tether_agent(&tether_settings);
+        let tether_agent = init_new_tether_agent(&tether_settings_from_project);
 
         if cli.tether_disable {
             warn!("Tether disabled; please connect manually if required");
         } else {
-            match tether_agent.connect(&tether_settings) {
+            match tether_agent.connect(&tether_settings_from_project) {
                 Ok(()) => {
                     info!("Tether Agent connected successfully");
                 }

@@ -10,18 +10,6 @@ pub struct Cli {
     #[arg(long = "tether.disable")]
     pub tether_disable: bool,
 
-    /// The IP address of the Tether MQTT broker (server)
-    #[arg(long = "tether.host", default_value_t = String::from("127.0.0.1"))]
-    pub tether_host: String,
-
-    /// Optional username for MQTT Broker
-    #[arg(long = "tether.username")]
-    pub tether_username: Option<String>,
-
-    /// Optional password for MQTT Broker
-    #[arg(long = "tether.password")]
-    pub tether_password: Option<String>,
-
     #[arg(long = "monitor.topic", default_value_t=String::from("#"))]
     pub monitor_topic: String,
 
