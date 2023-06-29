@@ -3,8 +3,8 @@ use std::fs;
 use crate::{
     insights::Insights,
     midi_mapping::MidiMapping,
-    project::{EditableTetherSettings, TetherSettings},
-    tether_utils::attempt_new_tether_connection,
+    project::TetherSettingsInProject,
+    tether_utils::{init_new_tether_agent, EditableTetherSettings},
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
         numbers::NumberWidget, point::Point2DWidget, CustomWidget, View,
@@ -14,7 +14,7 @@ use crate::{
 use egui::{Color32, Response, RichText, Ui};
 use log::{debug, error, info};
 use serde::Serialize;
-use tether_agent::TetherAgent;
+use tether_agent::{PlugOptionsBuilder, TetherAgent, TetherAgentOptionsBuilder};
 
 use crate::{Model, WidgetEntry};
 
@@ -71,7 +71,8 @@ pub fn common_send<T: Serialize>(entry: &mut impl CustomWidget<T>, tether_agent:
 
 pub fn entry_topic<T: Serialize>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
     ui.label(
-        RichText::new(format!("Topic: {}", entry.common().plug.topic)).color(Color32::LIGHT_BLUE),
+        RichText::new(format!("Topic: {}", entry.common().plug.common().topic))
+            .color(Color32::LIGHT_BLUE),
     );
 }
 
@@ -338,19 +339,7 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
             {
                 if model.editable_tether_settings.was_changed {
                     info!("Tether Settings were edited; saving these to project");
-                    model.project.tether_settings = Some(TetherSettings {
-                        host: model.editable_tether_settings.host.clone(),
-                        username: if model.editable_tether_settings.username.is_empty() {
-                            None
-                        } else {
-                            Some(model.editable_tether_settings.username.clone())
-                        },
-                        password: if model.editable_tether_settings.password.is_empty() {
-                            None
-                        } else {
-                            Some(model.editable_tether_settings.password.clone())
-                        },
-                    })
+                    model.project.tether_settings = Some(TetherSettingsInProject::from(model.editable_tether_settings.clone()));
                 };
                 let path_string = path.display().to_string();
                 let text = serde_json::to_string_pretty(&model.project)
@@ -375,29 +364,23 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                     Ok(()) => {
                         info!("Loaded project file OK");
                         model.json_file = Some(path_string);
-                        if let Some(tether_settings) = &model.project.tether_settings {
+                        if let Some(tether_settings_in_project) = &model.project.tether_settings {
                             info!("Project file had custom Tether settings; attempt to apply and connect...");
-                            let tether_settings = EditableTetherSettings {
-                                is_editing: false,
-                                was_changed: true,
-                                host: tether_settings.host.clone(),
-                                username: tether_settings.username.clone().unwrap_or("".into()),
-                                password: tether_settings.password.clone().unwrap_or("".into()),
-                            };
-                            match attempt_new_tether_connection(
-                                &tether_settings,
-                                &model.agent_role,
-                                &model.agent_id,
-                            ) {
-                                Ok(tether_agent) => {
-                                    model.tether_agent = tether_agent;
-                                    model.insights =
-                                        Insights::new(&model.tether_agent, &model.monitor_topic);
+                            model.editable_tether_settings = EditableTetherSettings::from(&tether_settings_in_project.clone());
+
+                            let tether_options = TetherAgentOptionsBuilder::from(&tether_settings_in_project.clone());
+
+                            let tether_agent = init_new_tether_agent(&tether_options);
+
+                            match tether_agent.connect(&tether_options) {
+                                Ok(_) => {
+                                    model.insights = Insights::new(&tether_agent, &model.monitor_topic);
                                 }
-                                Err(_) => {
-                                    error!("Failed to connect using these settings; ignore");
-                                }
+                                Err(e) => { error!("Failed to connect Tether, {}", e); }
                             }
+
+                            model.tether_agent =  tether_agent;
+
                         }
                     }
                     Err(_) => {
@@ -433,14 +416,13 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
             model.editable_tether_settings.is_editing = false;
             info!("Re(creating) Tether Agent with new settings...");
 
-            match attempt_new_tether_connection(
-                &model.editable_tether_settings,
-                &model.agent_role,
-                &model.agent_id,
-            ) {
-                Ok(tether_agent) => {
+            let options = TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
+
+            model.tether_agent = init_new_tether_agent(&options);
+
+            match model.tether_agent.connect(&options) {
+                Ok(()) => {
                     info!("Connected OK");
-                    model.tether_agent = tether_agent;
                     model.editable_tether_settings.was_changed = true;
                     model.insights = Insights::new(&model.tether_agent, &model.monitor_topic);
                 }
@@ -464,19 +446,35 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     } else {
         ui.label(RichText::new("Not connected ✖").color(Color32::RED));
         if ui.button("Connect").clicked() {
-            match attempt_new_tether_connection(
-                &model.editable_tether_settings,
-                &model.agent_role,
-                &model.agent_id,
-            ) {
-                Ok(tether_agent) => {
-                    model.tether_agent = tether_agent;
+            let options = TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
+
+            model.tether_agent = init_new_tether_agent(&options);
+
+            match model.tether_agent.connect(&options) {
+                Ok(()) => {
+                    info!("Connected OK");
+                    model.editable_tether_settings.was_changed = true;
                     model.insights = Insights::new(&model.tether_agent, &model.monitor_topic);
                 }
                 Err(_) => {
-                    error!("Failed to connect");
+                    error!("Failed to connect with new settings; discard");
+                    model.editable_tether_settings.is_editing = false;
+                    model.editable_tether_settings.was_changed = false;
                 }
             }
+            // match attempt_new_tether_connection(
+            //     &model.editable_tether_settings,
+            //     &model.agent_role,
+            //     &model.agent_id,
+            // ) {
+            //     Ok(tether_agent) => {
+            //         model.tether_agent = tether_agent;
+            //         model.insights = Insights::new(&model.tether_agent, &model.monitor_topic);
+            //     }
+            //     Err(_) => {
+            //         error!("Failed to connect");
+            //     }
+            // }
         }
     }
 
@@ -484,15 +482,25 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
 
     ui.horizontal(|ui| {
         ui.label("Role");
-        if ui.text_edit_singleline(&mut model.agent_role).changed() {
-            model.tether_agent.set_role(&model.agent_role);
+        if ui
+            .text_edit_singleline(&mut model.editable_tether_settings.role)
+            .changed()
+        {
+            model
+                .tether_agent
+                .set_role(&model.editable_tether_settings.role);
             // model.prepare_next_entry();
         }
     });
     ui.horizontal(|ui| {
         ui.label("ID or Group");
-        if ui.text_edit_singleline(&mut model.agent_id).changed() {
-            model.tether_agent.set_id(&model.agent_id);
+        if ui
+            .text_edit_singleline(&mut model.editable_tether_settings.id)
+            .changed()
+        {
+            model
+                .tether_agent
+                .set_id(&model.editable_tether_settings.id);
             // model.prepare_next_entry();
         }
     });
@@ -559,12 +567,12 @@ pub fn common_editable_values<T: Serialize>(
         .changed()
     {
         let shortened_name = String::from(entry.common().name.replace(' ', "_").trim());
-        entry.common_mut().plug.name = shortened_name;
+        entry.common_mut().plug.common_mut().name = shortened_name;
         if !entry.common().use_custom_topic {
             // Back to default (auto-generated) topic
-            entry.common_mut().plug = tether_agent
-                .create_output_plug(&entry.common().plug.name, None, None, None)
-                .expect("failed to create default plug");
+            entry.common_mut().plug =
+                PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
+                    .build(&tether_agent)
         }
     }
 
@@ -573,14 +581,17 @@ pub fn common_editable_values<T: Serialize>(
 
     ui.label("Plug Name");
     if ui
-        .text_edit_singleline(&mut entry.common_mut().plug.name)
+        .text_edit_singleline(&mut entry.common_mut().plug.common_mut().name)
         .changed()
         && !entry.common().use_custom_topic
     {
         // Back to default (auto-generated) topic
-        entry.common_mut().plug = tether_agent
-            .create_output_plug(&entry.common().plug.name, None, None, None)
-            .expect("failed to create default plug");
+        entry.common_mut().plug =
+            PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
+                .build(&tether_agent)
+        // tether_agent
+        //     .create_output_plug(&entry.common().plug.common().name, None, None, None)
+        //     .expect("failed to create default plug");
     }
 
     if ui
@@ -589,12 +600,15 @@ pub fn common_editable_values<T: Serialize>(
         && !entry.common().use_custom_topic
     {
         // Back to default (auto-generated) topic
-        entry.common_mut().plug = tether_agent
-            .create_output_plug(&entry.common().plug.name, None, None, None)
-            .expect("failed to create default plug");
+        entry.common_mut().plug =
+            PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
+                .build(&tether_agent);
+        // tether_agent
+        //     .create_output_plug(&entry.common().plug.common().name, None, None, None)
+        //     .expect("failed to create default plug");
     }
     ui.add_enabled_ui(entry.common().use_custom_topic, |ui| {
-        ui.text_edit_singleline(&mut entry.common_mut().plug.topic);
+        ui.text_edit_singleline(&mut entry.common_mut().plug.common_mut().topic);
     });
 
     common_edit_midi_mapping(ui, entry);
