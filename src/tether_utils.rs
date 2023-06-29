@@ -23,7 +23,7 @@ impl Default for EditableTetherSettings {
             port: 1883,
             username: "".into(),
             password: "".into(),
-            role: "any".into(),
+            role: "gui".into(),
             id: "any".into(),
         }
     }
