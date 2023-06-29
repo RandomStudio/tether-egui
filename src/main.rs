@@ -4,8 +4,8 @@ use std::time::Duration;
 
 use clap::Parser;
 use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
-use project::EditableTetherSettings;
 use settings::Cli;
+use tether_utils::EditableTetherSettings;
 use ui::{available_widgets, general_agent_area, standard_spacer, widgets_in_use};
 
 extern crate rmp_serde;
@@ -16,12 +16,13 @@ use eframe::egui;
 use env_logger::Env;
 use insights::Insights;
 use log::{error, info, warn};
-use tether_agent::TetherAgent;
+use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
 use widgets::WidgetEntry;
 
 use crate::{
     midi_mapping::{send_if_midi_note, update_widget_if_controllable},
-    project::{Project, TetherSettings},
+    project::{Project, TetherSettingsInProject},
+    tether_utils::init_new_tether_agent,
     ui::common_send,
 };
 
@@ -56,15 +57,13 @@ fn main() -> Result<(), eframe::Error> {
 
 pub struct Model {
     json_file: Option<String>,
-    agent_role: String,
-    agent_id: String,
     monitor_topic: String,
     project: Project,
     queue: Vec<QueueItem>,
-    tether_agent: TetherAgent,
     insights: Insights,
     midi_handler: MidiSubscriber,
     continuous_mode: bool,
+    tether_agent: TetherAgent,
     editable_tether_settings: EditableTetherSettings,
 }
 
@@ -78,23 +77,22 @@ impl Default for Model {
 
         let project_loaded = project.load(&json_path);
 
-        let tether_settings = project.tether_settings.clone().unwrap_or(TetherSettings {
-            host: cli.tether_host.to_string(),
-            username: cli.tether_username,
-            password: cli.tether_password,
-        });
+        let tether_settings_from_project = match &project.tether_settings {
+            Some(settings) => TetherAgentOptionsBuilder::from(settings),
+            None => TetherAgentOptionsBuilder::from(&TetherSettingsInProject::default()),
+        };
 
-        let tether_agent = TetherAgent::new(
-            "gui",
-            None,
-            Some(tether_settings.host.parse().unwrap_or("127.0.0.1".into())),
-        );
-        let (role, id) = tether_agent.description();
+        let editable_tether_settings = match &project.tether_settings {
+            Some(settings) => EditableTetherSettings::from(settings),
+            None => EditableTetherSettings::default(),
+        };
+
+        let tether_agent = init_new_tether_agent(&tether_settings_from_project);
 
         if cli.tether_disable {
             warn!("Tether disabled; please connect manually if required");
         } else {
-            match tether_agent.connect(tether_settings.username, tether_settings.password) {
+            match tether_agent.connect(&tether_settings_from_project) {
                 Ok(()) => {
                     info!("Tether Agent connected successfully");
                 }
@@ -112,8 +110,7 @@ impl Default for Model {
                     Some(json_path)
                 }
             },
-            agent_role: role.into(),
-            agent_id: id.into(),
+            editable_tether_settings,
             monitor_topic: cli.monitor_topic.clone(),
             project,
             queue: Vec::new(),
@@ -121,7 +118,6 @@ impl Default for Model {
             midi_handler: MidiSubscriber::new(&tether_agent),
             tether_agent,
             continuous_mode: cli.continuous_mode,
-            editable_tether_settings: EditableTetherSettings::default(),
         }
     }
 }

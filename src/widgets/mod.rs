@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tether_agent::{PlugDefinition, TetherAgent};
+use tether_agent::{PlugDefinition, PlugOptionsBuilder, TetherAgent};
 
 use crate::midi_mapping::MidiMapping;
 
@@ -71,6 +71,14 @@ impl Common {
         custom_topic: Option<&str>,
         agent: &TetherAgent,
     ) -> Self {
+        let plug = match custom_topic {
+            Some(topic) => PlugOptionsBuilder::create_output(plug_name)
+                .topic(topic)
+                .build(agent),
+
+            None => PlugOptionsBuilder::create_output(plug_name).build(agent),
+        };
+
         Common {
             name: String::from(widget_name),
             description: {
@@ -80,9 +88,7 @@ impl Common {
                     String::from("no description provided")
                 }
             },
-            plug: agent
-                .create_output_plug(plug_name, None, None, custom_topic)
-                .unwrap(),
+            plug,
             is_edit_mode: true,
             use_custom_topic: false,
             auto_send: true,

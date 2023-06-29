@@ -1,5 +1,8 @@
 use circular_buffer::CircularBuffer;
-use tether_agent::{mqtt::Message, parse_agent_id, parse_agent_role, parse_plug_name, TetherAgent};
+use tether_agent::{
+    mqtt::Message, parse_agent_id, parse_agent_role, parse_plug_name, PlugOptionsBuilder,
+    TetherAgent,
+};
 
 pub const MONITOR_LOG_LENGTH: usize = 256;
 
@@ -17,9 +20,9 @@ impl Insights {
     /// Create one plug that subscribes to all channels defined by topic; typically `#`
     pub fn new(agent: &TetherAgent, topic: &str) -> Self {
         if agent.is_connected() {
-            let _monitor_plug = agent
-                .create_input_plug("monitor", None, Some(topic))
-                .expect("failed to create monitor Input Plug");
+            let _monitor_plug = PlugOptionsBuilder::create_input("monitor")
+                .topic(topic)
+                .build(agent);
         }
 
         Insights {

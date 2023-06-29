@@ -1,7 +1,7 @@
 use egui::remap;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use tether_agent::{mqtt::Message, TetherAgent};
+use tether_agent::{mqtt::Message, PlugOptionsBuilder, TetherAgent};
 
 use crate::{
     ui::common_send,
@@ -47,8 +47,9 @@ impl MidiSubscriber {
     /// Subscribe to all Tether MIDI control change messages
     pub fn new(agent: &TetherAgent) -> Self {
         if agent.is_connected() {
-            let _midi_controllers_plug = agent.create_input_plug("controlChange", None, None);
-            let _midi_notes_plug = agent.create_input_plug("notesOn", None, None);
+            let _midi_controllers_plug =
+                PlugOptionsBuilder::create_input("controlChange").build(&agent);
+            let _midi_notes_plug = PlugOptionsBuilder::create_input("notesOn").build(&agent);
         }
         MidiSubscriber {}
     }
