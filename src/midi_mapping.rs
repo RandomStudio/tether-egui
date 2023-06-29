@@ -47,8 +47,9 @@ impl MidiSubscriber {
     /// Subscribe to all Tether MIDI control change messages
     pub fn new(agent: &TetherAgent) -> Self {
         if agent.is_connected() {
-            let _midi_controllers_plug = PlugOptionsBuilder::create_input("controlChange");
-            let _midi_notes_plug = PlugOptionsBuilder::create_input("notesOn");
+            let _midi_controllers_plug =
+                PlugOptionsBuilder::create_input("controlChange").build(&agent);
+            let _midi_notes_plug = PlugOptionsBuilder::create_input("notesOn").build(&agent);
         }
         MidiSubscriber {}
     }
