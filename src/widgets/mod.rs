@@ -71,12 +71,12 @@ impl Common {
         custom_topic: Option<&str>,
         agent: &TetherAgent,
     ) -> Self {
-        let plug = if custom_topic.is_some() {
-            PlugOptionsBuilder::create_output(plug_name)
-                .topic(custom_topic.unwrap())
-                .build(&agent)
-        } else {
-            PlugOptionsBuilder::create_output(plug_name).build(&agent)
+        let plug = match custom_topic {
+            Some(topic) => PlugOptionsBuilder::create_output(plug_name)
+                .topic(topic)
+                .build(agent),
+
+            None => PlugOptionsBuilder::create_output(plug_name).build(agent),
         };
 
         Common {

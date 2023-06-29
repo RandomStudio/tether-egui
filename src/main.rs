@@ -82,19 +82,10 @@ impl Default for Model {
             None => TetherAgentOptionsBuilder::from(&TetherSettingsInProject::default()),
         };
 
-        // let tether_settings = project.tether_settings.clone().unwrap_or(TetherSettings {
-        //     host: cli.tether_host.to_string(),
-        //     username: cli.tether_username,
-        //     password: cli.tether_password,
-        // });
-
-        // let editable_tether_settings = EditableTetherSettings {
-        //     is_editing: false,
-        //     was_changed: false,
-        //     host: cli.tether_host,
-        //     username: cli.tether_username.unwrap_or_default(),
-        //     password: cli.tether_password.unwrap_or_default()
-        // };
+        let editable_tether_settings = match &project.tether_settings {
+            Some(settings) => EditableTetherSettings::from(settings),
+            None => EditableTetherSettings::default(),
+        };
 
         let tether_agent = init_new_tether_agent(&tether_settings);
 
@@ -119,7 +110,7 @@ impl Default for Model {
                     Some(json_path)
                 }
             },
-            editable_tether_settings: EditableTetherSettings::from(&tether_settings),
+            editable_tether_settings,
             monitor_topic: cli.monitor_topic.clone(),
             project,
             queue: Vec::new(),

@@ -20,9 +20,9 @@ impl Insights {
     /// Create one plug that subscribes to all channels defined by topic; typically `#`
     pub fn new(agent: &TetherAgent, topic: &str) -> Self {
         if agent.is_connected() {
-            let monitor_plug = PlugOptionsBuilder::create_input("monitor")
+            let _monitor_plug = PlugOptionsBuilder::create_input("monitor")
                 .topic(topic)
-                .build(&agent);
+                .build(agent);
         }
 
         Insights {
