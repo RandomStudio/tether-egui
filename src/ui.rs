@@ -80,6 +80,28 @@ fn common_remove_button(ui: &mut Ui) -> bool {
     ui.button("❌ Remove").clicked()
 }
 
+fn attempt_new_tether_connection(model: &mut Model) {
+    let tether_options = TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
+
+    let tether_agent = init_new_tether_agent(&tether_options);
+
+    match tether_agent.connect(&tether_options) {
+        Ok(_) => {
+            info!("Connected Tether Agent OK");
+            model.editable_tether_settings.was_changed = true;
+            model.insights = Insights::new(&tether_agent, &model.monitor_topic);
+        }
+        Err(e) => {
+            model.editable_tether_settings.is_editing = false;
+            model.editable_tether_settings.was_changed = false;
+
+            error!("Failed to connect Tether, {}", e);
+        }
+    }
+
+    model.tether_agent = tether_agent;
+}
+
 pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
     // ui.checkbox(&mut model.auto_send, "Auto send")
     //     .on_hover_text(
@@ -366,20 +388,9 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                         model.json_file = Some(path_string);
                         if let Some(tether_settings_in_project) = &model.project.tether_settings {
                             info!("Project file had custom Tether settings; attempt to apply and connect...");
+
                             model.editable_tether_settings = EditableTetherSettings::from(&tether_settings_in_project.clone());
-
-                            let tether_options = TetherAgentOptionsBuilder::from(&tether_settings_in_project.clone());
-
-                            let tether_agent = init_new_tether_agent(&tether_options);
-
-                            match tether_agent.connect(&tether_options) {
-                                Ok(_) => {
-                                    model.insights = Insights::new(&tether_agent, &model.monitor_topic);
-                                }
-                                Err(e) => { error!("Failed to connect Tether, {}", e); }
-                            }
-
-                            model.tether_agent =  tether_agent;
+                            attempt_new_tether_connection(model);
 
                         }
                     }
@@ -416,22 +427,7 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
             model.editable_tether_settings.is_editing = false;
             info!("Re(creating) Tether Agent with new settings...");
 
-            let options = TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
-
-            model.tether_agent = init_new_tether_agent(&options);
-
-            match model.tether_agent.connect(&options) {
-                Ok(()) => {
-                    info!("Connected OK");
-                    model.editable_tether_settings.was_changed = true;
-                    model.insights = Insights::new(&model.tether_agent, &model.monitor_topic);
-                }
-                Err(_) => {
-                    error!("Failed to connect with new settings; discard");
-                    model.editable_tether_settings.is_editing = false;
-                    model.editable_tether_settings.was_changed = false;
-                }
-            }
+            attempt_new_tether_connection(model);
         }
     } else {
         ui.label(model.tether_agent.broker_uri());
@@ -446,35 +442,7 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     } else {
         ui.label(RichText::new("Not connected ✖").color(Color32::RED));
         if ui.button("Connect").clicked() {
-            let options = TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
-
-            model.tether_agent = init_new_tether_agent(&options);
-
-            match model.tether_agent.connect(&options) {
-                Ok(()) => {
-                    info!("Connected OK");
-                    model.editable_tether_settings.was_changed = true;
-                    model.insights = Insights::new(&model.tether_agent, &model.monitor_topic);
-                }
-                Err(_) => {
-                    error!("Failed to connect with new settings; discard");
-                    model.editable_tether_settings.is_editing = false;
-                    model.editable_tether_settings.was_changed = false;
-                }
-            }
-            // match attempt_new_tether_connection(
-            //     &model.editable_tether_settings,
-            //     &model.agent_role,
-            //     &model.agent_id,
-            // ) {
-            //     Ok(tether_agent) => {
-            //         model.tether_agent = tether_agent;
-            //         model.insights = Insights::new(&model.tether_agent, &model.monitor_topic);
-            //     }
-            //     Err(_) => {
-            //         error!("Failed to connect");
-            //     }
-            // }
+            attempt_new_tether_connection(model);
         }
     }
 
