@@ -3,7 +3,8 @@
 use std::time::Duration;
 
 use clap::Parser;
-use gui::{available_widgets, general_agent_area, standard_spacer, widgets_in_use};
+
+use gui::render;
 use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
 use settings::Cli;
 use tether_utils::EditableTetherSettings;
@@ -20,7 +21,7 @@ use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
 use widgets::WidgetEntry;
 
 use crate::{
-    gui::common_send,
+    gui::project_builder::common_send,
     midi_mapping::{send_if_midi_note, update_widget_if_controllable},
     project::{Project, TetherSettingsInProject},
     tether_utils::init_new_tether_agent,
@@ -205,24 +206,6 @@ impl eframe::App for Model {
             }
         }
 
-        egui::SidePanel::left("General")
-            .min_width(256.0)
-            .show(ctx, |ui| {
-                general_agent_area(ui, self);
-            });
-
-        egui::SidePanel::right("Available Widgets")
-            .min_width(128.)
-            .show(ctx, |ui| {
-                ui.heading("Available Widgets");
-
-                standard_spacer(ui);
-
-                available_widgets(ui, self);
-            });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            widgets_in_use(ctx, ui, self);
-        });
+        render(ctx, self);
     }
 }

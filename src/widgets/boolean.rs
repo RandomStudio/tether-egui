@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
 use crate::{
-    gui::{
+    gui::project_builder::{
         common_editable_values, common_in_use_heading, common_save_button, common_send,
         common_send_button,
     },

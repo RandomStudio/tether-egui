@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use tether_agent::{mqtt::Message, PlugOptionsBuilder, TetherAgent};
 
 use crate::{
-    gui::common_send,
+    gui::project_builder::common_send,
     widgets::{boolean::BoolWidget, numbers::NumberWidget, CustomWidget},
 };
 
