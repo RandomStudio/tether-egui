@@ -74,9 +74,12 @@ impl Common {
         let plug = match custom_topic {
             Some(topic) => PlugOptionsBuilder::create_output(plug_name)
                 .topic(topic)
-                .build(agent),
+                .build(agent)
+                .expect("failed to create output"),
 
-            None => PlugOptionsBuilder::create_output(plug_name).build(agent),
+            None => PlugOptionsBuilder::create_output(plug_name)
+                .build(agent)
+                .expect("failed to create output"),
         };
 
         Common {

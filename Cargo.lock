@@ -192,6 +192,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.71"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
+
+[[package]]
 name = "arboard"
 version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -706,6 +712,16 @@ checksum = "1bfb12502f3fc46cca1bb51ac28df9d618d813cdc3d2f25b9fe775a34af26bb3"
 dependencies = [
  "generic-array",
  "typenum",
+]
+
+[[package]]
+name = "ctrlc"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a011bbe2c35ce9c1f143b7af6f94f29a167beb4cd1d29e6740ce836f723120e"
+dependencies = [
+ "nix 0.26.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -1647,6 +1663,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nix"
+version = "0.26.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfdda3d196821d6af13126e40375cdf7da646a96114af134d5f417a9a1dc8e1a"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "libc",
+ "static_assertions",
+]
+
+[[package]]
 name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2393,10 +2421,24 @@ dependencies = [
 
 [[package]]
 name = "tether-agent"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e122f8a526dab49f57ac130d15a3ac5720cfea18d18c792b0c5f983996366f44"
+version = "0.8.4"
 dependencies = [
+ "anyhow",
+ "env_logger 0.7.1",
+ "log",
+ "paho-mqtt",
+ "rmp-serde 1.1.1",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "tether-agent"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0716c6da7b21eef6cd83a3cf391f63700080d56f74ce9ec796972c535cddd06b"
+dependencies = [
+ "anyhow",
  "env_logger 0.7.1",
  "log",
  "paho-mqtt",
@@ -2420,7 +2462,23 @@ dependencies = [
  "rmpv",
  "serde",
  "serde_json",
- "tether-agent",
+ "tether-agent 0.8.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tether-utils",
+]
+
+[[package]]
+name = "tether-utils"
+version = "0.3.2"
+dependencies = [
+ "clap",
+ "ctrlc",
+ "env_logger 0.7.1",
+ "log",
+ "rmp-serde 1.1.1",
+ "rmpv",
+ "serde",
+ "serde_json",
+ "tether-agent 0.8.4",
 ]
 
 [[package]]

@@ -541,6 +541,7 @@ pub fn common_editable_values<T: Serialize>(
             entry.common_mut().plug =
                 PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
                     .build(tether_agent)
+                    .expect("failed to create output")
         }
     }
 
@@ -557,6 +558,7 @@ pub fn common_editable_values<T: Serialize>(
         entry.common_mut().plug =
             PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
                 .build(tether_agent)
+                .expect("failed to create output")
         // tether_agent
         //     .create_output_plug(&entry.common().plug.common().name, None, None, None)
         //     .expect("failed to create default plug");
@@ -570,7 +572,8 @@ pub fn common_editable_values<T: Serialize>(
         // Back to default (auto-generated) topic
         entry.common_mut().plug =
             PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
-                .build(tether_agent);
+                .build(tether_agent)
+                .expect("failed to create output")
         // tether_agent
         //     .create_output_plug(&entry.common().plug.common().name, None, None, None)
         //     .expect("failed to create default plug");
