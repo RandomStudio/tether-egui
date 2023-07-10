@@ -3,10 +3,10 @@
 use std::time::Duration;
 
 use clap::Parser;
+use gui::{available_widgets, general_agent_area, standard_spacer, widgets_in_use};
 use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
 use settings::Cli;
 use tether_utils::EditableTetherSettings;
-use ui::{available_widgets, general_agent_area, standard_spacer, widgets_in_use};
 
 extern crate rmp_serde;
 extern crate rmpv;
@@ -20,18 +20,18 @@ use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
 use widgets::WidgetEntry;
 
 use crate::{
+    gui::common_send,
     midi_mapping::{send_if_midi_note, update_widget_if_controllable},
     project::{Project, TetherSettingsInProject},
     tether_utils::init_new_tether_agent,
-    ui::common_send,
 };
 
+mod gui;
 mod insights;
 mod midi_mapping;
 mod project;
 mod settings;
 mod tether_utils;
-mod ui;
 mod widgets;
 
 fn main() -> Result<(), eframe::Error> {

@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
 use crate::{
-    midi_mapping::MidiMapping,
-    ui::{
+    gui::{
         common_editable_values, common_in_use_heading, common_save_button, common_send,
         common_send_button,
     },
+    midi_mapping::MidiMapping,
 };
 
 use super::{Common, CustomWidget, View};

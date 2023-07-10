@@ -5,8 +5,8 @@ use serde_json::Value;
 use tether_agent::TetherAgent;
 
 use crate::{
+    gui::{common_editable_values, common_in_use_heading, common_save_button, common_send_button},
     midi_mapping::MidiMapping,
-    ui::{common_editable_values, common_in_use_heading, common_save_button, common_send_button},
 };
 
 use super::{Common, CustomWidget, View};
