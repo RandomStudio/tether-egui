@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use clap::Parser;
 
-use gui::render;
+use gui::{render, utilities_view::PlaybackState};
 use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
 use settings::Cli;
 
@@ -73,6 +73,7 @@ pub struct Model {
     tether_agent: TetherAgent,
     editable_tether_settings: EditableTetherSettings,
     active_window: ActiveView,
+    playback: PlaybackState,
 }
 
 impl Default for Model {
@@ -132,6 +133,7 @@ impl Default for Model {
             tether_agent,
             continuous_mode: cli.continuous_mode,
             active_window: ActiveView::WidgetView,
+            playback: PlaybackState::default(),
         }
     }
 }

@@ -6,11 +6,21 @@ use tether_utils::{
     tether_topics::MONITOR_LOG_LENGTH,
 };
 
-use crate::{tether_gui_utils::init_new_tether_agent, Model};
+use crate::Model;
 
 use super::standard_spacer;
 
-fn insights(ui: &mut Ui, model: &mut Model) {
+pub struct PlaybackState {
+    file_path: Option<String>,
+}
+
+impl Default for PlaybackState {
+    fn default() -> Self {
+        PlaybackState { file_path: None }
+    }
+}
+
+fn render_insights(ui: &mut Ui, model: &mut Model) {
     ui.heading("Insights");
     ui.checkbox(&mut model.continuous_mode, "Continuous mode")
         .on_hover_text("Message log will update immediately; CPU usage may be higher");
@@ -38,7 +48,7 @@ fn insights(ui: &mut Ui, model: &mut Model) {
     }
 }
 
-fn message_log(ui: &mut Ui, model: &mut Model) {
+fn render_message_log(ui: &mut Ui, model: &mut Model) {
     ui.heading(format!("Messages x{}", model.insights.message_count()));
     if model.insights.message_log().is_empty() {
         ui.small("0 messages in log");
@@ -64,41 +74,61 @@ fn message_log(ui: &mut Ui, model: &mut Model) {
 
 fn render_playback(ui: &mut Ui, model: &mut Model) {
     ui.heading("Playback");
-    ui.small("Simulate timed data, playing from file demo.json");
+    ui.label("Simulate timed data");
 
-    let Model {
-        editable_tether_settings,
-        ..
-    } = &model;
+    if ui.button("Load").clicked() {
+        if let Some(path) = rfd::FileDialog::new()
+            .add_filter("text", &["json"])
+            .pick_file()
+        {
+            let path_string = path.display().to_string();
+            model.playback.file_path = Some(path_string);
+        }
+    }
 
-    let tether_options = TetherAgentOptionsBuilder::from(editable_tether_settings);
+    match &model.playback.file_path {
+        Some(file_path) => {
+            let Model {
+                editable_tether_settings,
+                ..
+            } = &model;
 
-    if ui.button("▶️").clicked() {
-        std::thread::spawn(move || {
-            match tether_options.auto_connect(true).build() {
-                Ok(tether_agent) => {
-                    info!("Connected new Tether Agent for playback OK");
-                    let options = PlaybackOptions {
-                        file_path: "./demo.json".into(),
-                        override_topic: None,
-                        loop_count: 1,
-                        loop_infinite: false,
-                    };
-                    playback(&options, &tether_agent);
-                }
-                Err(e) => {
-                    error!("Error connecting Tether Agent for playback, {}", e);
-                }
+            let tether_options = TetherAgentOptionsBuilder::from(editable_tether_settings);
+
+            ui.label(format!("Play from \"{}\"", file_path));
+
+            if ui.button("Play ⏵").clicked() {
+                let f = file_path.clone();
+                std::thread::spawn(move || {
+                    match tether_options.auto_connect(true).build() {
+                        Ok(tether_agent) => {
+                            info!("Connected new Tether Agent for playback OK");
+                            let options = PlaybackOptions {
+                                file_path: String::from(f),
+                                override_topic: None,
+                                loop_count: 1,
+                                loop_infinite: false,
+                            };
+                            playback(&options, &tether_agent);
+                        }
+                        Err(e) => {
+                            error!("Error connecting Tether Agent for playback, {}", e);
+                        }
+                    }
+
+                    info!("Tether Playback Utility thread completed");
+                });
             }
-
-            info!("Tether Playback Utility thread completed");
-        });
+        }
+        None => {
+            ui.label("No playback file loaded");
+        }
     }
 }
 
 pub fn render(ctx: &Context, model: &mut Model) {
     egui::CentralPanel::default().show(ctx, |ui| {
-        insights(ui, model);
+        render_insights(ui, model);
         standard_spacer(ui);
         ui.separator();
         render_playback(ui, model);
@@ -107,6 +137,6 @@ pub fn render(ctx: &Context, model: &mut Model) {
     egui::SidePanel::right("MessageLog")
         .min_width(512.)
         .show(ctx, |ui| {
-            message_log(ui, model);
+            render_message_log(ui, model);
         });
 }

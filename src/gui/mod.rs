@@ -52,32 +52,6 @@ fn attempt_new_tether_connection(model: &mut Model) {
     model.tether_agent = tether_agent;
 }
 
-// fn number_widget_range(ui: &mut Ui, model: &mut Model, default_max: f32) {
-//     let openness = ui
-//         .collapsing("Range", |ui| {
-//             ui.label("Range");
-//             ui.vertical(|ui| {
-//                 ui.add(
-//                     egui::Slider::new(&mut model.next_range.0, i16::MIN as f32..=i16::MAX as f32)
-//                         .text("min"),
-//                 );
-//                 ui.add(
-//                     egui::Slider::new(&mut model.next_range.1, i16::MIN as f32..=i16::MAX as f32)
-//                         .text("max"),
-//                 );
-//                 if ui.small_button("Reset").clicked() {
-//                     model.next_range = (0., default_max);
-//                 }
-//             });
-//         })
-//         .openness;
-
-//     if openness > 0. && openness < 1.0 {
-//         model.next_range = (0., default_max);
-//     }
-//     ui.end_row();
-// }
-
 pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     ui.heading("Load/Save Project");
     if let Some(json_path) = &model.json_file {
