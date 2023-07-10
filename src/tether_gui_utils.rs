@@ -21,8 +21,8 @@ impl Default for EditableTetherSettings {
             was_changed: false,
             host: "localhost".into(),
             port: 1883,
-            username: "".into(),
-            password: "".into(),
+            username: "tether".into(),
+            password: "sp_ceB0ss!".into(),
             role: "gui".into(),
             id: "any".into(),
         }

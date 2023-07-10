@@ -1,7 +1,12 @@
 use egui::{Color32, Context, Ui};
-use tether_utils::tether_topics::MONITOR_LOG_LENGTH;
+use log::*;
+use tether_agent::TetherAgentOptionsBuilder;
+use tether_utils::{
+    tether_playback::{playback, PlaybackOptions},
+    tether_topics::MONITOR_LOG_LENGTH,
+};
 
-use crate::Model;
+use crate::{tether_gui_utils::init_new_tether_agent, Model};
 
 use super::standard_spacer;
 
@@ -57,9 +62,46 @@ fn message_log(ui: &mut Ui, model: &mut Model) {
         });
 }
 
+fn render_playback(ui: &mut Ui, model: &mut Model) {
+    ui.heading("Playback");
+    ui.small("Simulate timed data, playing from file demo.json");
+
+    let Model {
+        editable_tether_settings,
+        ..
+    } = &model;
+
+    let tether_options = TetherAgentOptionsBuilder::from(editable_tether_settings);
+
+    if ui.button("▶️").clicked() {
+        std::thread::spawn(move || {
+            match tether_options.auto_connect(true).build() {
+                Ok(tether_agent) => {
+                    info!("Connected new Tether Agent for playback OK");
+                    let options = PlaybackOptions {
+                        file_path: "./demo.json".into(),
+                        override_topic: None,
+                        loop_count: 1,
+                        loop_infinite: false,
+                    };
+                    playback(&options, &tether_agent);
+                }
+                Err(e) => {
+                    error!("Error connecting Tether Agent for playback, {}", e);
+                }
+            }
+
+            info!("Tether Playback Utility thread completed");
+        });
+    }
+}
+
 pub fn render(ctx: &Context, model: &mut Model) {
     egui::CentralPanel::default().show(ctx, |ui| {
         insights(ui, model);
+        standard_spacer(ui);
+        ui.separator();
+        render_playback(ui, model);
     });
 
     egui::SidePanel::right("MessageLog")
