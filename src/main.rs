@@ -7,32 +7,32 @@ use clap::Parser;
 use gui::render;
 use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
 use settings::Cli;
-use tether_utils::EditableTetherSettings;
 
 extern crate rmp_serde;
 extern crate rmpv;
 extern crate serde_json;
 
+use ::tether_utils::tether_topics::Insights;
 use eframe::egui;
 use env_logger::Env;
-use insights::Insights;
-use log::{error, info, warn};
+use log::*;
 use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
+use tether_gui_utils::EditableTetherSettings;
+use tether_utils::tether_topics::TopicOptions;
 use widgets::WidgetEntry;
 
 use crate::{
     gui::widget_view::common_send,
     midi_mapping::{send_if_midi_note, update_widget_if_controllable},
     project::{Project, TetherSettingsInProject},
-    tether_utils::init_new_tether_agent,
+    tether_gui_utils::init_new_tether_agent,
 };
 
 mod gui;
-mod insights;
 mod midi_mapping;
 mod project;
 mod settings;
-mod tether_utils;
+mod tether_gui_utils;
 mod widgets;
 
 fn main() -> Result<(), eframe::Error> {
@@ -122,7 +122,12 @@ impl Default for Model {
             monitor_topic: cli.monitor_topic.clone(),
             project,
             queue: Vec::new(),
-            insights: Insights::new(&tether_agent, &cli.monitor_topic),
+            insights: Insights::new(
+                &TopicOptions {
+                    subscribe_topic: cli.monitor_topic,
+                },
+                &tether_agent,
+            ),
             midi_handler: MidiSubscriber::new(&tether_agent),
             tether_agent,
             continuous_mode: cli.continuous_mode,
@@ -150,7 +155,9 @@ impl eframe::App for Model {
         let mut work_done = false;
         while let Some((plug_name, message)) = &self.tether_agent.check_messages() {
             work_done = true;
-            self.insights.update(plug_name, message);
+            if self.insights.update(&message) {
+                debug!("Insights update");
+            }
             match self.midi_handler.get_midi_message(plug_name, message) {
                 Some(MidiMessage::ControlChange(cc_message)) => {
                     for widget in self.project.widgets.iter_mut() {

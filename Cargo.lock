@@ -2421,22 +2421,7 @@ dependencies = [
 
 [[package]]
 name = "tether-agent"
-version = "0.8.4"
-dependencies = [
- "anyhow",
- "env_logger 0.7.1",
- "log",
- "paho-mqtt",
- "rmp-serde 1.1.1",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "tether-agent"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0716c6da7b21eef6cd83a3cf391f63700080d56f74ce9ec796972c535cddd06b"
+version = "0.8.3"
 dependencies = [
  "anyhow",
  "env_logger 0.7.1",
@@ -2451,7 +2436,6 @@ dependencies = [
 name = "tether-egui"
 version = "0.5.0"
 dependencies = [
- "circular-buffer",
  "clap",
  "eframe",
  "egui",
@@ -2462,7 +2446,7 @@ dependencies = [
  "rmpv",
  "serde",
  "serde_json",
- "tether-agent 0.8.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tether-agent",
  "tether-utils",
 ]
 
@@ -2470,6 +2454,8 @@ dependencies = [
 name = "tether-utils"
 version = "0.3.2"
 dependencies = [
+ "anyhow",
+ "circular-buffer",
  "clap",
  "ctrlc",
  "env_logger 0.7.1",
@@ -2478,7 +2464,7 @@ dependencies = [
  "rmpv",
  "serde",
  "serde_json",
- "tether-agent 0.8.4",
+ "tether-agent",
 ]
 
 [[package]]

@@ -1,14 +1,14 @@
 use std::fs;
 
 use crate::{
-    insights::Insights,
     project::TetherSettingsInProject,
-    tether_utils::{init_new_tether_agent, EditableTetherSettings},
+    tether_gui_utils::{init_new_tether_agent, EditableTetherSettings},
     ActiveView,
 };
 use egui::{Color32, RichText, Ui};
 use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
+use tether_utils::tether_topics::{Insights, TopicOptions};
 
 use crate::Model;
 
@@ -34,7 +34,12 @@ fn attempt_new_tether_connection(model: &mut Model) {
         Ok(_) => {
             info!("Connected Tether Agent OK");
             model.editable_tether_settings.was_changed = true;
-            model.insights = Insights::new(&tether_agent, &model.monitor_topic);
+            model.insights = Insights::new(
+                &TopicOptions {
+                    subscribe_topic: model.monitor_topic.clone(),
+                },
+                &model.tether_agent,
+            );
         }
         Err(e) => {
             model.editable_tether_settings.is_editing = false;

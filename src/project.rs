@@ -3,7 +3,7 @@ use std::fs;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 
-use crate::{tether_utils::EditableTetherSettings, widgets::WidgetEntry};
+use crate::{tether_gui_utils::EditableTetherSettings, widgets::WidgetEntry};
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
