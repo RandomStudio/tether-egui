@@ -157,7 +157,7 @@ impl eframe::App for Model {
         let mut work_done = false;
         while let Some((plug_name, message)) = &self.tether_agent.check_messages() {
             work_done = true;
-            if self.insights.update(&message) {
+            if self.insights.update(message) {
                 debug!("Insights update");
             }
             match self.midi_handler.get_midi_message(plug_name, message) {

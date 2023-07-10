@@ -1,8 +1,10 @@
+use std::{sync::mpsc, thread::JoinHandle};
+
 use egui::{Color32, Context, Ui};
 use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
 use tether_utils::{
-    tether_playback::{playback, PlaybackOptions},
+    tether_playback::{PlaybackOptions, TetherPlaybackUtil},
     tether_topics::MONITOR_LOG_LENGTH,
 };
 
@@ -12,11 +14,19 @@ use super::standard_spacer;
 
 pub struct PlaybackState {
     file_path: Option<String>,
+    is_playing: bool,
+    thread_handle: Option<JoinHandle<()>>,
+    stop_request_tx: Option<mpsc::Sender<bool>>,
 }
 
 impl Default for PlaybackState {
     fn default() -> Self {
-        PlaybackState { file_path: None }
+        PlaybackState {
+            file_path: None,
+            is_playing: false,
+            stop_request_tx: None,
+            thread_handle: None,
+        }
     }
 }
 
@@ -97,27 +107,44 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
 
             ui.label(format!("Play from \"{}\"", file_path));
 
-            if ui.button("Play ⏵").clicked() {
-                let f = file_path.clone();
-                std::thread::spawn(move || {
+            let text_in_button = if model.playback.is_playing {
+                "Playing..."
+            } else {
+                "Play ⏵"
+            };
+            if ui.button(text_in_button).clicked() {
+                let file_path = file_path.clone();
+                model.playback.is_playing = true;
+                model.playback.thread_handle = Some(std::thread::spawn(move || {
                     match tether_options.auto_connect(true).build() {
                         Ok(tether_agent) => {
                             info!("Connected new Tether Agent for playback OK");
                             let options = PlaybackOptions {
-                                file_path: String::from(f),
+                                file_path,
                                 override_topic: None,
                                 loop_count: 1,
                                 loop_infinite: false,
+                                ignore_ctrl_c: true,
                             };
-                            playback(&options, &tether_agent);
+                            let player = TetherPlaybackUtil::new(options, tether_agent);
+                            player.start();
+                            // let request_stop = player.get_stop_tx();
+                            // model.playback.stop_request_tx = Some(request_stop);
                         }
                         Err(e) => {
                             error!("Error connecting Tether Agent for playback, {}", e);
                         }
                     }
-
-                    info!("Tether Playback Utility thread completed");
-                });
+                }));
+            }
+            if model.playback.is_playing {
+                if let Some(handle) = &model.playback.thread_handle {
+                    if handle.is_finished() {
+                        info!("Playback handle finished");
+                        model.playback.is_playing = false;
+                        model.playback.thread_handle = None;
+                    }
+                }
             }
         }
         None => {
