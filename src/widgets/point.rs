@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use tether_agent::TetherAgent;
 
 use crate::{
-    gui::project_builder::{
+    gui::widget_view::{
         common_editable_values, common_in_use_heading, common_save_button, common_send_button,
     },
     midi_mapping::MidiMapping,

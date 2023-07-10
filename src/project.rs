@@ -21,8 +21,8 @@ impl Default for TetherSettingsInProject {
         TetherSettingsInProject {
             host: Some("127.0.0.1".into()),
             port: Some(1883),
-            username: None,
-            password: None,
+            username: Some("tether".into()),
+            password: Some("sp_ceB0ss!".into()),
             role: Some("gui".into()),
             id: Some("any".into()),
         }

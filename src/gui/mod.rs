@@ -4,6 +4,7 @@ use crate::{
     insights::Insights,
     project::TetherSettingsInProject,
     tether_utils::{init_new_tether_agent, EditableTetherSettings},
+    ActiveView,
 };
 use egui::{Color32, RichText, Ui};
 use log::*;
@@ -11,9 +12,10 @@ use tether_agent::TetherAgentOptionsBuilder;
 
 use crate::Model;
 
-use self::project_builder::{available_widgets, widgets_in_use};
+use self::widget_view::{available_widgets, widgets_in_use};
 
-pub mod project_builder;
+pub mod utilities_view;
+pub mod widget_view;
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
@@ -201,76 +203,48 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
             // model.prepare_next_entry();
         }
     });
-
-    standard_spacer(ui);
-    ui.separator();
-    ui.heading("Insights");
-    ui.checkbox(&mut model.continuous_mode, "Continuous mode")
-        .on_hover_text("Message log will update immediately; CPU usage may be higher");
-    ui.collapsing(format!("Topics x{}", model.insights.topics().len()), |ui| {
-        for t in model.insights.topics() {
-            ui.small(t);
-        }
-    });
-    ui.collapsing(
-        format!("Plug Names x{}", model.insights.plugs().len()),
-        |ui| {
-            for t in model.insights.plugs() {
-                ui.small(t);
-            }
-        },
-    );
-    ui.collapsing(
-        format!("Agent Roles x{}", model.insights.roles().len()),
-        |ui| {
-            for t in model.insights.roles() {
-                ui.small(t);
-            }
-        },
-    );
-    ui.collapsing(
-        format!("Agent IDs (groups) x{}", model.insights.ids().len()),
-        |ui| {
-            for t in model.insights.ids() {
-                ui.small(t);
-            }
-        },
-    );
-
-    standard_spacer(ui);
-    ui.separator();
-    ui.heading(format!("Messages x{}", model.insights.message_count()));
-    if model.insights.message_log().is_empty() {
-        ui.small("0 messages received");
-    }
-    egui::ScrollArea::vertical()
-        .auto_shrink([false; 2])
-        .show(ui, |ui| {
-            for (topic, json) in model.insights.message_log().iter().rev() {
-                ui.colored_label(Color32::LIGHT_BLUE, topic);
-                ui.label(json);
-            }
-        });
 }
 
-pub fn render(ctx: &egui::Context, model: &mut Model) {
+fn common_left_panel(ctx: &egui::Context, model: &mut Model) {
     egui::SidePanel::left("General")
         .min_width(256.0)
         .show(ctx, |ui| {
             general_agent_area(ui, model);
         });
+}
 
-    egui::SidePanel::right("Available Widgets")
-        .min_width(128.)
-        .show(ctx, |ui| {
-            ui.heading("Available Widgets");
-
-            standard_spacer(ui);
-
-            available_widgets(ui, model);
-        });
-
-    egui::CentralPanel::default().show(ctx, |ui| {
-        widgets_in_use(ctx, ui, model);
+pub fn render(ctx: &egui::Context, model: &mut Model) {
+    egui::TopBottomPanel::top("Tabs").show(ctx, |ui| {
+        ui.horizontal(|ui| {
+            ui.selectable_value(&mut model.active_window, ActiveView::WidgetView, "Project");
+            ui.selectable_value(
+                &mut model.active_window,
+                ActiveView::UtilitiesView,
+                "Utilities",
+            );
+        })
     });
+
+    match model.active_window {
+        ActiveView::WidgetView => {
+            common_left_panel(ctx, model);
+            egui::SidePanel::right("Available Widgets")
+                .min_width(128.)
+                .show(ctx, |ui| {
+                    ui.heading("Available Widgets");
+
+                    standard_spacer(ui);
+
+                    available_widgets(ui, model);
+                });
+
+            egui::CentralPanel::default().show(ctx, |ui| {
+                widgets_in_use(ctx, ui, model);
+            });
+        }
+        ActiveView::UtilitiesView => {
+            common_left_panel(ctx, model);
+            utilities_view::render(ctx, model);
+        }
+    }
 }

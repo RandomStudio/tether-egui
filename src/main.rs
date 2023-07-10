@@ -21,7 +21,7 @@ use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
 use widgets::WidgetEntry;
 
 use crate::{
-    gui::project_builder::common_send,
+    gui::widget_view::common_send,
     midi_mapping::{send_if_midi_note, update_widget_if_controllable},
     project::{Project, TetherSettingsInProject},
     tether_utils::init_new_tether_agent,
@@ -56,6 +56,12 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
+#[derive(PartialEq)]
+enum ActiveView {
+    WidgetView,
+    UtilitiesView,
+}
+
 pub struct Model {
     json_file: Option<String>,
     monitor_topic: String,
@@ -66,6 +72,7 @@ pub struct Model {
     continuous_mode: bool,
     tether_agent: TetherAgent,
     editable_tether_settings: EditableTetherSettings,
+    active_window: ActiveView,
 }
 
 impl Default for Model {
@@ -119,6 +126,7 @@ impl Default for Model {
             midi_handler: MidiSubscriber::new(&tether_agent),
             tether_agent,
             continuous_mode: cli.continuous_mode,
+            active_window: ActiveView::WidgetView,
         }
     }
 }
