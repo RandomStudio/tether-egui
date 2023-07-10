@@ -38,7 +38,7 @@ fn attempt_new_tether_connection(model: &mut Model) {
                 &TopicOptions {
                     subscribe_topic: model.monitor_topic.clone(),
                 },
-                &model.tether_agent,
+                &tether_agent,
             );
         }
         Err(e) => {
@@ -79,11 +79,7 @@ fn attempt_new_tether_connection(model: &mut Model) {
 // }
 
 pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
-    ui.heading("Project");
-
-    standard_spacer(ui);
-    ui.separator();
-    ui.heading("Load/Save");
+    ui.heading("Load/Save Project");
     if let Some(json_path) = &model.json_file {
         ui.small(json_path);
     } else {
@@ -221,7 +217,7 @@ fn common_left_panel(ctx: &egui::Context, model: &mut Model) {
 pub fn render(ctx: &egui::Context, model: &mut Model) {
     egui::TopBottomPanel::top("Tabs").show(ctx, |ui| {
         ui.horizontal(|ui| {
-            ui.selectable_value(&mut model.active_window, ActiveView::WidgetView, "Project");
+            ui.selectable_value(&mut model.active_window, ActiveView::WidgetView, "Widgets");
             ui.selectable_value(
                 &mut model.active_window,
                 ActiveView::UtilitiesView,
