@@ -19,16 +19,19 @@ fn common_left_panel(ctx: &egui::Context, model: &mut Model) {
 }
 
 pub fn render(ctx: &egui::Context, model: &mut Model) {
-    egui::TopBottomPanel::top("Tabs").show(ctx, |ui| {
-        ui.horizontal(|ui| {
-            ui.selectable_value(&mut model.active_window, ActiveView::WidgetView, "Widgets");
-            ui.selectable_value(
-                &mut model.active_window,
-                ActiveView::UtilitiesView,
-                "Utilities",
-            );
-        })
-    });
+    egui::TopBottomPanel::top("Tabs")
+        .min_height(32.)
+        .show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.heading("Views: ");
+                ui.selectable_value(&mut model.active_window, ActiveView::WidgetView, "Widgets");
+                ui.selectable_value(
+                    &mut model.active_window,
+                    ActiveView::UtilitiesView,
+                    "Utilities",
+                );
+            })
+        });
 
     match model.active_window {
         ActiveView::WidgetView => {
