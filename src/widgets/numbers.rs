@@ -26,6 +26,7 @@ pub struct NumberWidget {
     should_round: bool,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl NumberWidget {
     pub fn new(
         name: &str,

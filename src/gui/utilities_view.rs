@@ -13,6 +13,7 @@ use crate::Model;
 
 use super::common::standard_spacer;
 
+#[derive(Default)]
 pub struct PlaybackState {
     options: Option<PlaybackOptions>,
     // file_path: Option<String>,
@@ -20,17 +21,6 @@ pub struct PlaybackState {
     thread_handle: Option<JoinHandle<()>>,
     stop_request_tx: Option<mpsc::Sender<bool>>,
     // loop_infinite: bool
-}
-
-impl Default for PlaybackState {
-    fn default() -> Self {
-        PlaybackState {
-            options: None,
-            is_playing: false,
-            stop_request_tx: None,
-            thread_handle: None,
-        }
-    }
 }
 
 pub struct RecordingState {
@@ -137,7 +127,7 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
             });
 
             ui.horizontal(|ui| {
-                if !model.playback.is_playing  {
+                if !model.playback.is_playing {
                     if ui.button("⏵ Play").clicked() {
                         model.playback.is_playing = true;
                         let player = TetherPlaybackUtil::new(options.to_owned());
@@ -150,17 +140,14 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
                             player.start(&tether_agent);
                         }));
                     }
-
-                } else {
-                    if ui.button("⏹ Stop").clicked() {
-                        if let Some(tx) = &model.playback.stop_request_tx {
-                            tx.send(true)
-                                .expect("failed to send playback stop request via channel");
-                        } else {
-                            panic!(
-                                "Playback was marked in-progress but no stop request channel available"
-                            );
-                        }
+                } else if ui.button("⏹ Stop").clicked() {
+                    if let Some(tx) = &model.playback.stop_request_tx {
+                        tx.send(true)
+                            .expect("failed to send playback stop request via channel");
+                    } else {
+                        panic!(
+                            "Playback was marked in-progress but no stop request channel available"
+                        );
                     }
                 }
             });
@@ -280,16 +267,12 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
                     recorder.start_recording(&tether_agent);
                 }));
             }
-        } else {
-            if ui.button("⏹ Stop").clicked() {
-                if let Some(tx) = &model.recording.stop_request_tx {
-                    tx.send(true)
-                        .expect("failed to send recording stop request via channel");
-                } else {
-                    panic!(
-                        "Recording was marked in-progress but no stop request channel available"
-                    );
-                }
+        } else if ui.button("⏹ Stop").clicked() {
+            if let Some(tx) = &model.recording.stop_request_tx {
+                tx.send(true)
+                    .expect("failed to send recording stop request via channel");
+            } else {
+                panic!("Recording was marked in-progress but no stop request channel available");
             }
         }
     });
@@ -306,7 +289,7 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
 }
 
 pub fn render(ctx: &Context, model: &mut Model) {
-    egui::CentralPanel::default().show(ctx, |ui| {
+    egui::CentralPanel::default().show(ctx, |_ui| {
         egui::Window::new("Insights").show(ctx, |ui| {
             render_insights(ui, model);
         });
