@@ -9,9 +9,9 @@ use tether_utils::{
     tether_topics::MONITOR_LOG_LENGTH,
 };
 
-use crate::Model;
+use crate::{project::TetherSettingsInProject, Model};
 
-use super::common::standard_spacer;
+use super::{common::standard_spacer, tether_gui_utils::init_new_tether_agent};
 
 #[derive(Default)]
 pub struct PlaybackState {
@@ -131,11 +131,16 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
                     if ui.button("⏵ Play").clicked() {
                         model.playback.is_playing = true;
                         let player = TetherPlaybackUtil::new(options.to_owned());
+                        let options =
+                            TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
+
                         model.playback.stop_request_tx = Some(player.get_stop_tx());
                         model.playback.thread_handle = Some(std::thread::spawn(move || {
-                            let tether_agent = TetherAgentOptionsBuilder::new("playbackAgent")
-                                .build()
-                                .expect("failed to init/connect Tether for playback");
+                            // let tether_agent = TetherAgentOptionsBuilder::new("playbackAgent")
+                            //     .build()
+                            //     .expect("failed to init/connect Tether for playback");
+                            let tether_agent = init_new_tether_agent(&options);
+                            tether_agent.connect(&options).expect("failed to connect");
                             info!("Connected new Tether Agent for playback OK");
                             player.start(&tether_agent);
                         }));
@@ -258,12 +263,11 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
             if ui.button("⏺ Record").clicked() {
                 model.recording.is_recording = true;
                 let recorder = TetherRecordUtil::new(model.recording.options.to_owned());
+                let options = TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
                 model.recording.stop_request_tx = Some(recorder.get_stop_tx());
                 model.recording.thread_handle = Some(std::thread::spawn(move || {
-                    let tether_agent = TetherAgentOptionsBuilder::new("recordingAgent")
-                        .build()
-                        .expect("failed to create Tether Agent for recording");
-
+                    let tether_agent = init_new_tether_agent(&options);
+                    tether_agent.connect(&options).expect("failed to connect");
                     recorder.start_recording(&tether_agent);
                 }));
             }
