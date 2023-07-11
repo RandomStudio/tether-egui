@@ -98,51 +98,61 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
 
     match &model.playback.file_path {
         Some(file_path) => {
-            let Model {
-                editable_tether_settings,
-                ..
-            } = &model;
-
-            let tether_options = TetherAgentOptionsBuilder::from(editable_tether_settings);
+            // let Model {
+            //     editable_tether_settings,
+            //     ..
+            // } = &model;
 
             ui.label(format!("Play from \"{}\"", file_path));
+            
+            ui.horizontal(|ui| {
 
-            let text_in_button = if model.playback.is_playing {
-                "Playing..."
-            } else {
-                "Play ⏵"
-            };
-            if ui.button(text_in_button).clicked() {
-                let file_path = file_path.clone();
-                model.playback.is_playing = true;
-                model.playback.thread_handle = Some(std::thread::spawn(move || {
-                    match tether_options.auto_connect(true).build() {
-                        Ok(tether_agent) => {
+                
+                if !model.playback.is_playing  {
+                    if ui.button("⏵ Play").clicked() {
+                        let file_path = file_path.clone();
+                        model.playback.is_playing = true;
+                        let options = PlaybackOptions {
+                            file_path,
+                            override_topic: None,
+                            loop_count: 1,
+                            loop_infinite: false,
+                            ignore_ctrl_c: true,
+                        };
+                        let player = TetherPlaybackUtil::new(options);
+                        model.playback.stop_request_tx = Some(player.get_stop_tx());
+        
+                        model.playback.thread_handle = Some(std::thread::spawn(move || {
+                            let tether_agent = TetherAgentOptionsBuilder::new("playbackAgent")
+                                .build()
+                                .expect("failed to init/connect Tether for playback");
                             info!("Connected new Tether Agent for playback OK");
-                            let options = PlaybackOptions {
-                                file_path,
-                                override_topic: None,
-                                loop_count: 1,
-                                loop_infinite: false,
-                                ignore_ctrl_c: true,
-                            };
-                            let player = TetherPlaybackUtil::new(options, tether_agent);
-                            player.start();
+                            player.start(&tether_agent);
                             // let request_stop = player.get_stop_tx();
                             // model.playback.stop_request_tx = Some(request_stop);
-                        }
-                        Err(e) => {
-                            error!("Error connecting Tether Agent for playback, {}", e);
+                        }));
+                    }
+
+                }else {
+                    if ui.button("⏹ Stop").clicked() {
+                        if let Some(tx) = &model.playback.stop_request_tx {
+                            tx.send(true)
+                                .expect("failed to send stop request via channel");
+                        } else {
+                            panic!(
+                                "Playback was marked in-progress but no stop request channel available"
+                            );
                         }
                     }
-                }));
-            }
+                }
+            });
             if model.playback.is_playing {
                 if let Some(handle) = &model.playback.thread_handle {
                     if handle.is_finished() {
                         info!("Playback handle finished");
                         model.playback.is_playing = false;
                         model.playback.thread_handle = None;
+                        model.playback.stop_request_tx = None;
                     }
                 }
             }
