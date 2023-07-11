@@ -5,6 +5,7 @@ use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
 use tether_utils::{
     tether_playback::{PlaybackOptions, TetherPlaybackUtil},
+    tether_record::{RecordOptions, TetherRecordUtil},
     tether_topics::MONITOR_LOG_LENGTH,
 };
 
@@ -19,17 +20,36 @@ pub struct PlaybackState {
     thread_handle: Option<JoinHandle<()>>,
     stop_request_tx: Option<mpsc::Sender<bool>>,
     // loop_infinite: bool
-
 }
 
 impl Default for PlaybackState {
     fn default() -> Self {
-        // let options = PlaybackOptions {   ignore_ctrl_c: true, ..PlaybackOptions::default() };
         PlaybackState {
             options: None,
             is_playing: false,
             stop_request_tx: None,
             thread_handle: None,
+        }
+    }
+}
+
+pub struct RecordingState {
+    options: RecordOptions,
+    is_recording: bool,
+    thread_handle: Option<JoinHandle<()>>,
+    stop_request_tx: Option<mpsc::Sender<bool>>,
+}
+
+impl Default for RecordingState {
+    fn default() -> Self {
+        RecordingState {
+            options: RecordOptions {
+                ignore_ctrl_c: true,
+                ..RecordOptions::default()
+            },
+            is_recording: false,
+            thread_handle: None,
+            stop_request_tx: None,
         }
     }
 }
@@ -87,8 +107,7 @@ fn render_message_log(ui: &mut Ui, model: &mut Model) {
 }
 
 fn render_playback(ui: &mut Ui, model: &mut Model) {
-    ui.heading("Playback");
-    ui.label("Simulate timed data");
+    ui.label("Simulate timed messages");
 
     if ui.button("Load").clicked() {
         if let Some(path) = rfd::FileDialog::new()
@@ -96,7 +115,12 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
             .pick_file()
         {
             let file_path = path.display().to_string();
-            model.playback.options = Some(PlaybackOptions { file_path,  ignore_ctrl_c: true, loop_infinite: true, ..PlaybackOptions::default() } );
+            model.playback.options = Some(PlaybackOptions {
+                file_path,
+                ignore_ctrl_c: true,
+                loop_infinite: true,
+                ..PlaybackOptions::default()
+            });
         }
     }
 
@@ -110,17 +134,14 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
                     ui.label("Iterations:");
                     ui.add(egui::DragValue::new(&mut options.loop_count).speed(1.0));
                 }
-            
             });
 
             ui.horizontal(|ui| {
-                
                 if !model.playback.is_playing  {
                     if ui.button("⏵ Play").clicked() {
                         model.playback.is_playing = true;
                         let player = TetherPlaybackUtil::new(options.to_owned());
                         model.playback.stop_request_tx = Some(player.get_stop_tx());
-        
                         model.playback.thread_handle = Some(std::thread::spawn(move || {
                             let tether_agent = TetherAgentOptionsBuilder::new("playbackAgent")
                                 .build()
@@ -130,11 +151,11 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
                         }));
                     }
 
-                }else {
+                } else {
                     if ui.button("⏹ Stop").clicked() {
                         if let Some(tx) = &model.playback.stop_request_tx {
                             tx.send(true)
-                                .expect("failed to send stop request via channel");
+                                .expect("failed to send playback stop request via channel");
                         } else {
                             panic!(
                                 "Playback was marked in-progress but no stop request channel available"
@@ -146,7 +167,7 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
             if model.playback.is_playing {
                 if let Some(handle) = &model.playback.thread_handle {
                     if handle.is_finished() {
-                        info!("Playback handle finished");
+                        info!("Playback thread finished");
                         model.playback.is_playing = false;
                         model.playback.thread_handle = None;
                         model.playback.stop_request_tx = None;
@@ -160,12 +181,141 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
     }
 }
 
+fn render_record(ui: &mut Ui, model: &mut Model) {
+    ui.label("Record message, with timing, for simulation");
+
+    egui::Grid::new("my_grid")
+        .num_columns(2)
+        .spacing([40.0, 4.0])
+        .striped(true)
+        .show(ui, |ui| {
+            ui.label("File basename")
+                .on_hover_text("Excluding .json extension");
+            ui.text_edit_singleline(&mut model.recording.options.file_base_name);
+            ui.end_row();
+
+            ui.label("Path");
+            ui.text_edit_singleline(&mut model.recording.options.file_base_path);
+            ui.end_row();
+
+            ui.label("Timestamp");
+            ui.horizontal(|ui| {
+                if model.recording.options.file_no_timestamp {
+                    ui.label("Disabled");
+                    if ui.button("Enable").clicked() {
+                        model.recording.options.file_no_timestamp = false;
+                    }
+                } else {
+                    ui.label("Enabled");
+                    if ui.button("Disable").clicked() {
+                        model.recording.options.file_no_timestamp = true;
+                    }
+                }
+            });
+            ui.end_row();
+
+            if model.recording.options.timing_delay.is_none() {
+                ui.horizontal(|ui| {
+                    ui.label("Timing delay");
+                    if ui.button("enable").clicked() {
+                        model.recording.options.timing_delay = Some(2.0);
+                    }
+                });
+            } else {
+                ui.horizontal(|ui| {
+                    ui.label("Timing delay");
+                    if ui.button("disable").clicked() {
+                        model.recording.options.timing_delay = None;
+                    }
+                });
+            }
+            match &mut model.recording.options.timing_delay {
+                Some(delay) => {
+                    ui.add(egui::DragValue::new(delay).speed(1.0));
+                }
+                None => {
+                    ui.label("disabled");
+                }
+            }
+            ui.end_row();
+
+            if model.recording.options.timing_delay.is_none() {
+                ui.horizontal(|ui| {
+                    ui.label("Timing duration");
+                    if ui.button("enable").clicked() {
+                        model.recording.options.timing_duration = Some(10.0);
+                    }
+                });
+            } else {
+                ui.horizontal(|ui| {
+                    ui.label("Timing duration");
+                    if ui.button("disable").clicked() {
+                        model.recording.options.timing_duration = None;
+                    }
+                });
+            }
+            match &mut model.recording.options.timing_duration {
+                Some(delay) => {
+                    ui.add(egui::DragValue::new(delay).speed(1.0));
+                }
+                None => {
+                    ui.label("disabled");
+                }
+            }
+            ui.end_row();
+        });
+    standard_spacer(ui);
+    ui.separator();
+    ui.horizontal(|ui| {
+        if !model.recording.is_recording {
+            if ui.button("⏺ Record").clicked() {
+                model.recording.is_recording = true;
+                let recorder = TetherRecordUtil::new(model.recording.options.to_owned());
+                model.recording.stop_request_tx = Some(recorder.get_stop_tx());
+                model.recording.thread_handle = Some(std::thread::spawn(move || {
+                    let tether_agent = TetherAgentOptionsBuilder::new("recordingAgent")
+                        .build()
+                        .expect("failed to create Tether Agent for recording");
+
+                    recorder.start_recording(&tether_agent);
+                }));
+            }
+        } else {
+            if ui.button("⏹ Stop").clicked() {
+                if let Some(tx) = &model.recording.stop_request_tx {
+                    tx.send(true)
+                        .expect("failed to send recording stop request via channel");
+                } else {
+                    panic!(
+                        "Recording was marked in-progress but no stop request channel available"
+                    );
+                }
+            }
+        }
+    });
+    if model.recording.is_recording {
+        if let Some(handle) = &model.recording.thread_handle {
+            if handle.is_finished() {
+                info!("Recording thread finished");
+                model.recording.is_recording = false;
+                model.recording.thread_handle = None;
+                model.recording.stop_request_tx = None;
+            }
+        }
+    }
+}
+
 pub fn render(ctx: &Context, model: &mut Model) {
     egui::CentralPanel::default().show(ctx, |ui| {
-        render_insights(ui, model);
-        standard_spacer(ui);
-        ui.separator();
-        render_playback(ui, model);
+        egui::Window::new("Insights").show(ctx, |ui| {
+            render_insights(ui, model);
+        });
+        egui::Window::new("Playback").show(ctx, |ui| {
+            render_playback(ui, model);
+        });
+        egui::Window::new("Recording").show(ctx, |ui| {
+            render_record(ui, model);
+        });
     });
 
     egui::SidePanel::right("MessageLog")

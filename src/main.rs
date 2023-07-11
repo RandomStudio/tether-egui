@@ -4,7 +4,11 @@ use std::time::Duration;
 
 use clap::Parser;
 
-use gui::{render, tether_gui_utils::EditableTetherSettings, utilities_view::PlaybackState};
+use gui::{
+    render,
+    tether_gui_utils::EditableTetherSettings,
+    utilities_view::{PlaybackState, RecordingState},
+};
 use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
 use settings::Cli;
 
@@ -71,6 +75,7 @@ pub struct Model {
     editable_tether_settings: EditableTetherSettings,
     active_window: ActiveView,
     playback: PlaybackState,
+    recording: RecordingState,
 }
 
 impl Default for Model {
@@ -131,6 +136,7 @@ impl Default for Model {
             continuous_mode: cli.continuous_mode,
             active_window: ActiveView::WidgetView,
             playback: PlaybackState::default(),
+            recording: RecordingState::default(),
         }
     }
 }
