@@ -12,7 +12,7 @@ use crate::{
     Model, QueueItem,
 };
 
-use super::{common_remove_button, standard_spacer};
+use super::common::{common_remove_button, standard_spacer};
 
 pub fn common_in_use_heading<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
     ui.horizontal(|ui| {

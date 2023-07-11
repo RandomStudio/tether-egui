@@ -10,7 +10,7 @@ use tether_utils::{
 
 use crate::Model;
 
-use super::standard_spacer;
+use super::common::standard_spacer;
 
 pub struct PlaybackState {
     options: Option<PlaybackOptions>,

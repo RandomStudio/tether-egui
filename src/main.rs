@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use clap::Parser;
 
-use gui::{render, utilities_view::PlaybackState};
+use gui::{render, tether_gui_utils::EditableTetherSettings, utilities_view::PlaybackState};
 use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
 use settings::Cli;
 
@@ -17,22 +17,19 @@ use eframe::egui;
 use env_logger::Env;
 use log::*;
 use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
-use tether_gui_utils::EditableTetherSettings;
 use tether_utils::tether_topics::TopicOptions;
 use widgets::WidgetEntry;
 
 use crate::{
-    gui::widget_view::common_send,
+    gui::{tether_gui_utils::init_new_tether_agent, widget_view::common_send},
     midi_mapping::{send_if_midi_note, update_widget_if_controllable},
     project::{Project, TetherSettingsInProject},
-    tether_gui_utils::init_new_tether_agent,
 };
 
 mod gui;
 mod midi_mapping;
 mod project;
 mod settings;
-mod tether_gui_utils;
 mod widgets;
 
 fn main() -> Result<(), eframe::Error> {
