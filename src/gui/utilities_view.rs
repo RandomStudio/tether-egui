@@ -13,16 +13,20 @@ use crate::Model;
 use super::standard_spacer;
 
 pub struct PlaybackState {
-    file_path: Option<String>,
+    options: Option<PlaybackOptions>,
+    // file_path: Option<String>,
     is_playing: bool,
     thread_handle: Option<JoinHandle<()>>,
     stop_request_tx: Option<mpsc::Sender<bool>>,
+    // loop_infinite: bool
+
 }
 
 impl Default for PlaybackState {
     fn default() -> Self {
+        // let options = PlaybackOptions {   ignore_ctrl_c: true, ..PlaybackOptions::default() };
         PlaybackState {
-            file_path: None,
+            options: None,
             is_playing: false,
             stop_request_tx: None,
             thread_handle: None,
@@ -91,35 +95,30 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
             .add_filter("text", &["json"])
             .pick_file()
         {
-            let path_string = path.display().to_string();
-            model.playback.file_path = Some(path_string);
+            let file_path = path.display().to_string();
+            model.playback.options = Some(PlaybackOptions { file_path,  ignore_ctrl_c: true, loop_infinite: true, ..PlaybackOptions::default() } );
         }
     }
 
-    match &model.playback.file_path {
-        Some(file_path) => {
-            // let Model {
-            //     editable_tether_settings,
-            //     ..
-            // } = &model;
+    match &mut model.playback.options {
+        Some(options) => {
+            ui.label(format!("Play from \"{}\"", options.file_path));
 
-            ui.label(format!("Play from \"{}\"", file_path));
-            
             ui.horizontal(|ui| {
+                ui.checkbox(&mut options.loop_infinite, "Loop infinite");
+                if !options.loop_infinite {
+                    ui.label("Iterations:");
+                    ui.add(egui::DragValue::new(&mut options.loop_count).speed(1.0));
+                }
+            
+            });
 
+            ui.horizontal(|ui| {
                 
                 if !model.playback.is_playing  {
                     if ui.button("⏵ Play").clicked() {
-                        let file_path = file_path.clone();
                         model.playback.is_playing = true;
-                        let options = PlaybackOptions {
-                            file_path,
-                            override_topic: None,
-                            loop_count: 1,
-                            loop_infinite: false,
-                            ignore_ctrl_c: true,
-                        };
-                        let player = TetherPlaybackUtil::new(options);
+                        let player = TetherPlaybackUtil::new(options.to_owned());
                         model.playback.stop_request_tx = Some(player.get_stop_tx());
         
                         model.playback.thread_handle = Some(std::thread::spawn(move || {
@@ -128,8 +127,6 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
                                 .expect("failed to init/connect Tether for playback");
                             info!("Connected new Tether Agent for playback OK");
                             player.start(&tether_agent);
-                            // let request_stop = player.get_stop_tx();
-                            // model.playback.stop_request_tx = Some(request_stop);
                         }));
                     }
 
