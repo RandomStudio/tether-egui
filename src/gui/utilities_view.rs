@@ -1,12 +1,12 @@
 use std::{sync::mpsc, thread::JoinHandle};
 
-use egui::{Color32, Context, Ui};
+use egui::{Align2, Color32, Context, Ui};
 use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
 use tether_utils::{
     tether_playback::{PlaybackOptions, TetherPlaybackUtil},
     tether_record::{RecordOptions, TetherRecordUtil},
-    tether_topics::MONITOR_LOG_LENGTH,
+    tether_topics::{AgentTree, MONITOR_LOG_LENGTH},
 };
 
 use crate::Model;
@@ -51,25 +51,55 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
 
     standard_spacer(ui);
 
-    ui.heading(format!("Topics x{}", model.insights.topics().len()));
-    for t in model.insights.topics() {
-        ui.small(t);
-    }
+    ui.columns(2, |columns| {
+        // Column left
+        let ui = &mut columns[0];
 
-    ui.heading(format!("Agent Roles x{}", model.insights.roles().len()));
-    for role in model.insights.roles() {
-        ui.label(role);
-    }
+        ui.heading("List view");
 
-    ui.heading(format!("Agent IDs x{}", model.insights.ids().len()));
-    for id in model.insights.roles() {
-        ui.label(id);
-    }
+        ui.label(format!("Topics x{}", model.insights.topics().len()));
+        for t in model.insights.topics() {
+            ui.small(format!(" - {}", t));
+        }
 
-    ui.heading(format!("Plug Names x{}", model.insights.plugs().len()));
-    for plug in model.insights.plugs() {
-        ui.label(plug);
-    }
+        ui.label(format!("Agent Roles x{}", model.insights.roles().len()));
+        for role in model.insights.roles() {
+            ui.small(format!(" - {}", role));
+        }
+
+        ui.label(format!("Agent IDs x{}", model.insights.ids().len()));
+        for id in model.insights.roles() {
+            ui.small(format!(" - {}", id));
+        }
+
+        ui.label(format!("Plug Names x{}", model.insights.plugs().len()));
+        for plug in model.insights.plugs() {
+            ui.small(format!(" - {}", plug));
+        }
+
+        // Column right
+        let ui = &mut columns[1];
+        ui.heading("Tree view");
+
+        model.insights.trees().iter().for_each(|agent_tree| {
+            ui.group(|ui| {
+                ui.heading(&agent_tree.role);
+                agent_tree.ids.iter().for_each(|id| {
+                    let formatted = if id.len() > 12 {
+                        let mut shorter = id.clone();
+                        shorter.truncate(12);
+                        format!("{}...", shorter)
+                    } else {
+                        id.into()
+                    };
+                    ui.label(format!(" - {}", formatted)).on_hover_text(id);
+                });
+                agent_tree.output_plugs.iter().for_each(|plug| {
+                    ui.label(format!(" ---- {}", plug));
+                });
+            });
+        });
+    });
 }
 
 fn render_message_log(ui: &mut Ui, model: &mut Model) {
@@ -294,12 +324,16 @@ pub fn render(ctx: &Context, model: &mut Model) {
         egui::Window::new("Insights").show(ctx, |ui| {
             render_insights(ui, model);
         });
-        egui::Window::new("Playback").show(ctx, |ui| {
-            render_playback(ui, model);
-        });
-        egui::Window::new("Recording").show(ctx, |ui| {
-            render_record(ui, model);
-        });
+        egui::Window::new("Playback")
+            .default_pos([0., ctx.used_rect().height() * 0.5])
+            .show(ctx, |ui| {
+                render_playback(ui, model);
+            });
+        egui::Window::new("Recording")
+            .default_pos([0., ctx.used_rect().height() * 0.7])
+            .show(ctx, |ui| {
+                render_record(ui, model);
+            });
     });
 
     egui::SidePanel::right("MessageLog")

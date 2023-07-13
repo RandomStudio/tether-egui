@@ -127,7 +127,7 @@ impl Default for Model {
             queue: Vec::new(),
             insights: Insights::new(
                 &TopicOptions {
-                    subscribe_topic: cli.monitor_topic,
+                    topic: cli.monitor_topic,
                 },
                 &tether_agent,
             ),

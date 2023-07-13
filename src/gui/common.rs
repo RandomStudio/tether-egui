@@ -31,7 +31,7 @@ pub fn attempt_new_tether_connection(model: &mut Model) {
             model.editable_tether_settings.was_changed = true;
             model.insights = Insights::new(
                 &TopicOptions {
-                    subscribe_topic: model.monitor_topic.clone(),
+                    topic: model.monitor_topic.clone(),
                 },
                 &tether_agent,
             );
