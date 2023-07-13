@@ -1,12 +1,12 @@
 use std::{sync::mpsc, thread::JoinHandle};
 
-use egui::{Align2, Color32, Context, Ui};
+use egui::{Color32, Context, Ui};
 use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
 use tether_utils::{
     tether_playback::{PlaybackOptions, TetherPlaybackUtil},
     tether_record::{RecordOptions, TetherRecordUtil},
-    tether_topics::{AgentTree, MONITOR_LOG_LENGTH},
+    tether_topics::MONITOR_LOG_LENGTH,
 };
 
 use crate::Model;
