@@ -1,12 +1,15 @@
 use std::{sync::mpsc, thread::JoinHandle};
 
-use egui::{Color32, Context, Ui};
+use egui::{
+    plot::{Line, Plot, PlotPoint, PlotPoints},
+    Color32, Context, Ui,
+};
 use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
 use tether_utils::{
     tether_playback::{PlaybackOptions, TetherPlaybackUtil},
     tether_record::{RecordOptions, TetherRecordUtil},
-    tether_topics::MONITOR_LOG_LENGTH,
+    tether_topics::insights::MONITOR_LOG_LENGTH,
 };
 
 use crate::Model;
@@ -99,6 +102,23 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
                 });
             });
         });
+    });
+
+    ui.separator();
+
+    ui.heading("Graph");
+    let line = Line::new(PlotPoints::from_iter(
+        model
+            .insights
+            .sampler()
+            .delta_entries()
+            .iter()
+            .enumerate()
+            .map(|(i, x)| [i as f64, *x as f64]),
+    ));
+    let plot = Plot::new("messages");
+    plot.show(ui, |plot_ui| {
+        plot_ui.line(line);
     });
 }
 
