@@ -1,7 +1,7 @@
 use std::{sync::mpsc, thread::JoinHandle};
 
 use egui::{
-    plot::{Line, Plot, PlotPoint, PlotPoints},
+    plot::{Line, Plot, PlotPoints},
     Color32, Context, Ui,
 };
 use log::*;
@@ -106,7 +106,7 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
 
     ui.separator();
 
-    ui.heading("Graph");
+    ui.heading("Throughput Graph");
     ui.label(format!(
         "Averaging {:.2} messages per second",
         model.insights.get_rate().unwrap_or(0.)
