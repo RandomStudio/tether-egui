@@ -107,6 +107,10 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
     ui.separator();
 
     ui.heading("Graph");
+    ui.label(format!(
+        "Averaging {:.2} messages per second",
+        model.insights.get_rate().unwrap_or(0.)
+    ));
     let line = Line::new(PlotPoints::from_iter(
         model
             .insights
