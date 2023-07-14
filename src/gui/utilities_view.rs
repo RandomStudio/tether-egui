@@ -92,10 +92,10 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
                     } else {
                         id.into()
                     };
-                    ui.label(format!(" - {}", formatted)).on_hover_text(id);
+                    ui.label(format!("🏠 {}", formatted)).on_hover_text(id);
                 });
                 agent_tree.output_plugs.iter().for_each(|plug| {
-                    ui.label(format!(" ---- {}", plug));
+                    ui.label(format!(" ----🔌 {}", plug));
                 });
             });
         });

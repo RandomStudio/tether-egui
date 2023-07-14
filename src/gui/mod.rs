@@ -23,7 +23,7 @@ pub fn render(ctx: &egui::Context, model: &mut Model) {
         .min_height(32.)
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.heading("Views: ");
+                ui.heading("🗖");
                 ui.selectable_value(&mut model.active_window, ActiveView::WidgetView, "Widgets");
                 ui.selectable_value(
                     &mut model.active_window,
