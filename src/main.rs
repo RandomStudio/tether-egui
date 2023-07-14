@@ -3,35 +3,37 @@
 use std::time::Duration;
 
 use clap::Parser;
+
+use gui::{
+    render,
+    tether_gui_utils::EditableTetherSettings,
+    utilities_view::{PlaybackState, RecordingState},
+};
 use midi_mapping::{toggle_if_midi_note, MidiMessage, MidiSubscriber};
 use settings::Cli;
-use tether_utils::EditableTetherSettings;
-use ui::{available_widgets, general_agent_area, standard_spacer, widgets_in_use};
 
 extern crate rmp_serde;
 extern crate rmpv;
 extern crate serde_json;
 
+use ::tether_utils::tether_topics::Insights;
 use eframe::egui;
 use env_logger::Env;
-use insights::Insights;
-use log::{error, info, warn};
+use log::*;
 use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
+use tether_utils::tether_topics::TopicOptions;
 use widgets::WidgetEntry;
 
 use crate::{
+    gui::{tether_gui_utils::init_new_tether_agent, widget_view::common_send},
     midi_mapping::{send_if_midi_note, update_widget_if_controllable},
     project::{Project, TetherSettingsInProject},
-    tether_utils::init_new_tether_agent,
-    ui::common_send,
 };
 
-mod insights;
+mod gui;
 mod midi_mapping;
 mod project;
 mod settings;
-mod tether_utils;
-mod ui;
 mod widgets;
 
 fn main() -> Result<(), eframe::Error> {
@@ -55,6 +57,12 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
+#[derive(PartialEq)]
+enum ActiveView {
+    WidgetView,
+    UtilitiesView,
+}
+
 pub struct Model {
     json_file: Option<String>,
     monitor_topic: String,
@@ -65,6 +73,9 @@ pub struct Model {
     continuous_mode: bool,
     tether_agent: TetherAgent,
     editable_tether_settings: EditableTetherSettings,
+    active_window: ActiveView,
+    playback: PlaybackState,
+    recording: RecordingState,
 }
 
 impl Default for Model {
@@ -114,10 +125,18 @@ impl Default for Model {
             monitor_topic: cli.monitor_topic.clone(),
             project,
             queue: Vec::new(),
-            insights: Insights::new(&tether_agent, &cli.monitor_topic),
+            insights: Insights::new(
+                &TopicOptions {
+                    topic: cli.monitor_topic,
+                },
+                &tether_agent,
+            ),
             midi_handler: MidiSubscriber::new(&tether_agent),
             tether_agent,
             continuous_mode: cli.continuous_mode,
+            active_window: ActiveView::WidgetView,
+            playback: PlaybackState::default(),
+            recording: RecordingState::default(),
         }
     }
 }
@@ -141,7 +160,9 @@ impl eframe::App for Model {
         let mut work_done = false;
         while let Some((plug_name, message)) = &self.tether_agent.check_messages() {
             work_done = true;
-            self.insights.update(plug_name, message);
+            if self.insights.update(message) {
+                debug!("Insights update");
+            }
             match self.midi_handler.get_midi_message(plug_name, message) {
                 Some(MidiMessage::ControlChange(cc_message)) => {
                     for widget in self.project.widgets.iter_mut() {
@@ -205,24 +226,6 @@ impl eframe::App for Model {
             }
         }
 
-        egui::SidePanel::left("General")
-            .min_width(256.0)
-            .show(ctx, |ui| {
-                general_agent_area(ui, self);
-            });
-
-        egui::SidePanel::right("Available Widgets")
-            .min_width(128.)
-            .show(ctx, |ui| {
-                ui.heading("Available Widgets");
-
-                standard_spacer(ui);
-
-                available_widgets(ui, self);
-            });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            widgets_in_use(ctx, ui, self);
-        });
+        render(ctx, self);
     }
 }

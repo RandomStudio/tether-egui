@@ -4,11 +4,11 @@ use std::ops::RangeInclusive;
 use tether_agent::TetherAgent;
 
 use crate::{
-    midi_mapping::MidiMapping,
-    ui::{
+    gui::widget_view::{
         common_editable_values, common_in_use_heading, common_save_button, common_send,
         common_send_button,
     },
+    midi_mapping::MidiMapping,
 };
 
 use super::{Common, CustomWidget, View};
@@ -26,6 +26,7 @@ pub struct NumberWidget {
     should_round: bool,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl NumberWidget {
     pub fn new(
         name: &str,

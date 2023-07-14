@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use tether_agent::{mqtt::Message, PlugOptionsBuilder, TetherAgent};
 
 use crate::{
-    ui::common_send,
+    gui::widget_view::common_send,
     widgets::{boolean::BoolWidget, numbers::NumberWidget, CustomWidget},
 };
 
@@ -48,8 +48,8 @@ impl MidiSubscriber {
     pub fn new(agent: &TetherAgent) -> Self {
         if agent.is_connected() {
             let _midi_controllers_plug =
-                PlugOptionsBuilder::create_input("controlChange").build(&agent);
-            let _midi_notes_plug = PlugOptionsBuilder::create_input("notesOn").build(&agent);
+                PlugOptionsBuilder::create_input("controlChange").build(agent);
+            let _midi_notes_plug = PlugOptionsBuilder::create_input("notesOn").build(agent);
         }
         MidiSubscriber {}
     }

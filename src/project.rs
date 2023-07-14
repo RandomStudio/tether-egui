@@ -3,7 +3,7 @@ use std::fs;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 
-use crate::{tether_utils::EditableTetherSettings, widgets::WidgetEntry};
+use crate::{gui::tether_gui_utils::EditableTetherSettings, widgets::WidgetEntry};
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -21,8 +21,8 @@ impl Default for TetherSettingsInProject {
         TetherSettingsInProject {
             host: Some("127.0.0.1".into()),
             port: Some(1883),
-            username: None,
-            password: None,
+            username: Some("tether".into()),
+            password: Some("sp_ceB0ss!".into()),
             role: Some("gui".into()),
             id: Some("any".into()),
         }
