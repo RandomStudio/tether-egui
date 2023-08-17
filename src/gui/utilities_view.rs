@@ -1,6 +1,6 @@
 use std::{sync::mpsc, thread::JoinHandle};
 
-use egui::{Color32, Context, Ui};
+use egui::{Color32, Context, RichText, Ui};
 use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
 use tether_utils::{
@@ -51,79 +51,83 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
 
     standard_spacer(ui);
 
-    ui.columns(2, |columns| {
-        // Column left
-        let ui = &mut columns[0];
+    if let Some(insights) = &mut model.insights {
+        ui.columns(2, |columns| {
+            // Column left
+            let ui = &mut columns[0];
 
-        ui.heading("List view");
+            ui.heading("List view");
 
-        ui.label(format!("Topics x{}", model.insights.topics().len()));
-        for t in model.insights.topics() {
-            ui.small(format!(" - {}", t));
-        }
+            ui.label(format!("Topics x{}", insights.topics().len()));
+            for t in insights.topics() {
+                ui.small(format!(" - {}", t));
+            }
 
-        ui.label(format!("Agent Roles x{}", model.insights.roles().len()));
-        for role in model.insights.roles() {
-            ui.small(format!(" - {}", role));
-        }
+            ui.label(format!("Agent Roles x{}", insights.roles().len()));
+            for role in insights.roles() {
+                ui.small(format!(" - {}", role));
+            }
 
-        ui.label(format!("Agent IDs x{}", model.insights.ids().len()));
-        for id in model.insights.roles() {
-            ui.small(format!(" - {}", id));
-        }
+            ui.label(format!("Agent IDs x{}", insights.ids().len()));
+            for id in insights.roles() {
+                ui.small(format!(" - {}", id));
+            }
 
-        ui.label(format!("Plug Names x{}", model.insights.plugs().len()));
-        for plug in model.insights.plugs() {
-            ui.small(format!(" - {}", plug));
-        }
+            ui.label(format!("Plug Names x{}", insights.plugs().len()));
+            for plug in insights.plugs() {
+                ui.small(format!(" - {}", plug));
+            }
 
-        // Column right
-        let ui = &mut columns[1];
-        ui.heading("Tree view");
+            // Column right
+            let ui = &mut columns[1];
+            ui.heading("Tree view");
 
-        model.insights.trees().iter().for_each(|agent_tree| {
-            ui.group(|ui| {
-                ui.heading(&agent_tree.role);
-                agent_tree.ids.iter().for_each(|id| {
-                    let formatted = if id.len() > 12 {
-                        let mut shorter = id.clone();
-                        shorter.truncate(12);
-                        format!("{}...", shorter)
-                    } else {
-                        id.into()
-                    };
-                    ui.label(format!("🏠 {}", formatted)).on_hover_text(id);
-                });
-                agent_tree.output_plugs.iter().for_each(|plug| {
-                    ui.label(format!(" ----🔌 {}", plug));
+            insights.trees().iter().for_each(|agent_tree| {
+                ui.group(|ui| {
+                    ui.heading(&agent_tree.role);
+                    agent_tree.ids.iter().for_each(|id| {
+                        let formatted = if id.len() > 12 {
+                            let mut shorter = id.clone();
+                            shorter.truncate(12);
+                            format!("{}...", shorter)
+                        } else {
+                            id.into()
+                        };
+                        ui.label(format!("🏠 {}", formatted)).on_hover_text(id);
+                    });
+                    agent_tree.output_plugs.iter().for_each(|plug| {
+                        ui.label(format!(" ----🔌 {}", plug));
+                    });
                 });
             });
         });
-    });
+    }
 }
 
 fn render_message_log(ui: &mut Ui, model: &mut Model) {
-    ui.heading(format!("Messages x{}", model.insights.message_count()));
-    if model.insights.message_log().is_empty() {
-        ui.small("0 messages in log");
-    } else {
-        ui.small(format!(
-            "showing {} messages in log (up to {})",
-            model.insights.message_log().len(),
-            MONITOR_LOG_LENGTH
-        ));
+    if let Some(insights) = &mut model.insights {
+        ui.heading(format!("Messages x{}", insights.message_count()));
+        if insights.message_log().is_empty() {
+            ui.small("0 messages in log");
+        } else {
+            ui.small(format!(
+                "showing {} messages in log (up to {})",
+                insights.message_log().len(),
+                MONITOR_LOG_LENGTH
+            ));
+        }
+
+        standard_spacer(ui);
+
+        egui::ScrollArea::vertical()
+            .auto_shrink([false; 2])
+            .show(ui, |ui| {
+                for (topic, json) in insights.message_log().iter().rev() {
+                    ui.colored_label(Color32::LIGHT_BLUE, topic);
+                    ui.label(json);
+                }
+            });
     }
-
-    standard_spacer(ui);
-
-    egui::ScrollArea::vertical()
-        .auto_shrink([false; 2])
-        .show(ui, |ui| {
-            for (topic, json) in model.insights.message_log().iter().rev() {
-                ui.colored_label(Color32::LIGHT_BLUE, topic);
-                ui.label(json);
-            }
-        });
 }
 
 fn render_playback(ui: &mut Ui, model: &mut Model) {
@@ -320,25 +324,33 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
 }
 
 pub fn render(ctx: &Context, model: &mut Model) {
-    egui::CentralPanel::default().show(ctx, |_ui| {
-        egui::Window::new("Insights").show(ctx, |ui| {
-            render_insights(ui, model);
+    if model.insights.is_some() {
+        egui::CentralPanel::default().show(ctx, |_ui| {
+            egui::Window::new("Insights").show(ctx, |ui| {
+                render_insights(ui, model);
+            });
+            egui::Window::new("Playback")
+                .default_pos([0., ctx.used_rect().height() * 0.5])
+                .show(ctx, |ui| {
+                    render_playback(ui, model);
+                });
+            egui::Window::new("Recording")
+                .default_pos([0., ctx.used_rect().height() * 0.7])
+                .show(ctx, |ui| {
+                    render_record(ui, model);
+                });
         });
-        egui::Window::new("Playback")
-            .default_pos([0., ctx.used_rect().height() * 0.5])
-            .show(ctx, |ui| {
-                render_playback(ui, model);
-            });
-        egui::Window::new("Recording")
-            .default_pos([0., ctx.used_rect().height() * 0.7])
-            .show(ctx, |ui| {
-                render_record(ui, model);
-            });
-    });
 
-    egui::SidePanel::right("MessageLog")
-        .min_width(512.)
-        .show(ctx, |ui| {
-            render_message_log(ui, model);
+        egui::SidePanel::right("MessageLog")
+            .min_width(512.)
+            .show(ctx, |ui| {
+                render_message_log(ui, model);
+            });
+    } else {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.label(
+                RichText::new("No MQTT broker connected. Utilities will become available on successful connection.").color(Color32::YELLOW)
+            );
         });
+    }
 }
