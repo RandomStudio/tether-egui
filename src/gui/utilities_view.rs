@@ -349,7 +349,8 @@ pub fn render(ctx: &Context, model: &mut Model) {
     } else {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.label(
-                RichText::new("No MQTT broker connected. Utilities will become available on successful connection.").color(Color32::YELLOW)
+                RichText::new("Utilities will become available on successful connection.")
+                    .color(Color32::YELLOW),
             );
         });
     }

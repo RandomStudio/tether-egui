@@ -16,11 +16,11 @@ extern crate rmp_serde;
 extern crate rmpv;
 extern crate serde_json;
 
-use ::tether_utils::tether_topics::Insights;
 use eframe::egui;
 use env_logger::Env;
 use log::*;
 use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
+use tether_utils::tether_topics::Insights;
 use tether_utils::tether_topics::TopicOptions;
 use widgets::WidgetEntry;
 
