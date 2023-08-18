@@ -41,11 +41,11 @@ pub trait CustomWidget<T: Serialize> {
     fn value_mut(&mut self) -> &mut T;
 }
 
-#[derive(PartialEq, Serialize, Deserialize, Debug)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
 pub enum QOS {
-    AT_MOST_ONCE = 0,
-    AT_LEAST_ONCE = 1,
-    EXACTLY_ONCE = 2,
+    AtMostOnce = 0,
+    AtLeastOnce = 1,
+    ExactlyOnce = 2,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -105,7 +105,7 @@ impl Common {
             use_custom_topic: false,
             auto_send: true,
             midi_mapping: None,
-            qos: QOS::AT_MOST_ONCE,
+            qos: QOS::AtMostOnce,
             retain: false,
         }
     }

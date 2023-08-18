@@ -29,8 +29,13 @@ pub fn common_in_use_heading<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl C
     ui.separator();
 }
 
-pub fn common_save_button<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
+pub fn common_save_button<T: Serialize>(
+    ui: &mut egui::Ui,
+    entry: &mut impl CustomWidget<T>,
+    tether_agent: &TetherAgent,
+) {
     if ui.button("Save").clicked() {
+        update_plug_definition(entry, tether_agent);
         entry.common_mut().set_edit_mode(false);
     }
 }
@@ -69,12 +74,6 @@ pub fn entry_topic<T: Serialize>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>
 }
 
 pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
-    // ui.checkbox(&mut model.auto_send, "Auto send")
-    //     .on_hover_text(
-    //     "Trigger messages on any value change, where possible, instead of waiting for Send button",
-    // );
-    // standard_spacer(ui);
-
     let widgets = &mut model.project.widgets;
 
     for (i, entry) in widgets.iter_mut().enumerate() {
@@ -296,10 +295,7 @@ pub fn common_editable_values<T: Serialize>(
         entry.common_mut().plug.common_mut().name = shortened_name;
         if !entry.common().use_custom_topic {
             // Back to default (auto-generated) topic
-            entry.common_mut().plug =
-                PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
-                    .build(tether_agent)
-                    .expect("failed to create output")
+            update_plug_definition(entry, tether_agent);
         }
     }
 
@@ -313,10 +309,7 @@ pub fn common_editable_values<T: Serialize>(
         && !entry.common().use_custom_topic
     {
         // Back to default (auto-generated) topic
-        entry.common_mut().plug =
-            PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
-                .build(tether_agent)
-                .expect("failed to create output")
+        update_plug_definition(entry, tether_agent);
     }
 
     if ui
@@ -325,10 +318,7 @@ pub fn common_editable_values<T: Serialize>(
         && !entry.common().use_custom_topic
     {
         // Back to default (auto-generated) topic
-        entry.common_mut().plug =
-            PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
-                .build(tether_agent)
-                .expect("failed to create output")
+        update_plug_definition(entry, tether_agent);
     }
     ui.add_enabled_ui(entry.common().use_custom_topic, |ui| {
         ui.text_edit_singleline(&mut entry.common_mut().plug.common_mut().topic);
@@ -341,19 +331,19 @@ pub fn common_editable_values<T: Serialize>(
             ui.label("QOS level");
             ui.radio_value(
                 &mut entry.common_mut().qos,
-                QOS::AT_LEAST_ONCE,
+                QOS::AtLeastOnce,
                 "0: At least once",
             )
             .on_hover_text("Fastest, no delivery guarrantees");
             ui.radio_value(
                 &mut entry.common_mut().qos,
-                QOS::AT_MOST_ONCE,
+                QOS::AtMostOnce,
                 "1: At most once",
             )
             .on_hover_text("Ensure delivery, duplicates possible");
             ui.radio_value(
                 &mut entry.common_mut().qos,
-                QOS::EXACTLY_ONCE,
+                QOS::ExactlyOnce,
                 "2: Exactly once",
             )
             .on_hover_text("Slowest, guarranteed once-only delivery");
@@ -362,6 +352,20 @@ pub fn common_editable_values<T: Serialize>(
             ui.checkbox(&mut entry.common_mut().retain, "Retain?");
         });
     });
+}
+
+fn update_plug_definition<T: Serialize>(
+    entry: &mut impl CustomWidget<T>,
+    tether_agent: &TetherAgent,
+) {
+    debug!("Will update plug definition");
+    debug!("QOS level: {}", entry.common().qos as i32);
+    debug!("Retain: {}", entry.common().retain);
+    entry.common_mut().plug = PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
+        .qos(entry.common().qos as i32)
+        .retain(entry.common().retain)
+        .build(tether_agent)
+        .expect("failed to create output")
 }
 
 pub fn common_edit_midi_mapping<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
