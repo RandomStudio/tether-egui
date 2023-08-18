@@ -2436,7 +2436,7 @@ dependencies = [
 
 [[package]]
 name = "tether-egui"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "clap",
  "eframe",
