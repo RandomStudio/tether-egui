@@ -60,7 +60,7 @@ const PLOT_SIZE: f32 = 200.0;
 impl View for Point2DWidget {
     fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_editable_values(ui, self, tether_agent);
-        common_save_button(ui, self);
+        common_save_button(ui, self, tether_agent);
     }
 
     fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
