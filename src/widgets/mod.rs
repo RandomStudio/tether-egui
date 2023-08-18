@@ -41,6 +41,13 @@ pub trait CustomWidget<T: Serialize> {
     fn value_mut(&mut self) -> &mut T;
 }
 
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
+pub enum QOS {
+    AT_MOST_ONCE = 0,
+    AT_LEAST_ONCE = 1,
+    EXACTLY_ONCE = 2,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Common {
@@ -48,6 +55,8 @@ pub struct Common {
     pub description: String,
     pub plug: PlugDefinition,
     pub midi_mapping: Option<MidiMapping>,
+    pub qos: QOS,
+    pub retain: bool,
 
     // The fields below are never used in on-disk versions,
     // only in-memory state
@@ -96,6 +105,8 @@ impl Common {
             use_custom_topic: false,
             auto_send: true,
             midi_mapping: None,
+            qos: QOS::AT_MOST_ONCE,
+            retain: false,
         }
     }
 

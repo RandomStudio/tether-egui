@@ -7,7 +7,7 @@ use crate::{
     midi_mapping::MidiMapping,
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
-        numbers::NumberWidget, point::Point2DWidget, CustomWidget, View, WidgetEntry,
+        numbers::NumberWidget, point::Point2DWidget, CustomWidget, View, WidgetEntry, QOS,
     },
     Model, QueueItem,
 };
@@ -317,9 +317,6 @@ pub fn common_editable_values<T: Serialize>(
             PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
                 .build(tether_agent)
                 .expect("failed to create output")
-        // tether_agent
-        //     .create_output_plug(&entry.common().plug.common().name, None, None, None)
-        //     .expect("failed to create default plug");
     }
 
     if ui
@@ -332,15 +329,39 @@ pub fn common_editable_values<T: Serialize>(
             PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
                 .build(tether_agent)
                 .expect("failed to create output")
-        // tether_agent
-        //     .create_output_plug(&entry.common().plug.common().name, None, None, None)
-        //     .expect("failed to create default plug");
     }
     ui.add_enabled_ui(entry.common().use_custom_topic, |ui| {
         ui.text_edit_singleline(&mut entry.common_mut().plug.common_mut().topic);
     });
 
     common_edit_midi_mapping(ui, entry);
+
+    ui.collapsing("Publish options", |ui| {
+        ui.group(|ui| {
+            ui.label("QOS level");
+            ui.radio_value(
+                &mut entry.common_mut().qos,
+                QOS::AT_LEAST_ONCE,
+                "0: At least once",
+            )
+            .on_hover_text("Fastest, no delivery guarrantees");
+            ui.radio_value(
+                &mut entry.common_mut().qos,
+                QOS::AT_MOST_ONCE,
+                "1: At most once",
+            )
+            .on_hover_text("Ensure delivery, duplicates possible");
+            ui.radio_value(
+                &mut entry.common_mut().qos,
+                QOS::EXACTLY_ONCE,
+                "2: Exactly once",
+            )
+            .on_hover_text("Slowest, guarranteed once-only delivery");
+        });
+        ui.group(|ui| {
+            ui.checkbox(&mut entry.common_mut().retain, "Retain?");
+        });
+    });
 }
 
 pub fn common_edit_midi_mapping<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {
