@@ -361,9 +361,19 @@ fn update_plug_definition<T: Serialize>(
     debug!("Will update plug definition");
     debug!("QOS level: {}", entry.common().qos as i32);
     debug!("Retain: {}", entry.common().retain);
-    entry.common_mut().plug = PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
-        .qos(entry.common().qos as i32)
-        .retain(entry.common().retain)
+    let definition = if entry.common().use_custom_topic {
+        debug!("Override topic with {}", entry.common().plug.topic());
+        PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
+            .qos(entry.common().qos as i32)
+            .retain(entry.common().retain)
+            .topic(entry.common().plug.topic())
+    } else {
+        debug!("Re-create topic using defaults (no custom topic)");
+        PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
+            .qos(entry.common().qos as i32)
+            .retain(entry.common().retain)
+    };
+    entry.common_mut().plug = definition
         .build(tether_agent)
         .expect("failed to create output")
 }
