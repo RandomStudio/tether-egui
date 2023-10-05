@@ -68,7 +68,7 @@ pub struct Model {
     monitor_topic: String,
     project: Project,
     queue: Vec<QueueItem>,
-    insights: Insights,
+    insights: Option<Insights>,
     midi_handler: MidiSubscriber,
     continuous_mode: bool,
     tether_agent: TetherAgent,
@@ -125,13 +125,17 @@ impl Default for Model {
             monitor_topic: cli.monitor_topic.clone(),
             project,
             queue: Vec::new(),
-            insights: Insights::new(
-                &TopicOptions {
-                    topic: cli.monitor_topic,
-                    sampler_interval: 1000,
-                },
-                &tether_agent,
-            ),
+            insights: if tether_agent.is_connected() {
+                Some(Insights::new(
+                    &TopicOptions {
+                        topic: cli.monitor_topic,
+                        sampler_interval: 1000,
+                    },
+                    &tether_agent,
+                ))
+            } else {
+                None
+            },
             midi_handler: MidiSubscriber::new(&tether_agent),
             tether_agent,
             continuous_mode: cli.continuous_mode,
@@ -158,12 +162,14 @@ enum QueueItem {
 
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.insights.sample();
+        if let Some(insights) = &mut self.insights {
+            insights.sample();
+        }
         let mut work_done = false;
         while let Some((plug_name, message)) = &self.tether_agent.check_messages() {
             work_done = true;
-            if self.insights.update(message) {
-                debug!("Insights update");
+            if let Some(insights) = &mut self.insights {
+                insights.update(message);
             }
             match self.midi_handler.get_midi_message(plug_name, message) {
                 Some(MidiMessage::ControlChange(cc_message)) => {

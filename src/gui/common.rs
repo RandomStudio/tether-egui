@@ -29,13 +29,13 @@ pub fn attempt_new_tether_connection(model: &mut Model) {
         Ok(_) => {
             info!("Connected Tether Agent OK");
             model.editable_tether_settings.was_changed = true;
-            model.insights = Insights::new(
+            model.insights = Some(Insights::new(
                 &TopicOptions {
                     topic: model.monitor_topic.clone(),
                     sampler_interval: 1000,
                 },
                 &tether_agent,
-            );
+            ));
         }
         Err(e) => {
             model.editable_tether_settings.is_editing = false;

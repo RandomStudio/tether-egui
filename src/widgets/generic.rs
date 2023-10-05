@@ -78,7 +78,7 @@ impl CustomWidget<String> for GenericJSONWidget {
 impl View for GenericJSONWidget {
     fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
         common_editable_values(ui, self, tether_agent);
-        common_save_button(ui, self);
+        common_save_button(ui, self, tether_agent);
     }
 
     fn render_in_use(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {

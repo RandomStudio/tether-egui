@@ -143,6 +143,6 @@ impl View for NumberWidget {
             ));
         });
 
-        common_save_button(ui, self);
+        common_save_button(ui, self, tether_agent);
     }
 }
