@@ -2510,6 +2510,8 @@ dependencies = [
 [[package]]
 name = "tether-utils"
 version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d05cd6de33e1afec0b127b62003006e948fb66fe28db622184fefb2f74ddeb7c"
 dependencies = [
  "anyhow",
  "circular-buffer",
