@@ -1,9 +1,8 @@
 use std::fs;
 
-use tether_agent::TetherAgentOptionsBuilder;
-
 use egui::{Color32, RichText, Ui};
 use log::*;
+use tether_agent::TetherAgentOptionsBuilder;
 use tether_utils::tether_topics::{insights::Insights, TopicOptions};
 
 use crate::{
