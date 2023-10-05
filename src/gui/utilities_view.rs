@@ -1,12 +1,15 @@
 use std::{sync::mpsc, thread::JoinHandle};
 
-use egui::{Color32, Context, RichText, Ui};
+use egui::{
+    plot::{Line, Plot, PlotPoints},
+    Color32, Context, RichText, Ui,
+};
 use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
 use tether_utils::{
     tether_playback::{PlaybackOptions, TetherPlaybackUtil},
     tether_record::{RecordOptions, TetherRecordUtil},
-    tether_topics::MONITOR_LOG_LENGTH,
+    tether_topics::insights::MONITOR_LOG_LENGTH,
 };
 
 use crate::Model;
@@ -101,7 +104,26 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
                 });
             });
         });
-    }
+        ui.separator();
+
+        ui.heading("Throughput Graph");
+        ui.label(format!(
+            "Averaging {:.2} messages per second",
+            insights.get_rate().unwrap_or(0.)
+        ));
+        let line = Line::new(PlotPoints::from_iter(
+            insights
+                .sampler()
+                .delta_entries()
+                .iter()
+                .enumerate()
+                .map(|(i, x)| [i as f64, *x as f64]),
+        ));
+        let plot = Plot::new("messages");
+        plot.show(ui, |plot_ui| {
+            plot_ui.line(line);
+        });
+    };
 }
 
 fn render_message_log(ui: &mut Ui, model: &mut Model) {

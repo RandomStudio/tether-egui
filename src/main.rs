@@ -16,11 +16,11 @@ extern crate rmp_serde;
 extern crate rmpv;
 extern crate serde_json;
 
+use ::tether_utils::tether_topics::insights::Insights;
 use eframe::egui;
 use env_logger::Env;
 use log::*;
 use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
-use tether_utils::tether_topics::Insights;
 use tether_utils::tether_topics::TopicOptions;
 use widgets::WidgetEntry;
 
@@ -129,6 +129,7 @@ impl Default for Model {
                 Some(Insights::new(
                     &TopicOptions {
                         topic: cli.monitor_topic,
+                        sampler_interval: 1000,
                     },
                     &tether_agent,
                 ))
@@ -161,6 +162,9 @@ enum QueueItem {
 
 impl eframe::App for Model {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if let Some(insights) = &mut self.insights {
+            insights.sample();
+        }
         let mut work_done = false;
         while let Some((plug_name, message)) = &self.tether_agent.check_messages() {
             work_done = true;

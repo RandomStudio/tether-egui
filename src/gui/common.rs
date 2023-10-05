@@ -1,10 +1,9 @@
 use std::fs;
 
-use tether_agent::TetherAgentOptionsBuilder;
-
 use egui::{Color32, RichText, Ui};
 use log::*;
-use tether_utils::tether_topics::{Insights, TopicOptions};
+use tether_agent::TetherAgentOptionsBuilder;
+use tether_utils::tether_topics::{insights::Insights, TopicOptions};
 
 use crate::{
     gui::tether_gui_utils::EditableTetherSettings, project::TetherSettingsInProject, Model,
@@ -32,6 +31,7 @@ pub fn attempt_new_tether_connection(model: &mut Model) {
             model.insights = Some(Insights::new(
                 &TopicOptions {
                     topic: model.monitor_topic.clone(),
+                    sampler_interval: 1000,
                 },
                 &tether_agent,
             ));
