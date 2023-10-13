@@ -127,6 +127,11 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
 }
 
 fn render_message_log(ui: &mut Ui, model: &mut Model) {
+    ui.group(|ui| {
+        ui.label("Topic filter");
+        ui.text_edit_singleline(&mut model.message_log_filter);
+    });
+
     if let Some(insights) = &mut model.insights {
         ui.heading(format!("Messages x{}", insights.message_count()));
         if insights.message_log().is_empty() {
@@ -144,7 +149,18 @@ fn render_message_log(ui: &mut Ui, model: &mut Model) {
         egui::ScrollArea::vertical()
             .auto_shrink([false; 2])
             .show(ui, |ui| {
-                for (topic, json) in insights.message_log().iter().rev() {
+                for (topic, json) in insights
+                    .message_log()
+                    .iter()
+                    .filter(|(topic, _json)| {
+                        if &model.message_log_filter == "" {
+                            true
+                        } else {
+                            topic.contains(&model.message_log_filter)
+                        }
+                    })
+                    .rev()
+                {
                     ui.colored_label(Color32::LIGHT_BLUE, topic);
                     ui.label(json);
                 }

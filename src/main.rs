@@ -69,6 +69,7 @@ pub struct Model {
     project: Project,
     queue: Vec<QueueItem>,
     insights: Option<Insights>,
+    message_log_filter: String,
     midi_handler: MidiSubscriber,
     continuous_mode: bool,
     tether_agent: TetherAgent,
@@ -136,6 +137,7 @@ impl Default for Model {
             } else {
                 None
             },
+            message_log_filter: "".into(),
             midi_handler: MidiSubscriber::new(&tether_agent),
             tether_agent,
             continuous_mode: cli.continuous_mode,
