@@ -153,7 +153,7 @@ fn render_message_log(ui: &mut Ui, model: &mut Model) {
                     .message_log()
                     .iter()
                     .filter(|(topic, _json)| {
-                        if &model.message_log_filter == "" {
+                        if model.message_log_filter.is_empty() {
                             true
                         } else {
                             topic.contains(&model.message_log_filter)

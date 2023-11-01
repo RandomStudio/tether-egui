@@ -32,6 +32,7 @@ pub fn attempt_new_tether_connection(model: &mut Model) {
                 &TopicOptions {
                     topic: model.monitor_topic.clone(),
                     sampler_interval: 1000,
+                    graph_enable: false,
                 },
                 &tether_agent,
             ));

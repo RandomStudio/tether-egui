@@ -7,7 +7,8 @@ use crate::{
     midi_mapping::MidiMapping,
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
-        numbers::NumberWidget, point::Point2DWidget, CustomWidget, View, WidgetEntry, QOS,
+        numbers::NumberWidget, point::Point2DWidget, shortened_name, CustomWidget, Qos, View,
+        WidgetEntry,
     },
     Model, QueueItem,
 };
@@ -68,8 +69,7 @@ pub fn common_send<T: Serialize>(entry: &mut impl CustomWidget<T>, tether_agent:
 
 pub fn entry_topic<T: Serialize>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
     ui.label(
-        RichText::new(format!("Topic: {}", entry.common().plug.common().topic))
-            .color(Color32::LIGHT_BLUE),
+        RichText::new(format!("Topic: {}", entry.common().plug.topic())).color(Color32::LIGHT_BLUE),
     );
 }
 
@@ -291,12 +291,7 @@ pub fn common_editable_values<T: Serialize>(
         .text_edit_singleline(&mut entry.common_mut().name)
         .changed()
     {
-        let shortened_name = String::from(entry.common().name.replace(' ', "_").trim());
-        entry.common_mut().plug.common_mut().name = shortened_name;
-        if !entry.common().use_custom_topic {
-            // Back to default (auto-generated) topic
-            update_plug_definition(entry, tether_agent);
-        }
+        update_plug_definition(entry, tether_agent);
     }
 
     ui.label("Description");
@@ -304,11 +299,10 @@ pub fn common_editable_values<T: Serialize>(
 
     ui.label("Plug Name");
     if ui
-        .text_edit_singleline(&mut entry.common_mut().plug.common_mut().name)
+        .text_edit_singleline(&mut entry.common_mut().plug_name)
         .changed()
-        && !entry.common().use_custom_topic
     {
-        // Back to default (auto-generated) topic
+        // Back to default (auto-generated) plug name, details
         update_plug_definition(entry, tether_agent);
     }
 
@@ -321,7 +315,12 @@ pub fn common_editable_values<T: Serialize>(
         update_plug_definition(entry, tether_agent);
     }
     ui.add_enabled_ui(entry.common().use_custom_topic, |ui| {
-        ui.text_edit_singleline(&mut entry.common_mut().plug.common_mut().topic);
+        if ui
+            .text_edit_singleline(&mut entry.common_mut().custom_topic)
+            .changed()
+        {
+            update_plug_definition(entry, tether_agent);
+        }
     });
 
     common_edit_midi_mapping(ui, entry);
@@ -331,19 +330,19 @@ pub fn common_editable_values<T: Serialize>(
             ui.label("QOS level");
             ui.radio_value(
                 &mut entry.common_mut().qos,
-                QOS::AtLeastOnce,
+                Qos::AtLeastOnce,
                 "0: At least once",
             )
             .on_hover_text("Fastest, no delivery guarrantees");
             ui.radio_value(
                 &mut entry.common_mut().qos,
-                QOS::AtMostOnce,
+                Qos::AtMostOnce,
                 "1: At most once",
             )
             .on_hover_text("Ensure delivery, duplicates possible");
             ui.radio_value(
                 &mut entry.common_mut().qos,
-                QOS::ExactlyOnce,
+                Qos::ExactlyOnce,
                 "2: Exactly once",
             )
             .on_hover_text("Slowest, guarranteed once-only delivery");
@@ -361,19 +360,15 @@ fn update_plug_definition<T: Serialize>(
     debug!("Will update plug definition");
     debug!("QOS level: {}", entry.common().qos as i32);
     debug!("Retain: {}", entry.common().retain);
-    let definition = if entry.common().use_custom_topic {
-        debug!("Override topic with {}", entry.common().plug.topic());
-        PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
-            .qos(entry.common().qos as i32)
-            .retain(entry.common().retain)
-            .topic(entry.common().plug.topic())
-    } else {
-        debug!("Re-create topic using defaults (no custom topic)");
-        PlugOptionsBuilder::create_output(&entry.common().plug.common().name)
-            .qos(entry.common().qos as i32)
-            .retain(entry.common().retain)
-    };
-    entry.common_mut().plug = definition
+
+    entry.common_mut().plug = PlugOptionsBuilder::create_output(&entry.common().plug_name)
+        .qos(Some(entry.common().qos as i32))
+        .retain(Some(entry.common().retain))
+        .topic(if entry.common().use_custom_topic {
+            Some(&entry.common().custom_topic)
+        } else {
+            None
+        })
         .build(tether_agent)
         .expect("failed to create output")
 }

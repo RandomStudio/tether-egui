@@ -65,8 +65,6 @@ impl From<&TetherSettingsInProject> for EditableTetherSettings {
             default_editable_settings.role.clone()
         };
 
-        let role = role;
-
         let id = if id.is_some() {
             id.clone().unwrap()
         } else {
@@ -91,11 +89,11 @@ impl From<&TetherSettingsInProject> for TetherAgentOptionsBuilder {
         let project = project.clone();
 
         TetherAgentOptionsBuilder::new(&project.role.unwrap_or("gui".into()))
-            .id(&project.id.unwrap_or("any".into()))
-            .host(&project.host.unwrap_or("127.0.0.1".into()))
-            .port(project.port.unwrap_or(1883))
-            .username(&project.username.unwrap_or_default())
-            .password(&project.password.unwrap_or_default())
+            .id(project.id.as_deref())
+            .host(project.host.as_deref())
+            .port(project.port)
+            .username(project.username.as_deref())
+            .password(project.password.as_deref())
             .auto_connect(false)
     }
 }
@@ -103,11 +101,11 @@ impl From<&TetherSettingsInProject> for TetherAgentOptionsBuilder {
 impl From<&EditableTetherSettings> for TetherAgentOptionsBuilder {
     fn from(editable: &EditableTetherSettings) -> Self {
         TetherAgentOptionsBuilder::new(&editable.role)
-            .id(&editable.id)
-            .host(&editable.host)
-            .port(editable.port)
-            .username(&editable.username)
-            .password(&editable.password)
+            .id(Some(&editable.id))
+            .host(Some(&editable.host))
+            .port(Some(editable.port))
+            .username(Some(&editable.username))
+            .password(Some(&editable.password))
             .auto_connect(false)
     }
 }

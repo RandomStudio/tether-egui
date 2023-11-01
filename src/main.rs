@@ -20,7 +20,7 @@ use ::tether_utils::tether_topics::insights::Insights;
 use eframe::egui;
 use env_logger::Env;
 use log::*;
-use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
+use tether_agent::{TetherAgent, TetherAgentOptionsBuilder, TetherOrCustomTopic};
 use tether_utils::tether_topics::TopicOptions;
 use widgets::WidgetEntry;
 
@@ -131,6 +131,7 @@ impl Default for Model {
                     &TopicOptions {
                         topic: cli.monitor_topic,
                         sampler_interval: 1000,
+                        graph_enable: false,
                     },
                     &tether_agent,
                 ))
@@ -168,11 +169,18 @@ impl eframe::App for Model {
             insights.sample();
         }
         let mut work_done = false;
-        while let Some((plug_name, message)) = &self.tether_agent.check_messages() {
+        while let Some((plug, message)) = &self.tether_agent.check_messages() {
             work_done = true;
             if let Some(insights) = &mut self.insights {
                 insights.update(message);
             }
+            let plug_name = match plug {
+                TetherOrCustomTopic::Custom(topic) => {
+                    error!("Invalid Tether Topic \"{}\"", &topic);
+                    "INVALID_TETHER_TOPIC!"
+                }
+                TetherOrCustomTopic::Tether(tpt) => tpt.plug_name(),
+            };
             match self.midi_handler.get_midi_message(plug_name, message) {
                 Some(MidiMessage::ControlChange(cc_message)) => {
                     for widget in self.project.widgets.iter_mut() {
