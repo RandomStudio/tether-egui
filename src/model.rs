@@ -54,20 +54,7 @@ impl Default for Model {
         let tether_agent =
             unconnected_tether_agent(&TetherAgentOptionsBuilder::from(tether_settings));
 
-        if cli.tether_disable {
-            warn!("Tether disabled; please connect manually if required");
-        } else {
-            match tether_agent.connect() {
-                Ok(()) => {
-                    info!("Tether Agent connected successfully");
-                }
-                Err(e) => {
-                    error!("Tether Agent failed to connect: {}", e);
-                }
-            }
-        }
-
-        Self {
+        let mut init_model = Model {
             tether_agent,
             // edit_tether_settings: false,
             json_file: {
@@ -87,7 +74,15 @@ impl Default for Model {
             active_window: ActiveView::WidgetView,
             playback: PlaybackState::default(),
             recording: RecordingState::default(),
+        };
+
+        if cli.tether_disable {
+            warn!("Tether disabled; please connect manually if required");
+        } else {
+            init_model.attempt_new_tether_connection();
         }
+
+        init_model
     }
 }
 
