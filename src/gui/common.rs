@@ -59,8 +59,6 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                   if let Some(tether_settings_in_project) =project.tether_settings {
                       info!("Project file had custom Tether settings; attempt to apply and connect...");
 
-                    //   model.editable_tether_settings = tether_settings_in_project.clone();
-                    //   attempt_new_tether_connection(model);
                     model.tether_agent = unconnected_tether_agent(&TetherAgentOptionsBuilder::from(tether_settings_in_project))
                   }
 

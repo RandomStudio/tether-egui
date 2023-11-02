@@ -8,13 +8,13 @@ use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
 use tether_utils::{
     tether_playback::{PlaybackOptions, TetherPlaybackUtil},
-    tether_record::{RecordOptions, TetherRecordUtil},
+    tether_record::RecordOptions,
     tether_topics::insights::MONITOR_LOG_LENGTH,
 };
 
 use crate::Model;
 
-use super::{common::standard_spacer, tether_gui_utils::unconnected_tether_agent};
+use super::{common::standard_spacer, tether_gui_utils::EditableTetherSettings};
 
 #[derive(Default)]
 pub struct PlaybackState {
@@ -199,32 +199,38 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
             });
 
             ui.horizontal(|ui| {
-                // if !model.playback.is_playing {
-                //     if ui.button("⏵ Play").clicked() {
-                //         model.playback.is_playing = true;
-                //         let player = TetherPlaybackUtil::new(options.to_owned());
-                //         let options = TetherAgentOptionsBuilder::from(
-                //             &model.project.tether_settings.unwrap_or_default(),
-                //         );
+                if !model.playback.is_playing {
+                    if ui.button("⏵ Play").clicked() {
+                        model.playback.is_playing = true;
+                        let player = TetherPlaybackUtil::new(options.to_owned());
 
-                //         model.playback.stop_request_tx = Some(player.get_stop_tx());
-                //         model.playback.thread_handle = Some(std::thread::spawn(move || {
-                //             let tether_agent = init_new_tether_agent(&options);
-                //             tether_agent.connect().expect("failed to connect");
-                //             info!("Connected new Tether Agent for playback OK");
-                //             player.start(&tether_agent);
-                //         }));
-                //     }
-                // } else if ui.button("⏹ Stop").clicked() {
-                //     if let Some(tx) = &model.playback.stop_request_tx {
-                //         tx.send(true)
-                //             .expect("failed to send playback stop request via channel");
-                //     } else {
-                //         panic!(
-                //             "Playback was marked in-progress but no stop request channel available"
-                //         );
-                //     }
-                // }
+                        let tether_settings = match &model.project.tether_settings {
+                            Some(s) => s.clone(),
+                            None => EditableTetherSettings::default(),
+                        };
+
+                        model.playback.stop_request_tx = Some(player.get_stop_tx());
+                        model.playback.thread_handle = Some(std::thread::spawn(move || {
+                            if let Ok(tether_agent) =
+                                TetherAgentOptionsBuilder::new(&tether_settings.role).build()
+                            {
+                                info!("Connected new Tether Agent for playback OK");
+                                player.start(&tether_agent);
+                            } else {
+                                error!("Failed tonnect Tether Agent for playback");
+                            }
+                        }));
+                    }
+                } else if ui.button("⏹ Stop").clicked() {
+                    if let Some(tx) = &model.playback.stop_request_tx {
+                        tx.send(true)
+                            .expect("failed to send playback stop request via channel");
+                    } else {
+                        panic!(
+                            "Playback was marked in-progress but no stop request channel available"
+                        );
+                    }
+                }
             });
             if model.playback.is_playing {
                 if let Some(handle) = &model.playback.thread_handle {
