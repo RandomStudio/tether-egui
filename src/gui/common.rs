@@ -90,11 +90,22 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
             ui.label("Password");
             ui.text_edit_singleline(&mut tether_settings.password);
         });
+        ui.separator();
+        ui.horizontal(|ui| {
+            ui.label("Role");
+            if ui.text_edit_singleline(&mut tether_settings.role).changed() {
+                model.tether_agent.set_role(&tether_settings.role);
+            }
+        });
+        ui.horizontal(|ui| {
+            ui.label("ID or Group");
+            if ui.text_edit_singleline(&mut tether_settings.id).changed() {
+                model.tether_agent.set_id(&tether_settings.id);
+            }
+        });
+        ui.separator();
         ui.horizontal(|ui| {
             if ui.button("Save").clicked() {
-                //     // tether_settings.is_editing = false;
-                //     // info!("Re(creating) Tether Agent with new settings...");
-
                 model.attempt_new_tether_connection();
             }
             if ui.button("Reset").clicked() {
@@ -118,27 +129,4 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
             model.attempt_new_tether_connection();
         }
     }
-
-    // ui.horizontal(|ui| {
-    //     ui.label("Role");
-    //     if ui
-    //         .text_edit_singleline(&mut model.editable_tether_settings.role)
-    //         .changed()
-    //     {
-    //         model
-    //             .tether_agent
-    //             .set_role(&model.editable_tether_settings.role);
-    //     }
-    // });
-    // ui.horizontal(|ui| {
-    //     ui.label("ID or Group");
-    //     if ui
-    //         .text_edit_singleline(&mut model.editable_tether_settings.id)
-    //         .changed()
-    //     {
-    //         model
-    //             .tether_agent
-    //             .set_id(&model.editable_tether_settings.id);
-    //     }
-    // });
 }
