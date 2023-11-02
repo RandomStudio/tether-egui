@@ -14,7 +14,7 @@ use tether_utils::{
 
 use crate::Model;
 
-use super::{common::standard_spacer, tether_gui_utils::init_new_tether_agent};
+use super::{common::standard_spacer, tether_gui_utils::EditableTetherSettings};
 
 #[derive(Default)]
 pub struct PlaybackState {
@@ -153,7 +153,7 @@ fn render_message_log(ui: &mut Ui, model: &mut Model) {
                     .message_log()
                     .iter()
                     .filter(|(topic, _json)| {
-                        if &model.message_log_filter == "" {
+                        if model.message_log_filter.is_empty() {
                             true
                         } else {
                             topic.contains(&model.message_log_filter)
@@ -203,15 +203,23 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
                     if ui.button("⏵ Play").clicked() {
                         model.playback.is_playing = true;
                         let player = TetherPlaybackUtil::new(options.to_owned());
-                        let options =
-                            TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
+
+                        let tether_settings = match &model.project.tether_settings {
+                            Some(s) => s.clone(),
+                            None => EditableTetherSettings::default(),
+                        };
 
                         model.playback.stop_request_tx = Some(player.get_stop_tx());
                         model.playback.thread_handle = Some(std::thread::spawn(move || {
-                            let tether_agent = init_new_tether_agent(&options);
-                            tether_agent.connect(&options).expect("failed to connect");
-                            info!("Connected new Tether Agent for playback OK");
-                            player.start(&tether_agent);
+                            if let Ok(tether_agent) =
+                                TetherAgentOptionsBuilder::from(tether_settings).build()
+                            {
+                                tether_agent.connect().expect("failed to connect");
+                                info!("Connected new Tether Agent for playback OK");
+                                player.start(&tether_agent);
+                            } else {
+                                error!("Failed tonnect Tether Agent for playback");
+                            }
                         }));
                     }
                 } else if ui.button("⏹ Stop").clicked() {
@@ -262,7 +270,7 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
             ui.label("Timestamp");
             ui.horizontal(|ui| {
                 if model.recording.options.file_no_timestamp {
-                    ui.label("Disabled");
+                    ui.label(RichText::new("Disabled").color(Color32::DARK_GRAY));
                     if ui.button("Enable").clicked() {
                         model.recording.options.file_no_timestamp = false;
                     }
@@ -275,55 +283,36 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
             });
             ui.end_row();
 
-            if model.recording.options.timing_delay.is_none() {
-                ui.horizontal(|ui| {
-                    ui.label("Timing delay");
-                    if ui.button("enable").clicked() {
-                        model.recording.options.timing_delay = Some(2.0);
-                    }
-                });
-            } else {
-                ui.horizontal(|ui| {
-                    ui.label("Timing delay");
+            ui.label("Timing Delay");
+            ui.horizontal(|ui| {
+                if let Some(delay) = &mut model.recording.options.timing_delay {
+                    ui.add(egui::DragValue::new(delay).speed(1.0));
                     if ui.button("disable").clicked() {
                         model.recording.options.timing_delay = None;
                     }
-                });
-            }
-            match &mut model.recording.options.timing_delay {
-                Some(delay) => {
-                    ui.add(egui::DragValue::new(delay).speed(1.0));
+                } else {
+                    ui.label(RichText::new("Disabled").color(Color32::DARK_GRAY));
+                    if ui.button("Enable").clicked() {
+                        model.recording.options.timing_delay = Some(2.0);
+                    }
                 }
-                None => {
-                    ui.label("disabled");
-                }
-            }
+            });
             ui.end_row();
 
-            if model.recording.options.timing_delay.is_none() {
-                ui.horizontal(|ui| {
-                    ui.label("Timing duration");
-                    if ui.button("enable").clicked() {
-                        model.recording.options.timing_duration = Some(10.0);
-                    }
-                });
-            } else {
-                ui.horizontal(|ui| {
-                    ui.label("Timing duration");
-                    if ui.button("disable").clicked() {
+            ui.label("Max Duration");
+            ui.horizontal(|ui| {
+                if let Some(duration) = &mut model.recording.options.timing_duration {
+                    ui.add(egui::DragValue::new(duration).speed(1.0));
+                    if ui.button("Disable").clicked() {
                         model.recording.options.timing_duration = None;
                     }
-                });
-            }
-            match &mut model.recording.options.timing_duration {
-                Some(delay) => {
-                    ui.add(egui::DragValue::new(delay).speed(1.0));
+                } else {
+                    ui.label(RichText::new("Disabled").color(Color32::DARK_GRAY));
+                    if ui.button("Enable").clicked() {
+                        model.recording.options.timing_duration = Some(10.0);
+                    }
                 }
-                None => {
-                    ui.label("disabled");
-                }
-            }
-            ui.end_row();
+            });
         });
     standard_spacer(ui);
     ui.separator();
@@ -332,13 +321,22 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
             if ui.button("⏺ Record").clicked() {
                 model.recording.is_recording = true;
                 let recorder = TetherRecordUtil::new(model.recording.options.to_owned());
-                let options = TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
-                model.recording.stop_request_tx = Some(recorder.get_stop_tx());
-                model.recording.thread_handle = Some(std::thread::spawn(move || {
-                    let tether_agent = init_new_tether_agent(&options);
-                    tether_agent.connect(&options).expect("failed to connect");
-                    recorder.start_recording(&tether_agent);
-                }));
+
+                let tether_settings = match &model.project.tether_settings {
+                    Some(s) => s.clone(),
+                    None => EditableTetherSettings::default(),
+                };
+
+                if let Ok(tether_agent) = TetherAgentOptionsBuilder::from(tether_settings).build() {
+                    model.recording.stop_request_tx = Some(recorder.get_stop_tx());
+                    model.recording.thread_handle = Some(std::thread::spawn(move || {
+                        tether_agent.connect().expect("failed to connect");
+                        info!("Connected new Tether Agent for recording OK");
+                        recorder.start_recording(&tether_agent);
+                    }));
+                } else {
+                    error!("Failed to connect Tether Agent for recording");
+                }
             }
         } else if ui.button("⏹ Stop").clicked() {
             if let Some(tx) = &model.recording.stop_request_tx {

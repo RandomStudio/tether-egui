@@ -42,7 +42,7 @@ pub trait CustomWidget<T: Serialize> {
 }
 
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
-pub enum QOS {
+pub enum Qos {
     AtMostOnce = 0,
     AtLeastOnce = 1,
     ExactlyOnce = 2,
@@ -50,13 +50,12 @@ pub enum QOS {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+/// Represents user-defined options common to all Widgets
 pub struct Common {
     pub name: String,
     pub description: String,
     pub plug: PlugDefinition,
     pub midi_mapping: Option<MidiMapping>,
-    pub qos: QOS,
-    pub retain: bool,
 
     // The fields below are never used in on-disk versions,
     // only in-memory state
@@ -64,12 +63,29 @@ pub struct Common {
     is_edit_mode: bool,
     #[serde(skip)]
     pub use_custom_topic: bool,
+    #[serde(skip)]
+    pub custom_topic: String,
+    #[serde(skip)]
+    pub plug_name: String,
+    #[serde(skip, default = "default_qos")]
+    pub qos: Qos,
+    #[serde(skip)]
+    pub retain: bool,
+
     #[serde(skip, default = "default_auto_send")]
     pub auto_send: bool,
 }
 
 fn default_auto_send() -> bool {
     true
+}
+
+fn default_qos() -> Qos {
+    Qos::AtLeastOnce
+}
+
+pub fn shortened_name(full_name: &str) -> String {
+    String::from(full_name.replace(' ', "_").trim())
 }
 
 impl Common {
@@ -82,7 +98,7 @@ impl Common {
     ) -> Self {
         let plug = match custom_topic {
             Some(topic) => PlugOptionsBuilder::create_output(plug_name)
-                .topic(topic)
+                .topic(Some(topic))
                 .build(agent)
                 .expect("failed to create output"),
 
@@ -102,11 +118,13 @@ impl Common {
             },
             plug,
             is_edit_mode: true,
+            plug_name: shortened_name(widget_name),
             use_custom_topic: false,
             auto_send: true,
             midi_mapping: None,
-            qos: QOS::AtMostOnce,
+            qos: Qos::AtMostOnce,
             retain: false,
+            custom_topic: String::from(""),
         }
     }
 

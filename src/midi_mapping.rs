@@ -54,8 +54,8 @@ impl MidiSubscriber {
         MidiSubscriber {}
     }
 
-    pub fn get_midi_message(&self, plug_name: &String, message: &Message) -> Option<MidiMessage> {
-        match plug_name.as_str() {
+    pub fn get_midi_message(&self, plug_name: &str, message: &Message) -> Option<MidiMessage> {
+        match plug_name {
             "controlChange" => {
                 debug!(
                     "This is a Tether MIDI control change message: {} :: {:?}",
