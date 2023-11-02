@@ -14,7 +14,7 @@ use tether_utils::{
 
 use crate::Model;
 
-use super::{common::standard_spacer, tether_gui_utils::tether_agent_if_connected};
+use super::{common::standard_spacer, tether_gui_utils::unconnected_tether_agent};
 
 #[derive(Default)]
 pub struct PlaybackState {

@@ -2,12 +2,12 @@ use std::time::Duration;
 
 use log::{error, info, warn};
 use tether_agent::{TetherAgent, TetherAgentOptionsBuilder, TetherOrCustomTopic};
-use tether_utils::tether_topics::{insights::Insights, TopicOptions};
+use tether_utils::tether_topics::insights::Insights;
 
 use crate::{
     gui::{
         render,
-        tether_gui_utils::tether_agent_if_connected,
+        tether_gui_utils::{unconnected_tether_agent, EditableTetherSettings},
         utilities_view::{PlaybackState, RecordingState},
         widget_view::common_send,
     },
@@ -22,6 +22,7 @@ use crate::{
 use clap::Parser;
 
 pub struct Model {
+    pub tether_agent: TetherAgent,
     pub json_file: Option<String>,
     pub monitor_topic: String,
     pub project: Project,
@@ -30,7 +31,6 @@ pub struct Model {
     pub message_log_filter: String,
     pub midi_handler: Option<MidiSubscriber>,
     pub continuous_mode: bool,
-    pub tether_agent: Option<TetherAgent>,
     pub active_window: ActiveView,
     pub playback: PlaybackState,
     pub recording: RecordingState,
@@ -44,6 +44,11 @@ impl Default for Model {
         info!("Will attempt to load JSON from {} ...", &json_path);
 
         let (project, was_loaded_from_disk) = try_load(&json_path);
+
+        let tether_settings = match &project.tether_settings {
+            Some(s) => s.clone(),
+            None => EditableTetherSettings::default(),
+        };
 
         // let tether_settings = project.tether_settings
 
@@ -64,9 +69,8 @@ impl Default for Model {
         //     }
         // }
 
-        let tether_agent = tether_agent_if_connected(&TetherAgentOptionsBuilder::from(
-            project.tether_settings.unwrap_or_default().clone(),
-        ));
+        let tether_agent =
+            unconnected_tether_agent(&TetherAgentOptionsBuilder::from(tether_settings));
 
         Self {
             json_file: {
@@ -80,25 +84,9 @@ impl Default for Model {
             monitor_topic: cli.monitor_topic.clone(),
             project,
             queue: Vec::new(),
-            insights: if let Some(agent) = &tether_agent {
-                Some(Insights::new(
-                    &TopicOptions {
-                        topic: cli.monitor_topic,
-                        sampler_interval: 1000,
-                        graph_enable: false,
-                    },
-                    &agent,
-                ))
-            } else {
-                None
-            },
-
+            insights: None,
             message_log_filter: "".into(),
-            midi_handler: if let Some(agent) = &tether_agent {
-                Some(MidiSubscriber::new(agent))
-            } else {
-                None
-            },
+            midi_handler: None,
             continuous_mode: cli.continuous_mode,
             active_window: ActiveView::WidgetView,
             playback: PlaybackState::default(),
@@ -113,8 +101,8 @@ impl eframe::App for Model {
         if let Some(insights) = &mut self.insights {
             insights.sample();
         }
-        if let Some(agent) = &self.tether_agent {
-            while let Some((plug, message)) = &agent.check_messages() {
+        if self.tether_agent.is_connected() {
+            while let Some((plug, message)) = &self.tether_agent.check_messages() {
                 work_done = true;
                 if let Some(insights) = &mut self.insights {
                     insights.update(message);
@@ -132,10 +120,18 @@ impl eframe::App for Model {
                             for widget in self.project.widgets.iter_mut() {
                                 match widget {
                                     WidgetEntry::FloatNumber(e) => {
-                                        update_widget_if_controllable(e, &cc_message, agent);
+                                        update_widget_if_controllable(
+                                            e,
+                                            &cc_message,
+                                            &self.tether_agent,
+                                        );
                                     }
                                     WidgetEntry::WholeNumber(e) => {
-                                        update_widget_if_controllable(e, &cc_message, agent);
+                                        update_widget_if_controllable(
+                                            e,
+                                            &cc_message,
+                                            &self.tether_agent,
+                                        );
                                     }
                                     _ => {}
                                 }
@@ -145,26 +141,26 @@ impl eframe::App for Model {
                             for widget in self.project.widgets.iter_mut() {
                                 match widget {
                                     WidgetEntry::Bool(e) => {
-                                        toggle_if_midi_note(e, &note_message, agent);
+                                        toggle_if_midi_note(e, &note_message, &self.tether_agent);
                                     }
                                     WidgetEntry::Empty(e) => {
                                         if send_if_midi_note(e, &note_message) {
-                                            common_send(e, agent);
+                                            common_send(e, &self.tether_agent);
                                         }
                                     }
                                     WidgetEntry::Generic(e) => {
                                         if send_if_midi_note(e, &note_message) {
-                                            e.publish_from_json_string(agent);
+                                            e.publish_from_json_string(&self.tether_agent);
                                         }
                                     }
                                     WidgetEntry::Colour(e) => {
                                         if send_if_midi_note(e, &note_message) {
-                                            common_send(e, agent);
+                                            common_send(e, &self.tether_agent);
                                         }
                                     }
                                     WidgetEntry::Point2D(e) => {
                                         if send_if_midi_note(e, &note_message) {
-                                            common_send(e, agent);
+                                            common_send(e, &self.tether_agent);
                                         }
                                     }
                                     _ => {}
@@ -176,7 +172,6 @@ impl eframe::App for Model {
                 }
             }
         }
-
         if !work_done {
             std::thread::sleep(Duration::from_millis(1));
         }

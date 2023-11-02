@@ -6,7 +6,7 @@ use tether_agent::TetherAgentOptionsBuilder;
 
 use crate::{project::try_load, Model};
 
-use super::tether_gui_utils::tether_agent_if_connected;
+use super::tether_gui_utils::{attempt_new_tether_connection, unconnected_tether_agent};
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
@@ -61,7 +61,7 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
 
                     //   model.editable_tether_settings = tether_settings_in_project.clone();
                     //   attempt_new_tether_connection(model);
-                    model.tether_agent = tether_agent_if_connected(&TetherAgentOptionsBuilder::from(tether_settings_in_project))
+                    model.tether_agent = unconnected_tether_agent(&TetherAgentOptionsBuilder::from(tether_settings_in_project))
                   }
 
               }
@@ -104,11 +104,13 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     //     }
     // }
 
-    if let Some(agent) = model.tether_agent {
+    if model.tether_agent.is_connected() {
         ui.label(RichText::new("Connected ☑").color(Color32::GREEN));
     } else {
         ui.label(RichText::new("Not connected ✖").color(Color32::RED));
-        if ui.button("Connect").clicked() {}
+        if ui.button("Connect").clicked() {
+            attempt_new_tether_connection(model);
+        }
     }
 
     // ui.horizontal(|ui| {

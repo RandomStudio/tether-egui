@@ -5,6 +5,7 @@ use tether_agent::{PlugOptionsBuilder, TetherAgent};
 
 use crate::{
     midi_mapping::MidiMapping,
+    model::QueueItem,
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
         numbers::NumberWidget, point::Point2DWidget, CustomWidget, Qos, View, WidgetEntry,

@@ -48,32 +48,31 @@ impl From<EditableTetherSettings> for TetherAgentOptionsBuilder {
     }
 }
 
-pub fn tether_agent_if_connected(options: &TetherAgentOptionsBuilder) -> Option<TetherAgent> {
-    match options.build() {
-        Ok(tether_agent) => Some(tether_agent),
-        Err(e) => {
-            error!("Failed to connect Tether Agent: {}", e);
-            None
-        }
-    }
+pub fn unconnected_tether_agent(options: &TetherAgentOptionsBuilder) -> TetherAgent {
+    options
+        .clone()
+        .auto_connect(false)
+        .build()
+        .expect("Failed to initialise (not connect) new Tether Agent")
 }
 
 pub fn attempt_new_tether_connection(model: &mut Model) {
-    let tether_options =
-        TetherAgentOptionsBuilder::from(model.project.tether_settings.unwrap_or_default());
-
-    if let Some(tether_agent) = tether_agent_if_connected(&tether_options) {
-        info!("Connected Tether Agent OK");
-        // model.project.tether_settings.was_changed = true;
-        model.insights = Some(Insights::new(
-            &TopicOptions {
-                topic: model.monitor_topic.clone(),
-                sampler_interval: 1000,
-                graph_enable: false,
-            },
-            &tether_agent,
-        ));
-        model.midi_handler = Some(MidiSubscriber::new(&tether_agent));
-        model.tether_agent = Some(tether_agent);
+    match &model.tether_agent.connect() {
+        Ok(()) => {
+            info!("Connected Tether Agent OK");
+            // model.project.tether_settings.was_changed = true;
+            model.insights = Some(Insights::new(
+                &TopicOptions {
+                    topic: model.monitor_topic.clone(),
+                    sampler_interval: 1000,
+                    graph_enable: false,
+                },
+                &model.tether_agent,
+            ));
+            model.midi_handler = Some(MidiSubscriber::new(&model.tether_agent));
+        }
+        Err(e) => {
+            error!("Failed to connect Tether Agent: {}", e);
+        }
     }
 }
