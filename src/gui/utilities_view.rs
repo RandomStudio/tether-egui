@@ -203,13 +203,14 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
                     if ui.button("⏵ Play").clicked() {
                         model.playback.is_playing = true;
                         let player = TetherPlaybackUtil::new(options.to_owned());
-                        let options =
-                            TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
+                        let options = TetherAgentOptionsBuilder::from(
+                            &model.project.tether_settings.unwrap_or_default(),
+                        );
 
                         model.playback.stop_request_tx = Some(player.get_stop_tx());
                         model.playback.thread_handle = Some(std::thread::spawn(move || {
                             let tether_agent = init_new_tether_agent(&options);
-                            tether_agent.connect(&options).expect("failed to connect");
+                            tether_agent.connect().expect("failed to connect");
                             info!("Connected new Tether Agent for playback OK");
                             player.start(&tether_agent);
                         }));
@@ -332,11 +333,13 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
             if ui.button("⏺ Record").clicked() {
                 model.recording.is_recording = true;
                 let recorder = TetherRecordUtil::new(model.recording.options.to_owned());
-                let options = TetherAgentOptionsBuilder::from(&model.editable_tether_settings);
+                let options = TetherAgentOptionsBuilder::from(
+                    &model.project.tether_settings.unwrap_or_default(),
+                );
                 model.recording.stop_request_tx = Some(recorder.get_stop_tx());
                 model.recording.thread_handle = Some(std::thread::spawn(move || {
                     let tether_agent = init_new_tether_agent(&options);
-                    tether_agent.connect(&options).expect("failed to connect");
+                    tether_agent.connect().expect("failed to connect");
                     recorder.start_recording(&tether_agent);
                 }));
             }
