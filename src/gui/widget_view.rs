@@ -192,7 +192,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .project
             .widgets
             .push(WidgetEntry::Bool(BoolWidget::new(
-                "Boolean Meassage",
+                "Boolean Message",
                 Some("A true or false value"),
                 "booleans",
                 None,
