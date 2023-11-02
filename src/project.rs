@@ -1,6 +1,6 @@
 use std::fs;
 
-use log::{error, info, warn};
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
 
 use crate::{gui::tether_gui_utils::EditableTetherSettings, widgets::WidgetEntry};
