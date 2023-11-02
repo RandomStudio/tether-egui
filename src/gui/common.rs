@@ -24,52 +24,48 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         ui.small("(No JSON file loaded)");
     }
     ui.horizontal(|ui| {
-      if ui.button("Save").clicked() {
-          if let Some(path) = rfd::FileDialog::new()
-              .add_filter("text", &["json"])
-              .save_file()
-          {
-            //   if model.project.tether_settings.was_changed {
-            //       info!("Tether Settings were edited; copying these to project");
-            //       model.project.tether_settings = Some(model.editable_tether_settings.clone());
-            //   };
-              let path_string = path.display().to_string();
-              let text = serde_json::to_string_pretty(&model.project)
-                  .expect("failed to serialise widget data");
-              match fs::write(path_string, text) {
-                  Ok(()) => {
-                      info!("Saved OK");
-                  }
-                  Err(e) => {
-                      error!("Error saving to disk: {:?}", e);
-                  }
-              }
-          }
-      }
-      if ui.button("Load").clicked() {
-          if let Some(path) = rfd::FileDialog::new()
-              .add_filter("text", &["json"])
-              .pick_file()
-          {
-              let path_string = path.display().to_string();
-              let (project, loaded) = try_load(&path_string);
-              if loaded {
-                  info!("Loaded project file OK");
-                  model.json_file = Some(path_string);
-                  if let Some(tether_settings_in_project) =project.tether_settings {
-                      info!("Project file had custom Tether settings; attempt to apply and connect...");
-
-                    model.tether_agent = unconnected_tether_agent(&TetherAgentOptionsBuilder::from(tether_settings_in_project))
-                  }
-
-              }
-          }
-      }
-      if ui.button("Clear").clicked() {
-          model.project.widgets.clear();
-          model.json_file = None;
-      }
-  });
+        if ui.button("Save").clicked() {
+            if let Some(path) = rfd::FileDialog::new()
+                .add_filter("text", &["json"])
+                .save_file()
+            {
+                //   if model.project.tether_settings.was_changed {
+                //       info!("Tether Settings were edited; copying these to project");
+                //       model.project.tether_settings = Some(model.editable_tether_settings.clone());
+                //   };
+                let path_string = path.display().to_string();
+                let text = serde_json::to_string_pretty(&model.project)
+                    .expect("failed to serialise widget data");
+                match fs::write(path_string, text) {
+                    Ok(()) => {
+                        info!("Saved OK");
+                    }
+                    Err(e) => {
+                        error!("Error saving to disk: {:?}", e);
+                    }
+                }
+            }
+        }
+        if ui.button("Load").clicked() {
+            if let Some(path) = rfd::FileDialog::new()
+                .add_filter("text", &["json"])
+                .pick_file()
+            {
+                let path_string = path.display().to_string();
+                let (project, loaded) = try_load(&path_string);
+                if loaded {
+                    info!("Loaded project file OK");
+                    model.json_file = Some(path_string);
+                    model.project = project;
+                    model.attempt_new_tether_connection();
+                }
+            }
+        }
+        if ui.button("Clear").clicked() {
+            model.project.widgets.clear();
+            model.json_file = None;
+        }
+    });
 
     standard_spacer(ui);
     ui.separator();
