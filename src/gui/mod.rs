@@ -1,4 +1,4 @@
-use crate::{ActiveView, Model};
+use crate::model::{ActiveView, Model};
 
 use self::{
     common::{general_agent_area, standard_spacer},

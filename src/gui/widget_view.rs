@@ -7,10 +7,9 @@ use crate::{
     midi_mapping::MidiMapping,
     widgets::{
         boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
-        numbers::NumberWidget, point::Point2DWidget, shortened_name, CustomWidget, Qos, View,
-        WidgetEntry,
+        numbers::NumberWidget, point::Point2DWidget, CustomWidget, Qos, View, WidgetEntry,
     },
-    Model, QueueItem,
+    Model,
 };
 
 use super::common::{common_remove_button, standard_spacer};

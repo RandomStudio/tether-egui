@@ -14,7 +14,7 @@ use tether_utils::{
 
 use crate::Model;
 
-use super::{common::standard_spacer, tether_gui_utils::init_new_tether_agent};
+use super::{common::standard_spacer, tether_gui_utils::tether_agent_if_connected};
 
 #[derive(Default)]
 pub struct PlaybackState {
@@ -199,32 +199,32 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
             });
 
             ui.horizontal(|ui| {
-                if !model.playback.is_playing {
-                    if ui.button("⏵ Play").clicked() {
-                        model.playback.is_playing = true;
-                        let player = TetherPlaybackUtil::new(options.to_owned());
-                        let options = TetherAgentOptionsBuilder::from(
-                            &model.project.tether_settings.unwrap_or_default(),
-                        );
+                // if !model.playback.is_playing {
+                //     if ui.button("⏵ Play").clicked() {
+                //         model.playback.is_playing = true;
+                //         let player = TetherPlaybackUtil::new(options.to_owned());
+                //         let options = TetherAgentOptionsBuilder::from(
+                //             &model.project.tether_settings.unwrap_or_default(),
+                //         );
 
-                        model.playback.stop_request_tx = Some(player.get_stop_tx());
-                        model.playback.thread_handle = Some(std::thread::spawn(move || {
-                            let tether_agent = init_new_tether_agent(&options);
-                            tether_agent.connect().expect("failed to connect");
-                            info!("Connected new Tether Agent for playback OK");
-                            player.start(&tether_agent);
-                        }));
-                    }
-                } else if ui.button("⏹ Stop").clicked() {
-                    if let Some(tx) = &model.playback.stop_request_tx {
-                        tx.send(true)
-                            .expect("failed to send playback stop request via channel");
-                    } else {
-                        panic!(
-                            "Playback was marked in-progress but no stop request channel available"
-                        );
-                    }
-                }
+                //         model.playback.stop_request_tx = Some(player.get_stop_tx());
+                //         model.playback.thread_handle = Some(std::thread::spawn(move || {
+                //             let tether_agent = init_new_tether_agent(&options);
+                //             tether_agent.connect().expect("failed to connect");
+                //             info!("Connected new Tether Agent for playback OK");
+                //             player.start(&tether_agent);
+                //         }));
+                //     }
+                // } else if ui.button("⏹ Stop").clicked() {
+                //     if let Some(tx) = &model.playback.stop_request_tx {
+                //         tx.send(true)
+                //             .expect("failed to send playback stop request via channel");
+                //     } else {
+                //         panic!(
+                //             "Playback was marked in-progress but no stop request channel available"
+                //         );
+                //     }
+                // }
             });
             if model.playback.is_playing {
                 if let Some(handle) = &model.playback.thread_handle {
@@ -329,28 +329,28 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
     standard_spacer(ui);
     ui.separator();
     ui.horizontal(|ui| {
-        if !model.recording.is_recording {
-            if ui.button("⏺ Record").clicked() {
-                model.recording.is_recording = true;
-                let recorder = TetherRecordUtil::new(model.recording.options.to_owned());
-                let options = TetherAgentOptionsBuilder::from(
-                    &model.project.tether_settings.unwrap_or_default(),
-                );
-                model.recording.stop_request_tx = Some(recorder.get_stop_tx());
-                model.recording.thread_handle = Some(std::thread::spawn(move || {
-                    let tether_agent = init_new_tether_agent(&options);
-                    tether_agent.connect().expect("failed to connect");
-                    recorder.start_recording(&tether_agent);
-                }));
-            }
-        } else if ui.button("⏹ Stop").clicked() {
-            if let Some(tx) = &model.recording.stop_request_tx {
-                tx.send(true)
-                    .expect("failed to send recording stop request via channel");
-            } else {
-                panic!("Recording was marked in-progress but no stop request channel available");
-            }
-        }
+        // if !model.recording.is_recording {
+        //     if ui.button("⏺ Record").clicked() {
+        //         model.recording.is_recording = true;
+        //         let recorder = TetherRecordUtil::new(model.recording.options.to_owned());
+        //         let options = TetherAgentOptionsBuilder::from(
+        //             &model.project.tether_settings.unwrap_or_default(),
+        //         );
+        //         model.recording.stop_request_tx = Some(recorder.get_stop_tx());
+        //         model.recording.thread_handle = Some(std::thread::spawn(move || {
+        //             let tether_agent = init_new_tether_agent(&options);
+        //             tether_agent.connect().expect("failed to connect");
+        //             recorder.start_recording(&tether_agent);
+        //         }));
+        //     }
+        // } else if ui.button("⏹ Stop").clicked() {
+        //     if let Some(tx) = &model.recording.stop_request_tx {
+        //         tx.send(true)
+        //             .expect("failed to send recording stop request via channel");
+        //     } else {
+        //         panic!("Recording was marked in-progress but no stop request channel available");
+        //     }
+        // }
     });
     if model.recording.is_recording {
         if let Some(handle) = &model.recording.thread_handle {

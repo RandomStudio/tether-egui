@@ -3,14 +3,10 @@ use std::fs;
 use egui::{Color32, RichText, Ui};
 use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
-use tether_utils::tether_topics::{insights::Insights, TopicOptions};
 
-use crate::{
-    project::{try_load, Project},
-    Model,
-};
+use crate::{project::try_load, Model};
 
-use super::tether_gui_utils::init_new_tether_agent;
+use super::tether_gui_utils::tether_agent_if_connected;
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
@@ -18,36 +14,6 @@ pub fn standard_spacer(ui: &mut egui::Ui) {
 
 pub fn common_remove_button(ui: &mut Ui) -> bool {
     ui.button("❌ Remove").clicked()
-}
-
-pub fn attempt_new_tether_connection(model: &mut Model) {
-    let tether_options =
-        TetherAgentOptionsBuilder::from(&model.project.tether_settings.unwrap_or_default());
-
-    let tether_agent = init_new_tether_agent(&tether_options);
-
-    match tether_agent.connect() {
-        Ok(_) => {
-            info!("Connected Tether Agent OK");
-            // model.project.tether_settings.was_changed = true;
-            model.insights = Some(Insights::new(
-                &TopicOptions {
-                    topic: model.monitor_topic.clone(),
-                    sampler_interval: 1000,
-                    graph_enable: false,
-                },
-                &tether_agent,
-            ));
-        }
-        Err(e) => {
-            // model.editable_tether_settings.is_editing = false;
-            // model.editable_tether_settings.was_changed = false;
-
-            error!("Failed to connect Tether, {}", e);
-        }
-    }
-
-    model.tether_agent = tether_agent;
 }
 
 pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
@@ -90,11 +56,12 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
               if loaded {
                   info!("Loaded project file OK");
                   model.json_file = Some(path_string);
-                  if let Some(tether_settings_in_project) = &project.tether_settings {
+                  if let Some(tether_settings_in_project) =project.tether_settings {
                       info!("Project file had custom Tether settings; attempt to apply and connect...");
 
                     //   model.editable_tether_settings = tether_settings_in_project.clone();
-                      attempt_new_tether_connection(model);
+                    //   attempt_new_tether_connection(model);
+                    model.tether_agent = tether_agent_if_connected(&TetherAgentOptionsBuilder::from(tether_settings_in_project))
                   }
 
               }
@@ -137,13 +104,11 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     //     }
     // }
 
-    if model.tether_agent.is_connected() {
+    if let Some(agent) = model.tether_agent {
         ui.label(RichText::new("Connected ☑").color(Color32::GREEN));
     } else {
         ui.label(RichText::new("Not connected ✖").color(Color32::RED));
-        if ui.button("Connect").clicked() {
-            attempt_new_tether_connection(model);
-        }
+        if ui.button("Connect").clicked() {}
     }
 
     // ui.horizontal(|ui| {
