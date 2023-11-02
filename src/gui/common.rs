@@ -6,7 +6,7 @@ use tether_agent::TetherAgentOptionsBuilder;
 
 use crate::{project::try_load, Model};
 
-use super::tether_gui_utils::{attempt_new_tether_connection, unconnected_tether_agent};
+use super::tether_gui_utils::{unconnected_tether_agent, EditableTetherSettings};
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
@@ -77,39 +77,45 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     ui.separator();
     ui.heading("Agent");
 
-    // if model.editable_tether_settings.is_editing {
-    //     ui.horizontal(|ui| {
-    //         ui.label("IP Address");
-    //         ui.text_edit_singleline(&mut model.editable_tether_settings.host);
-    //     });
-    //     ui.horizontal(|ui| {
-    //         ui.label("Username");
-    //         ui.text_edit_singleline(&mut model.editable_tether_settings.username);
-    //     });
-    //     ui.horizontal(|ui| {
-    //         ui.label("Password");
-    //         ui.text_edit_singleline(&mut model.editable_tether_settings.password);
-    //     });
-    //     if ui.button("Apply").clicked() {
-    //         model.editable_tether_settings.is_editing = false;
-    //         info!("Re(creating) Tether Agent with new settings...");
+    if let Some(tether_settings) = &mut model.project.tether_settings {
+        ui.horizontal(|ui| {
+            ui.label("IP Address");
+            ui.text_edit_singleline(&mut tether_settings.host);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Username");
+            ui.text_edit_singleline(&mut tether_settings.username);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Password");
+            ui.text_edit_singleline(&mut tether_settings.password);
+        });
+        ui.horizontal(|ui| {
+            if ui.button("Save").clicked() {
+                //     // tether_settings.is_editing = false;
+                //     // info!("Re(creating) Tether Agent with new settings...");
 
-    //         attempt_new_tether_connection(model);
-    //     }
-    // } else {
-    //     ui.label(model.tether_agent.broker_uri());
+                model.attempt_new_tether_connection();
+            }
+            if ui.button("Reset").clicked() {
+                model.project.tether_settings = None;
+                model.attempt_new_tether_connection();
+            }
+        });
+    } else {
+        ui.label(model.tether_agent.broker_uri());
 
-    //     if ui.button("Edit").clicked() {
-    //         model.editable_tether_settings.is_editing = true;
-    //     }
-    // }
+        if ui.button("Edit").clicked() {
+            model.project.tether_settings = Some(EditableTetherSettings::default());
+        }
+    }
 
     if model.tether_agent.is_connected() {
         ui.label(RichText::new("Connected ☑").color(Color32::GREEN));
     } else {
         ui.label(RichText::new("Not connected ✖").color(Color32::RED));
         if ui.button("Connect").clicked() {
-            attempt_new_tether_connection(model);
+            model.attempt_new_tether_connection();
         }
     }
 

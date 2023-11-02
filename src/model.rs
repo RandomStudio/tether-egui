@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use log::{error, info, warn};
 use tether_agent::{TetherAgent, TetherAgentOptionsBuilder, TetherOrCustomTopic};
-use tether_utils::tether_topics::insights::Insights;
+use tether_utils::tether_topics::{insights::Insights, TopicOptions};
 
 use crate::{
     gui::{
@@ -23,6 +23,7 @@ use clap::Parser;
 
 pub struct Model {
     pub tether_agent: TetherAgent,
+    // pub edit_tether_settings: bool,
     pub json_file: Option<String>,
     pub monitor_topic: String,
     pub project: Project,
@@ -50,29 +51,25 @@ impl Default for Model {
             None => EditableTetherSettings::default(),
         };
 
-        // let tether_settings = project.tether_settings
-
-        // let tether_agent = init_new_tether_agent(&TetherAgentOptionsBuilder::from(
-        //     project.tether_settings.unwrap_or_default().clone(),
-        // ));
-
-        // if cli.tether_disable {
-        //     warn!("Tether disabled; please connect manually if required");
-        // } else {
-        //     match tether_agent.connect() {
-        //         Ok(()) => {
-        //             info!("Tether Agent connected successfully");
-        //         }
-        //         Err(e) => {
-        //             error!("Tether Agent failed to connect: {}", e);
-        //         }
-        //     }
-        // }
-
         let tether_agent =
             unconnected_tether_agent(&TetherAgentOptionsBuilder::from(tether_settings));
 
+        if cli.tether_disable {
+            warn!("Tether disabled; please connect manually if required");
+        } else {
+            match tether_agent.connect() {
+                Ok(()) => {
+                    info!("Tether Agent connected successfully");
+                }
+                Err(e) => {
+                    error!("Tether Agent failed to connect: {}", e);
+                }
+            }
+        }
+
         Self {
+            tether_agent,
+            // edit_tether_settings: false,
             json_file: {
                 if was_loaded_from_disk {
                     None
@@ -80,7 +77,6 @@ impl Default for Model {
                     Some(json_path)
                 }
             },
-            tether_agent,
             monitor_topic: cli.monitor_topic.clone(),
             project,
             queue: Vec::new(),
@@ -189,6 +185,40 @@ impl eframe::App for Model {
         }
 
         render(ctx, self);
+    }
+}
+
+impl Model {
+    /// Always creates a new Tether Agent instance, using the settings either loaded from the
+    /// current "project"
+    /// or defaults if none are available.
+    pub fn attempt_new_tether_connection(&mut self) {
+        let tether_settings = match &self.project.tether_settings {
+            Some(s) => s.clone(),
+            None => EditableTetherSettings::default(),
+        };
+
+        self.tether_agent =
+            unconnected_tether_agent(&TetherAgentOptionsBuilder::from(tether_settings));
+
+        match self.tether_agent.connect() {
+            Ok(()) => {
+                info!("Connected Tether Agent OK");
+                // model.project.tether_settings.was_changed = true;
+                self.insights = Some(Insights::new(
+                    &TopicOptions {
+                        topic: self.monitor_topic.clone(),
+                        sampler_interval: 1000,
+                        graph_enable: false,
+                    },
+                    &self.tether_agent,
+                ));
+                self.midi_handler = Some(MidiSubscriber::new(&self.tether_agent));
+            }
+            Err(e) => {
+                error!("Failed to connect Tether Agent: {}", e);
+            }
+        }
     }
 }
 

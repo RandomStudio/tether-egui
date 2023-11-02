@@ -1,9 +1,5 @@
-use log::{error, info};
 use serde::{Deserialize, Serialize};
 use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
-use tether_utils::tether_topics::{insights::Insights, TopicOptions};
-
-use crate::{midi_mapping::MidiSubscriber, model::Model};
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -54,25 +50,4 @@ pub fn unconnected_tether_agent(options: &TetherAgentOptionsBuilder) -> TetherAg
         .auto_connect(false)
         .build()
         .expect("Failed to initialise (not connect) new Tether Agent")
-}
-
-pub fn attempt_new_tether_connection(model: &mut Model) {
-    match &model.tether_agent.connect() {
-        Ok(()) => {
-            info!("Connected Tether Agent OK");
-            // model.project.tether_settings.was_changed = true;
-            model.insights = Some(Insights::new(
-                &TopicOptions {
-                    topic: model.monitor_topic.clone(),
-                    sampler_interval: 1000,
-                    graph_enable: false,
-                },
-                &model.tether_agent,
-            ));
-            model.midi_handler = Some(MidiSubscriber::new(&model.tether_agent));
-        }
-        Err(e) => {
-            error!("Failed to connect Tether Agent: {}", e);
-        }
-    }
 }
