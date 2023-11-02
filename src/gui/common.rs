@@ -2,11 +2,10 @@ use std::fs;
 
 use egui::{Color32, RichText, Ui};
 use log::*;
-use tether_agent::TetherAgentOptionsBuilder;
 
 use crate::{project::try_load, Model};
 
-use super::tether_gui_utils::{unconnected_tether_agent, EditableTetherSettings};
+use super::tether_gui_utils::EditableTetherSettings;
 
 pub fn standard_spacer(ui: &mut egui::Ui) {
     ui.add_space(16.);
