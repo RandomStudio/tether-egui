@@ -270,7 +270,7 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
             ui.label("Timestamp");
             ui.horizontal(|ui| {
                 if model.recording.options.file_no_timestamp {
-                    ui.label("Disabled");
+                    ui.label(RichText::new("Disabled").color(Color32::DARK_GRAY));
                     if ui.button("Enable").clicked() {
                         model.recording.options.file_no_timestamp = false;
                     }
@@ -283,55 +283,36 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
             });
             ui.end_row();
 
-            if model.recording.options.timing_delay.is_none() {
-                ui.horizontal(|ui| {
-                    ui.label("Timing delay");
-                    if ui.button("enable").clicked() {
-                        model.recording.options.timing_delay = Some(2.0);
-                    }
-                });
-            } else {
-                ui.horizontal(|ui| {
-                    ui.label("Timing delay");
+            ui.label("Timing Delay");
+            ui.horizontal(|ui| {
+                if let Some(delay) = &mut model.recording.options.timing_delay {
+                    ui.add(egui::DragValue::new(delay).speed(1.0));
                     if ui.button("disable").clicked() {
                         model.recording.options.timing_delay = None;
                     }
-                });
-            }
-            match &mut model.recording.options.timing_delay {
-                Some(delay) => {
-                    ui.add(egui::DragValue::new(delay).speed(1.0));
+                } else {
+                    ui.label(RichText::new("Disabled").color(Color32::DARK_GRAY));
+                    if ui.button("Enable").clicked() {
+                        model.recording.options.timing_delay = Some(2.0);
+                    }
                 }
-                None => {
-                    ui.label("disabled");
-                }
-            }
+            });
             ui.end_row();
 
-            if model.recording.options.timing_delay.is_none() {
-                ui.horizontal(|ui| {
-                    ui.label("Timing duration");
-                    if ui.button("enable").clicked() {
-                        model.recording.options.timing_duration = Some(10.0);
-                    }
-                });
-            } else {
-                ui.horizontal(|ui| {
-                    ui.label("Timing duration");
-                    if ui.button("disable").clicked() {
+            ui.label("Max Duration");
+            ui.horizontal(|ui| {
+                if let Some(duration) = &mut model.recording.options.timing_duration {
+                    ui.add(egui::DragValue::new(duration).speed(1.0));
+                    if ui.button("Disable").clicked() {
                         model.recording.options.timing_duration = None;
                     }
-                });
-            }
-            match &mut model.recording.options.timing_duration {
-                Some(delay) => {
-                    ui.add(egui::DragValue::new(delay).speed(1.0));
+                } else {
+                    ui.label(RichText::new("Disabled").color(Color32::DARK_GRAY));
+                    if ui.button("Enable").clicked() {
+                        model.recording.options.timing_duration = Some(10.0);
+                    }
                 }
-                None => {
-                    ui.label("disabled");
-                }
-            }
-            ui.end_row();
+            });
         });
     standard_spacer(ui);
     ui.separator();
