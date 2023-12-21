@@ -2,6 +2,8 @@
 name = "tether-egui"
 version = "0.9.1"
 edition = "2021"
+license = "MIT"
+description = "GUI for building and testing Tether-based applications"
 
 [[bin]]
 name = "tether-egui"
