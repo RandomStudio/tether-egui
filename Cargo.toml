@@ -7,6 +7,12 @@ description = "GUI for building and testing Tether-based applications"
 repository = "https://github.com/RandomStudio/tether-egui"
 authors = ["Stephen Buchanan"]
 
+[package.metadata.wix]
+upgrade-guid = "12CBD8B7-2DDE-4272-8638-52E00EF3BDD4"
+path-guid = "2B10E32F-002B-4F7A-97D1-E2F28E68ABEB"
+license = false
+eula = false
+
 [[bin]]
 name = "tether-egui"
 
@@ -16,7 +22,7 @@ eframe = "0.21.3"
 env_logger = "0.10"
 log = "0.4.17"
 # tether-agent = { path = "../tether/base_agent/rs" }
-tether-agent = "0.12.1"
+tether-agent = "0.12.2"
 # tether-utils = { path = "../tether/utilities/tether-utils"}
 tether-utils = "0.7.2"
 serde = { version = "1.0", features = ["derive"] }
@@ -25,3 +31,26 @@ rmpv = { version = "0.4", features = ["with-serde"] }
 rmp-serde = "0.13"
 clap = { version = "4.1.1", features = ["derive"] }
 rfd = "0.11"
+
+# The profile that 'cargo dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
+
+# Config for 'cargo dist'
+[workspace.metadata.dist]
+# The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
+cargo-dist-version = "0.8.0"
+# CI backends to support
+ci = ["github"]
+# The installers to generate for each app
+installers = ["shell", "msi"]
+# Target platforms to build apps for (Rust target-triple syntax)
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+# Publish jobs to run in CI
+pr-run-mode = "plan"
+
+#System dependencies needing for building with CI
+[workspace.metadata.dist.dependencies.apt]
+librust-atk-dev = "*"
+libgtk-3-dev = "*"
