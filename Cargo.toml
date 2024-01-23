@@ -4,6 +4,8 @@ version = "0.9.4"
 edition = "2021"
 license = "MIT"
 description = "GUI for building and testing Tether-based applications"
+repository = "https://github.com/RandomStudio/tether-egui"
+authors = ["Stephen Buchanan"]
 
 [[bin]]
 name = "tether-egui"
