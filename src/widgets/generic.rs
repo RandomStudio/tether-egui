@@ -97,7 +97,7 @@ impl View for GenericJSONWidget {
         }
 
         if ui.text_edit_multiline(self.value_mut()).changed() {
-            self.is_valid_json = !serde_json::from_str::<Value>(self.value()).is_err();
+            self.is_valid_json = serde_json::from_str::<Value>(self.value()).is_ok();
         }
         if self.is_valid_json {
             ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");
