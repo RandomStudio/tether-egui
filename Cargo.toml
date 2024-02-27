@@ -1,6 +1,6 @@
 [package]
 name = "tether-egui"
-version = "0.9.4"
+version = "0.9.5"
 edition = "2021"
 license = "MIT"
 description = "GUI for building and testing Tether-based applications"
@@ -46,7 +46,12 @@ ci = ["github"]
 # The installers to generate for each app
 installers = ["shell", "msi"]
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+]
 # Publish jobs to run in CI
 pr-run-mode = "plan"
 

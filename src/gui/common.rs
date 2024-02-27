@@ -1,6 +1,6 @@
 use std::fs;
 
-use egui::{Color32, RichText, Ui};
+use egui::{Color32, DragValue, RichText, Ui};
 use log::*;
 
 use crate::{project::try_load, Model};
@@ -74,6 +74,10 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         ui.horizontal(|ui| {
             ui.label("IP Address");
             ui.text_edit_singleline(&mut tether_settings.host);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Port");
+            ui.add(DragValue::new(&mut tether_settings.port));
         });
         ui.horizontal(|ui| {
             ui.label("Username");
