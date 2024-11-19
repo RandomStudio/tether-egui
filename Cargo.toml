@@ -1,6 +1,6 @@
 [package]
 name = "tether-egui"
-version = "0.9.5"
+version = "0.9.6"
 edition = "2021"
 license = "MIT"
 description = "GUI for building and testing Tether-based applications"
@@ -28,7 +28,7 @@ tether-utils = "0.7.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.91"
 rmpv = { version = "0.4", features = ["with-serde"] }
-rmp-serde = "0.13"
+rmp-serde = "0.15"
 clap = { version = "4.1.1", features = ["derive"] }
 rfd = "0.11"
 
