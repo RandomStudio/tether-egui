@@ -5,6 +5,7 @@ edition = "2021"
 license = "MIT"
 description = "GUI for building and testing Tether-based applications"
 repository = "https://github.com/RandomStudio/tether-egui"
+homepage = "https://github.com/RandomStudio/tether-egui"
 authors = ["Stephen Buchanan"]
 
 [package.metadata.wix]
@@ -36,25 +37,3 @@ rfd = "0.11"
 [profile.dist]
 inherits = "release"
 lto = "thin"
-
-# Config for 'dist'
-[workspace.metadata.dist]
-# The preferred dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.27.0"
-# CI backends to support
-ci = "github"
-# The installers to generate for each app
-installers = ["shell", "msi"]
-# Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
-# Which actions to run on pull requests
-pr-run-mode = "plan"
-# Path that installers should place binaries in
-install-path = "CARGO_HOME"
-# Whether to install an updater program
-install-updater = false
-
-#System dependencies needing for building with CI
-[workspace.metadata.dist.dependencies.apt]
-librust-atk-dev = "*"
-libgtk-3-dev = "*"
