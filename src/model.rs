@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use log::{error, info, warn};
-use tether_agent::{TetherAgent, TetherAgentOptionsBuilder, TetherOrCustomTopic};
+use tether_agent::{three_part_topic::TetherOrCustomTopic, TetherAgent, TetherAgentOptionsBuilder};
 use tether_utils::tether_topics::{insights::Insights, TopicOptions};
 
 use crate::{
@@ -93,20 +93,20 @@ impl eframe::App for Model {
             insights.sample();
         }
         if self.tether_agent.is_connected() {
-            while let Some((plug, message)) = &self.tether_agent.check_messages() {
+            while let Some((topic, payload)) = self.tether_agent.check_messages() {
                 work_done = true;
                 if let Some(insights) = &mut self.insights {
-                    insights.update(message);
+                    insights.update(&topic, payload.to_vec());
                 }
-                let plug_name = match plug {
+                let plug_name: String = match topic {
                     TetherOrCustomTopic::Custom(topic) => {
                         error!("Invalid Tether Topic \"{}\"", &topic);
-                        "INVALID_TETHER_TOPIC!"
+                        String::from("INVALID_TETHER_TOPIC!")
                     }
-                    TetherOrCustomTopic::Tether(tpt) => tpt.plug_name(),
+                    TetherOrCustomTopic::Tether(tpt) => String::from(tpt.plug_name()),
                 };
                 if let Some(midi_handler) = &self.midi_handler {
-                    match midi_handler.get_midi_message(plug_name, message) {
+                    match midi_handler.get_midi_message(&plug_name, &payload) {
                         Some(MidiMessage::ControlChange(cc_message)) => {
                             for widget in self.project.widgets.iter_mut() {
                                 match widget {
@@ -206,9 +206,9 @@ impl Model {
                         sampler_interval: 1000,
                         graph_enable: false,
                     },
-                    &self.tether_agent,
+                    &mut self.tether_agent,
                 ));
-                self.midi_handler = Some(MidiSubscriber::new(&self.tether_agent));
+                self.midi_handler = Some(MidiSubscriber::new(&mut self.tether_agent));
             }
             Err(e) => {
                 error!("Failed to connect Tether Agent: {}", e);

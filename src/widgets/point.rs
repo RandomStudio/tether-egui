@@ -30,7 +30,7 @@ impl Point2DWidget {
         description: Option<&str>,
         plug_name: &str,
         custom_topic: Option<&str>,
-        agent: &TetherAgent,
+        agent: &mut TetherAgent,
     ) -> Self {
         Point2DWidget {
             common: Common::new(widget_name, description, plug_name, custom_topic, agent),
@@ -58,7 +58,7 @@ impl CustomWidget<Point2D> for Point2DWidget {
 const PLOT_SIZE: f32 = 200.0;
 
 impl View for Point2DWidget {
-    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &mut TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         common_save_button(ui, self, tether_agent);
     }

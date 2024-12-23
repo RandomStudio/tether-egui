@@ -26,7 +26,7 @@ impl BoolWidget {
         plug_name: &str,
         custom_topic: Option<&str>,
         init_state: bool,
-        agent: &TetherAgent,
+        agent: &mut TetherAgent,
     ) -> Self {
         BoolWidget {
             common: Common::new(widget_name, description, plug_name, custom_topic, agent),
@@ -87,7 +87,7 @@ impl View for BoolWidget {
         }
     }
 
-    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &mut TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         common_save_button(ui, self, tether_agent);
     }

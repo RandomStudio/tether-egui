@@ -211,7 +211,7 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
 
                         model.playback.stop_request_tx = Some(player.get_stop_tx());
                         model.playback.thread_handle = Some(std::thread::spawn(move || {
-                            if let Ok(tether_agent) =
+                            if let Ok(mut tether_agent) =
                                 TetherAgentOptionsBuilder::from(tether_settings).build()
                             {
                                 tether_agent.connect().expect("failed to connect");
@@ -327,12 +327,14 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
                     None => EditableTetherSettings::default(),
                 };
 
-                if let Ok(tether_agent) = TetherAgentOptionsBuilder::from(tether_settings).build() {
+                if let Ok(mut tether_agent) =
+                    TetherAgentOptionsBuilder::from(tether_settings).build()
+                {
                     model.recording.stop_request_tx = Some(recorder.get_stop_tx());
                     model.recording.thread_handle = Some(std::thread::spawn(move || {
                         tether_agent.connect().expect("failed to connect");
                         info!("Connected new Tether Agent for recording OK");
-                        recorder.start_recording(&tether_agent);
+                        recorder.start_recording(&mut tether_agent);
                     }));
                 } else {
                     error!("Failed to connect Tether Agent for recording");

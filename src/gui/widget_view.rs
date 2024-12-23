@@ -33,7 +33,7 @@ pub fn common_in_use_heading<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl C
 pub fn common_save_button<T: Serialize>(
     ui: &mut egui::Ui,
     entry: &mut impl CustomWidget<T>,
-    tether_agent: &TetherAgent,
+    tether_agent: &mut TetherAgent,
 ) {
     if ui.button("Save").clicked() {
         update_plug_definition(entry, tether_agent);
@@ -83,7 +83,7 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                     .id(format!("{}", i).into())
                     .show(ctx, |ui| {
                         if e.common().is_edit_mode() {
-                            e.render_editing(ui, &model.tether_agent);
+                            e.render_editing(ui, &mut model.tether_agent);
                             if common_remove_button(ui) {
                                 model.queue.push(QueueItem::Remove(i));
                             }
@@ -97,7 +97,7 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                     .id(format!("{}", i).into())
                     .show(ctx, |ui| {
                         if e.common().is_edit_mode() {
-                            e.render_editing(ui, &model.tether_agent);
+                            e.render_editing(ui, &mut model.tether_agent);
                             if common_remove_button(ui) {
                                 model.queue.push(QueueItem::Remove(i));
                             }
@@ -111,7 +111,7 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                     .id(format!("{}", i).into())
                     .show(ctx, |ui| {
                         if e.common().is_edit_mode() {
-                            e.render_editing(ui, &model.tether_agent);
+                            e.render_editing(ui, &mut model.tether_agent);
                             if common_remove_button(ui) {
                                 model.queue.push(QueueItem::Remove(i));
                             }
@@ -125,7 +125,7 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                     .id(format!("{}", i).into())
                     .show(ctx, |ui| {
                         if e.common().is_edit_mode() {
-                            e.render_editing(ui, &model.tether_agent);
+                            e.render_editing(ui, &mut model.tether_agent);
                             if common_remove_button(ui) {
                                 model.queue.push(QueueItem::Remove(i));
                             }
@@ -139,7 +139,7 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                     .id(format!("{}", i).into())
                     .show(ctx, |ui| {
                         if e.common().is_edit_mode() {
-                            e.render_editing(ui, &model.tether_agent);
+                            e.render_editing(ui, &mut model.tether_agent);
                             if common_remove_button(ui) {
                                 model.queue.push(QueueItem::Remove(i));
                             }
@@ -153,7 +153,7 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                     .id(format!("{}", i).into())
                     .show(ctx, |ui| {
                         if e.common().is_edit_mode() {
-                            e.render_editing(ui, &model.tether_agent);
+                            e.render_editing(ui, &mut model.tether_agent);
                             if common_remove_button(ui) {
                                 model.queue.push(QueueItem::Remove(i));
                             }
@@ -167,7 +167,7 @@ pub fn widgets_in_use(ctx: &egui::Context, ui: &mut Ui, model: &mut Model) {
                     .id(format!("{}", i).into())
                     .show(ctx, |ui| {
                         if e.common().is_edit_mode() {
-                            e.render_editing(ui, &model.tether_agent);
+                            e.render_editing(ui, &mut model.tether_agent);
                             if common_remove_button(ui) {
                                 model.queue.push(QueueItem::Remove(i));
                             }
@@ -197,7 +197,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 "booleans",
                 None,
                 false,
-                &model.tether_agent,
+                &mut model.tether_agent,
             )));
     }
     if ui.button("Empty").clicked() {
@@ -209,7 +209,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 Some("A message with no payload"),
                 "events",
                 None,
-                &model.tether_agent,
+                &mut model.tether_agent,
             )));
     }
 
@@ -225,7 +225,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 0.,
                 0. ..=1.0,
                 false,
-                &model.tether_agent,
+                &mut model.tether_agent,
             )));
     }
     if ui.button("Whole Number").clicked() {
@@ -240,7 +240,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 0.,
                 0. ..=100.,
                 true,
-                &model.tether_agent,
+                &mut model.tether_agent,
             )));
     }
     if ui.button("Point2D").clicked() {
@@ -252,7 +252,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 Some("X and Y values"),
                 "point2d",
                 None,
-                &model.tether_agent,
+                &mut model.tether_agent,
             )));
     }
     if ui.button("Generic data").clicked() {
@@ -264,7 +264,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 Some("Any generic data, in JSON format"),
                 "generic",
                 None,
-                &model.tether_agent,
+                &mut model.tether_agent,
             )));
     }
     if ui.button("Colour").clicked() {
@@ -276,7 +276,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
                 Some("8-bit colour including alpha"),
                 "colours",
                 None,
-                &model.tether_agent,
+                &mut model.tether_agent,
             )))
     }
 }
@@ -284,7 +284,7 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
 pub fn common_editable_values<T: Serialize>(
     ui: &mut egui::Ui,
     entry: &mut impl CustomWidget<T>,
-    tether_agent: &TetherAgent,
+    tether_agent: &mut TetherAgent,
 ) {
     ui.label("Widget Name");
     if ui
@@ -355,7 +355,7 @@ pub fn common_editable_values<T: Serialize>(
 
 fn update_plug_definition<T: Serialize>(
     entry: &mut impl CustomWidget<T>,
-    tether_agent: &TetherAgent,
+    tether_agent: &mut TetherAgent,
 ) {
     debug!("Will update plug definition");
     debug!("QOS level: {}", entry.common().qos as i32);

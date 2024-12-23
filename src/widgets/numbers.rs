@@ -36,7 +36,7 @@ impl NumberWidget {
         value: f64,
         range: RangeInclusive<f64>,
         round_off: bool,
-        agent: &TetherAgent,
+        agent: &mut TetherAgent,
     ) -> Self {
         NumberWidget {
             common: Common::new(name, description, plug_name, custom_topic, agent),
@@ -121,7 +121,7 @@ impl View for NumberWidget {
         };
     }
 
-    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &mut TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         ui.collapsing("Range", |ui| {
             // This trickery is needed so that we artifically restrict slider ranges to
