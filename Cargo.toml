@@ -1,6 +1,6 @@
 [package]
 name = "tether-egui"
-version = "0.10.1"
+version = "0.10.2"
 edition = "2021"
 license = "MIT"
 description = "GUI for building and testing Tether-based applications"
@@ -23,7 +23,7 @@ eframe = "0.21.3"
 env_logger = "0.10"
 log = "0.4.17"
 # tether-agent = { path = "../tether/base_agent/rs" }
-tether-agent = "0.14"
+tether-agent = "0.14.1"
 # tether-utils = { path = "../tether/utilities/tether-utils" }
 tether-utils = "0.11.2"
 serde = { version = "1.0", features = ["derive"] }

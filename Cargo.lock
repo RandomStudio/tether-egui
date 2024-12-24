@@ -3338,9 +3338,9 @@ dependencies = [
 
 [[package]]
 name = "tether-agent"
-version = "0.14.0"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c21c7368ee2a0b4423b22731a8c3fca918cfa9b8b7283cb76faec7f6d1071b5"
+checksum = "f1047481d152bbf98ce19f404b6adcf06f126ff0f0a739386331eb5712850661"
 dependencies = [
  "anyhow",
  "env_logger 0.7.1",
@@ -3355,7 +3355,7 @@ dependencies = [
 
 [[package]]
 name = "tether-egui"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "clap",
  "eframe",
