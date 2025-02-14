@@ -34,7 +34,7 @@ impl GenericJSONWidget {
         description: Option<&str>,
         plug_name: &str,
         custom_topic: Option<&str>,
-        agent: &TetherAgent,
+        agent: &mut TetherAgent,
     ) -> Self {
         GenericJSONWidget {
             common: Common::new(widget_name, description, plug_name, custom_topic, agent),
@@ -76,7 +76,7 @@ impl CustomWidget<String> for GenericJSONWidget {
 }
 
 impl View for GenericJSONWidget {
-    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &TetherAgent) {
+    fn render_editing(&mut self, ui: &mut Ui, tether_agent: &mut TetherAgent) {
         common_editable_values(ui, self, tether_agent);
         common_save_button(ui, self, tether_agent);
     }
@@ -97,7 +97,7 @@ impl View for GenericJSONWidget {
         }
 
         if ui.text_edit_multiline(self.value_mut()).changed() {
-            self.is_valid_json = serde_json::from_str::<Value>(self.value()).is_err();
+            self.is_valid_json = serde_json::from_str::<Value>(self.value()).is_ok();
         }
         if self.is_valid_json {
             ui.colored_label(Color32::LIGHT_GREEN, "Valid JSON");

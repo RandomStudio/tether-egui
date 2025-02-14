@@ -1,4 +1,4 @@
-use crate::{ActiveView, Model};
+use crate::model::{ActiveView, Model};
 
 use self::{
     common::{general_agent_area, standard_spacer},
@@ -25,11 +25,16 @@ pub fn render(ctx: &egui::Context, model: &mut Model) {
             ui.horizontal(|ui| {
                 ui.heading("🗖");
                 ui.selectable_value(&mut model.active_window, ActiveView::WidgetView, "Widgets");
-                ui.selectable_value(
-                    &mut model.active_window,
-                    ActiveView::UtilitiesView,
-                    "Utilities",
-                );
+                if ui
+                    .selectable_value(
+                        &mut model.active_window,
+                        ActiveView::UtilitiesView,
+                        "Utilities",
+                    )
+                    .clicked()
+                {
+                    model.continuous_mode = true;
+                };
             })
         });
 
