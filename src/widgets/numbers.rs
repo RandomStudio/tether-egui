@@ -24,6 +24,7 @@ pub struct NumberWidget {
     range_min: f64,
     range_max: f64,
     should_round: bool,
+    step_size: f64,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -44,6 +45,13 @@ impl NumberWidget {
             range_min: *range.start(),
             range_max: *range.end(),
             should_round: round_off,
+            step_size: {
+                if round_off {
+                    1.0
+                } else {
+                    (*range.start() - *range.end()).abs() / 100.
+                }
+            },
         }
     }
 
@@ -79,7 +87,11 @@ impl View for NumberWidget {
         let &max = self.range().end();
 
         if ui
-            .add(Slider::new(&mut self.value, min..=max).clamp_to_range(false))
+            .add(
+                Slider::new(&mut self.value, min..=max)
+                    .clamp_to_range(false)
+                    .step_by(self.step_size),
+            )
             .changed()
             && self.common().auto_send
         {
