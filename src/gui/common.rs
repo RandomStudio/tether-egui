@@ -56,7 +56,7 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                 }
             }
         }
-        if ui.button("Clear").clicked() {
+        if ui.button("New").clicked() {
             model.project.widgets.clear();
             model.json_file = None;
         }
