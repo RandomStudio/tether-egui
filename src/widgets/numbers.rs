@@ -24,7 +24,12 @@ pub struct NumberWidget {
     range_min: f64,
     range_max: f64,
     should_round: bool,
+    #[serde(default = "default_step_size")]
     step_size: f64,
+}
+
+fn default_step_size() -> f64 {
+    0.1
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -153,6 +158,10 @@ impl View for NumberWidget {
                 &mut self.range_max,
                 SENSIBLE_MIN..=SENSIBLE_MAX,
             ));
+
+            ui.label("StepSize");
+            let max_step = self.range_max - self.range_min;
+            ui.add(Slider::new(&mut self.step_size, 0.0..=max_step));
         });
 
         common_save_button(ui, self, tether_agent);
