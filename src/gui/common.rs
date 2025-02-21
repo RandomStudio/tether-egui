@@ -1,5 +1,6 @@
 use std::fs;
 
+use anyhow::anyhow;
 use egui::{Color32, DragValue, RichText, Ui};
 use log::*;
 
@@ -23,30 +24,22 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         ui.small("(No JSON file loaded)");
     }
     ui.horizontal(|ui| {
-        if ui.button("Save").clicked() {
-            if let Some(path_string) = {
-                if let Some(current_project) = &model.json_file {
-                    info!("Already have a project file loaded; just Save...");
-                    Some(current_project.clone())
-                } else {
-                    rfd::FileDialog::new()
-                        .add_filter("text", &["json"])
-                        .save_file()
-                        .map(|path| path.display().to_string())
-                }
-            } {
-                let text = serde_json::to_string_pretty(&model.project)
-                    .expect("failed to serialise widget data");
-                match fs::write(path_string, text) {
-                    Ok(()) => {
-                        info!("Saved OK");
-                    }
-                    Err(e) => {
-                        error!("Error saving to disk: {:?}", e);
-                    }
-                }
+        if let Some(path_string) = &model.json_file {
+            if ui.button("Save").clicked() {
+                save_to_disk(model, path_string).expect("failed to save");
             }
         }
+
+        if ui.button("Save As...").clicked() {
+            if let Some(path_string) = rfd::FileDialog::new()
+                .add_filter("text", &["json"])
+                .save_file()
+                .map(|path| path.display().to_string())
+            {
+                save_to_disk(model, &path_string).expect("failed to save as");
+            }
+        }
+
         if ui.button("Load").clicked() {
             if let Some(path) = rfd::FileDialog::new()
                 .add_filter("text", &["json"])
@@ -127,5 +120,17 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         if ui.button("Connect").clicked() {
             model.attempt_new_tether_connection();
         }
+    }
+}
+
+fn save_to_disk(model: &Model, path: &str) -> anyhow::Result<()> {
+    let text =
+        serde_json::to_string_pretty(&model.project).expect("failed to serialise widget data");
+    match fs::write(path, text) {
+        Ok(_) => {
+            info!("Saved OK to \"{}\"", path);
+            Ok(())
+        }
+        Err(e) => Err(anyhow!("Error writing to disk: {}", e)),
     }
 }
