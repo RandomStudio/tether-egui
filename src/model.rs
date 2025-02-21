@@ -59,9 +59,9 @@ impl Default for Model {
             // edit_tether_settings: false,
             json_file: {
                 if was_loaded_from_disk {
-                    None
-                } else {
                     Some(json_path)
+                } else {
+                    None
                 }
             },
             monitor_topic: cli.monitor_topic.clone(),
