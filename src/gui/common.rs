@@ -37,6 +37,7 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
                 .map(|path| path.display().to_string())
             {
                 save_to_disk(model, &path_string).expect("failed to save as");
+                model.json_file = Some(path_string);
             }
         }
 
