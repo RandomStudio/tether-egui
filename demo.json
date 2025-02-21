@@ -7,16 +7,16 @@
           "description": "A true or false value",
           "plug": {
             "OutputPlug": {
-              "name": "Message",
+              "name": "",
               "topic": {
                 "Tether": {
                   "role": "gui",
                   "id": "any",
-                  "plug_name": "Message",
-                  "full_topic": "gui/any/Message"
+                  "plug_name": "",
+                  "full_topic": "gui/any/"
                 }
               },
-              "qos": 0,
+              "qos": 1,
               "retain": false
             }
           },
@@ -50,7 +50,8 @@
         "value": 0.0,
         "rangeMin": 0.0,
         "rangeMax": 1.0,
-        "shouldRound": false
+        "shouldRound": false,
+        "stepSize": 1.0
       }
     },
     {
@@ -75,7 +76,10 @@
           },
           "midiMapping": null
         },
-        "value": [0.0, 0.0]
+        "value": [
+          0.0,
+          0.0
+        ]
       }
     }
   ],
