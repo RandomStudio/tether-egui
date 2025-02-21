@@ -24,15 +24,17 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
     }
     ui.horizontal(|ui| {
         if ui.button("Save").clicked() {
-            if let Some(path) = rfd::FileDialog::new()
-                .add_filter("text", &["json"])
-                .save_file()
-            {
-                //   if model.project.tether_settings.was_changed {
-                //       info!("Tether Settings were edited; copying these to project");
-                //       model.project.tether_settings = Some(model.editable_tether_settings.clone());
-                //   };
-                let path_string = path.display().to_string();
+            if let Some(path_string) = {
+                if let Some(current_project) = &model.json_file {
+                    info!("Already have a project file loaded; just Save...");
+                    Some(current_project.clone())
+                } else {
+                    rfd::FileDialog::new()
+                        .add_filter("text", &["json"])
+                        .save_file()
+                        .map(|path| path.display().to_string())
+                }
+            } {
                 let text = serde_json::to_string_pretty(&model.project)
                     .expect("failed to serialise widget data");
                 match fs::write(path_string, text) {

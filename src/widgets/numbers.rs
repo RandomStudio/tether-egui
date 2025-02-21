@@ -29,7 +29,7 @@ pub struct NumberWidget {
 }
 
 fn default_step_size() -> f64 {
-    0.1
+    1.0
 }
 
 #[allow(clippy::too_many_arguments)]
