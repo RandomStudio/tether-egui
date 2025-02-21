@@ -32,6 +32,7 @@ rmpv = { version = "0.4", features = ["with-serde"] }
 rmp-serde = "0.15"
 clap = { version = "4.1.1", features = ["derive"] }
 rfd = "0.11"
+anyhow = "1.0.96"
 
 # The profile that 'cargo dist' will build with
 [profile.dist]
