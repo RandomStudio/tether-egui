@@ -95,7 +95,7 @@ impl Common {
         custom_topic: Option<&str>,
         agent: &mut TetherAgent,
     ) -> Self {
-        debug!("Custom topic? {:?}", custom_topic);
+        debug!("New Widget: with Custom topic? {:?}", custom_topic);
         let channel = match custom_topic {
             Some(topic) => ChannelOptionsBuilder::create_sender(channel_name)
                 .topic(Some(topic))
@@ -123,7 +123,7 @@ impl Common {
             midi_mapping: None,
             qos: Qos::AtMostOnce,
             retain: false,
-            custom_topic: None,
+            custom_topic: custom_topic.map(String::from),
         }
     }
 

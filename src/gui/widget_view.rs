@@ -311,24 +311,44 @@ pub fn common_editable_values<T: Serialize>(
         update_channel_definition(entry, tether_agent);
     }
 
-    let mut is_custom_topic_enabled = entry.common().custom_topic.is_some();
+    let mut was_custom_topic_enabled = entry.common().custom_topic.is_some();
+
     if ui
-        .checkbox(&mut is_custom_topic_enabled, "Use custom topic")
+        .checkbox(&mut was_custom_topic_enabled, "Use custom topic")
         .changed()
-        && is_custom_topic_enabled
-    // it WAS enabled...
     {
-        // Back to default (auto-generated) topic
-        update_channel_definition(entry, tether_agent);
-    } else {
-        // it WAS NOT enabled...
-        entry.common_mut().custom_topic = Some("customID".into());
+        let just_enabled = !was_custom_topic_enabled; // opposite to previous state!
+        debug!(
+            "Set/change custom topic: was it enabled? {:?}",
+            just_enabled
+        );
+        let new_topic_option = {
+            if just_enabled {
+                None
+            } else {
+                Some(String::from(entry.common().channel.generated_topic()))
+            }
+        };
+        debug!("New topic option: {:?}", new_topic_option);
+
+        match new_topic_option {
+            Some(t) => {
+                debug!("Enable custom topic");
+                entry.common_mut().custom_topic = Some(t)
+            }
+            None => {
+                debug!("Disable custom topic");
+                entry.common_mut().custom_topic = None
+            }
+        }
     }
-    ui.add_enabled_ui(is_custom_topic_enabled, |ui| {
+    ui.add_enabled_ui(was_custom_topic_enabled, |ui| {
         if let Some(custom_topic) = &mut entry.common_mut().custom_topic {
             if ui.text_edit_singleline(custom_topic).changed() {
                 update_channel_definition(entry, tether_agent);
             }
+        } else {
+            ui.label(entry.common().channel.generated_topic());
         }
     });
 
