@@ -84,7 +84,18 @@ fn default_qos() -> Qos {
 }
 
 pub fn shortened_name(full_name: &str) -> String {
-    String::from(full_name.replace(' ', "_").trim())
+    // String::from(full_name.to_lowercase().replace(' ', "").trim())
+    let parts = full_name.split(" ").collect::<Vec<&str>>();
+    let mut s = String::new();
+    for (i, part) in parts.iter().enumerate() {
+        if i == 0 {
+            s.push_str(&part.to_lowercase());
+        } else {
+            s.push_str(&part[0..1].to_uppercase());
+            s.push_str(&part[1..].to_lowercase());
+        }
+    }
+    s
 }
 
 impl Common {
