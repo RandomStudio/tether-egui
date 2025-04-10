@@ -1,0 +1,88 @@
+{
+  "widgets": [
+    {
+      "bool": {
+        "common": {
+          "name": "Boolean Message",
+          "description": "A true or false value",
+          "channel": {
+            "ChannelSender": {
+              "name": "booleanMessage",
+              "topic": {
+                "Tether": {
+                  "role": "gui",
+                  "id": null,
+                  "channel_name": "booleanMessage",
+                  "full_topic": "gui/booleanMessage"
+                }
+              },
+              "qos": 0,
+              "retain": false
+            }
+          },
+          "midiMapping": null
+        },
+        "value": true
+      }
+    },
+    {
+      "colour": {
+        "common": {
+          "name": "Colour",
+          "description": "8-bit colour including alpha",
+          "channel": {
+            "ChannelSender": {
+              "name": "colour",
+              "topic": {
+                "Tether": {
+                  "role": "gui",
+                  "id": null,
+                  "channel_name": "colour",
+                  "full_topic": "gui/colour"
+                }
+              },
+              "qos": 0,
+              "retain": false
+            }
+          },
+          "midiMapping": null
+        },
+        "value": [
+          129,
+          74,
+          74,
+          255
+        ]
+      }
+    },
+    {
+      "point2D": {
+        "common": {
+          "name": "Point2D",
+          "description": "X and Y values",
+          "channel": {
+            "ChannelSender": {
+              "name": "point2d",
+              "topic": {
+                "Tether": {
+                  "role": "gui",
+                  "id": null,
+                  "channel_name": "point2d",
+                  "full_topic": "gui/point2d"
+                }
+              },
+              "qos": 0,
+              "retain": false
+            }
+          },
+          "midiMapping": null
+        },
+        "value": [
+          0.0,
+          0.0
+        ]
+      }
+    }
+  ],
+  "tetherSettings": null
+}
