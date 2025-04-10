@@ -37,7 +37,7 @@ impl NumberWidget {
     pub fn new(
         name: &str,
         description: Option<&str>,
-        plug_name: &str,
+        channel_name: &str,
         custom_topic: Option<&str>,
         value: f64,
         range: RangeInclusive<f64>,
@@ -45,7 +45,7 @@ impl NumberWidget {
         agent: &mut TetherAgent,
     ) -> Self {
         NumberWidget {
-            common: Common::new(name, description, plug_name, custom_topic, agent),
+            common: Common::new(name, description, channel_name, custom_topic, agent),
             value,
             range_min: *range.start(),
             range_max: *range.end(),
@@ -107,7 +107,7 @@ impl View for NumberWidget {
                 let value = *self.value() as i64;
                 let payload = rmp_serde::to_vec(&value).expect("failed to serialised");
                 tether_agent
-                    .publish(&self.common().plug, Some(&payload))
+                    .send_raw(&self.common().channel, Some(&payload))
                     .expect("failed to publish");
             } else {
                 // No rounding, just encode and publish

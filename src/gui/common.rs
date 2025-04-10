@@ -4,7 +4,7 @@ use anyhow::anyhow;
 use egui::{Color32, DragValue, RichText, Ui};
 use log::*;
 
-use crate::{project::try_load, Model};
+use crate::{Model, project::try_load};
 
 use super::tether_gui_utils::EditableTetherSettings;
 
@@ -92,8 +92,12 @@ pub fn general_agent_area(ui: &mut Ui, model: &mut Model) {
         });
         ui.horizontal(|ui| {
             ui.label("ID or Group");
-            if ui.text_edit_singleline(&mut tether_settings.id).changed() {
-                model.tether_agent.set_id(&tether_settings.id);
+            if let Some(id) = &mut tether_settings.id {
+                if ui.text_edit_singleline(id).changed() {
+                    model.tether_agent.set_id(id);
+                }
+            } else if ui.button("Set").clicked() {
+                tether_settings.id = Some("customID".into());
             }
         });
         ui.separator();

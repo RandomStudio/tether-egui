@@ -32,12 +32,12 @@ impl GenericJSONWidget {
     pub fn new(
         widget_name: &str,
         description: Option<&str>,
-        plug_name: &str,
+        channel_name: &str,
         custom_topic: Option<&str>,
         agent: &mut TetherAgent,
     ) -> Self {
         GenericJSONWidget {
-            common: Common::new(widget_name, description, plug_name, custom_topic, agent),
+            common: Common::new(widget_name, description, channel_name, custom_topic, agent),
             value: "{\"answer\":42}".into(),
             is_valid_json: true,
         }
@@ -47,7 +47,7 @@ impl GenericJSONWidget {
         match serde_json::from_str::<serde_json::Value>(&self.value) {
             Ok(encoded) => {
                 let payload = rmp_serde::to_vec_named(&encoded).expect("failed to encode msgpack");
-                match tether_agent.publish(&self.common().plug, Some(&payload)) {
+                match tether_agent.send_raw(&self.common().channel, Some(&payload)) {
                     Ok(()) => debug!("Send OK"),
                     Err(_) => error!("Failed to send; connected? {}", tether_agent.is_connected()),
                 }

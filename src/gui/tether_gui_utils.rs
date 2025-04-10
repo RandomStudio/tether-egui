@@ -9,7 +9,7 @@ pub struct EditableTetherSettings {
     pub username: String,
     pub password: String,
     pub role: String,
-    pub id: String,
+    pub id: Option<String>,
 
     #[serde(skip)]
     pub is_editing: bool,
@@ -27,7 +27,7 @@ impl Default for EditableTetherSettings {
             username: "tether".into(),
             password: "sp_ceB0ss!".into(),
             role: "gui".into(),
-            id: "any".into(),
+            id: None,
         }
     }
 }
@@ -35,7 +35,7 @@ impl Default for EditableTetherSettings {
 impl From<EditableTetherSettings> for TetherAgentOptionsBuilder {
     fn from(editable: EditableTetherSettings) -> Self {
         TetherAgentOptionsBuilder::new(&editable.role)
-            .id(Some(&editable.id))
+            .id(editable.id.as_deref())
             .host(Some(&editable.host))
             .port(Some(editable.port))
             .username(Some(&editable.username))

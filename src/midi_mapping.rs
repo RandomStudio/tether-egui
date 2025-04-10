@@ -1,11 +1,11 @@
 use egui::remap;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use tether_agent::{PlugOptionsBuilder, TetherAgent};
+use tether_agent::{ChannelOptionsBuilder, TetherAgent};
 
 use crate::{
     gui::widget_view::common_send,
-    widgets::{boolean::BoolWidget, numbers::NumberWidget, CustomWidget},
+    widgets::{CustomWidget, boolean::BoolWidget, numbers::NumberWidget},
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -47,26 +47,27 @@ impl MidiSubscriber {
     /// Subscribe to all Tether MIDI control change messages
     pub fn new(agent: &mut TetherAgent) -> Self {
         if agent.is_connected() {
-            let _midi_controllers_plug =
-                PlugOptionsBuilder::create_input("controlChange").build(agent);
-            let _midi_notes_plug = PlugOptionsBuilder::create_input("notesOn").build(agent);
+            let _midi_controllers_channel =
+                ChannelOptionsBuilder::create_receiver("controlChange").build(agent);
+            let _midi_notes_channel =
+                ChannelOptionsBuilder::create_receiver("notesOn").build(agent);
         }
         MidiSubscriber {}
     }
 
-    pub fn get_midi_message(&self, plug_name: &str, payload: &[u8]) -> Option<MidiMessage> {
-        match plug_name {
+    pub fn get_midi_message(&self, channel_name: &str, payload: &[u8]) -> Option<MidiMessage> {
+        match channel_name {
             "controlChange" => {
                 debug!(
                     "This is a Tether MIDI control change message: {}",
-                    plug_name
+                    channel_name
                 );
                 let decoded: TetherControlChangePayload =
                     rmp_serde::from_slice(payload).expect("failed to decode payload");
                 Some(MidiMessage::ControlChange(decoded))
             }
             "notesOn" => {
-                debug!("This is a Tether MIDI note on message: {}", plug_name);
+                debug!("This is a Tether MIDI note on message: {}", channel_name);
                 let decoded: TetherNotePayload =
                     rmp_serde::from_slice(payload).expect("failed to decode payload");
                 Some(MidiMessage::Note(decoded))

@@ -23,12 +23,12 @@ impl EmptyWidget {
     pub fn new(
         widget_name: &str,
         description: Option<&str>,
-        plug_name: &str,
+        channel_name: &str,
         custom_topic: Option<&str>,
         agent: &mut TetherAgent,
     ) -> Self {
         EmptyWidget {
-            common: Common::new(widget_name, description, plug_name, custom_topic, agent),
+            common: Common::new(widget_name, description, channel_name, custom_topic, agent),
             value: (),
         }
     }

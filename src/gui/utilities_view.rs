@@ -1,8 +1,8 @@
 use std::{sync::mpsc, thread::JoinHandle};
 
 use egui::{
-    plot::{Line, Plot, PlotPoints},
     Color32, Context, RichText, Ui,
+    plot::{Line, Plot, PlotPoints},
 };
 use log::*;
 use tether_agent::TetherAgentOptionsBuilder;
@@ -76,8 +76,8 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
                 ui.small(format!(" - {}", id));
             }
 
-            ui.label(format!("Plug Names x{}", insights.plugs().len()));
-            for plug in insights.plugs() {
+            ui.label(format!("Plug Names x{}", insights.channels().len()));
+            for plug in insights.channels() {
                 ui.small(format!(" - {}", plug));
             }
 
@@ -98,7 +98,7 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
                         };
                         ui.label(format!("🏠 {}", formatted)).on_hover_text(id);
                     });
-                    agent_tree.output_plugs.iter().for_each(|plug| {
+                    agent_tree.channels.iter().for_each(|plug| {
                         ui.label(format!(" ----🔌 {}", plug));
                     });
                 });

@@ -26,6 +26,8 @@ fn main() -> Result<(), eframe::Error> {
         .filter_module("paho_mqtt", log::LevelFilter::Warn)
         .filter_module("winit", log::LevelFilter::Warn)
         .filter_module("eframe", log::LevelFilter::Warn)
+        .filter_module("tether_agent", log::LevelFilter::Warn)
+        .filter_module("rumqttc", log::LevelFilter::Warn)
         .init();
 
     let options = eframe::NativeOptions {

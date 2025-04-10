@@ -1,7 +1,7 @@
 [package]
 name = "tether-egui"
-version = "0.10.5"
-edition = "2021"
+version = "1.0.0-alpha"
+edition = "2024"
 license = "MIT"
 description = "GUI for building and testing Tether-based applications"
 repository = "https://github.com/RandomStudio/tether-egui"
@@ -23,9 +23,9 @@ eframe = "0.21.3"
 env_logger = "0.10"
 log = "0.4.17"
 # tether-agent = { path = "../tether/base_agent/rs" }
-tether-agent = "0.14.1"
+tether-agent = "4.0.1-alpha"
 # tether-utils = { path = "../tether/utilities/tether-utils" }
-tether-utils = "0.11.2"
+tether-utils = "1.0.3-alpha"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.91"
 rmpv = { version = "0.4", features = ["with-serde"] }

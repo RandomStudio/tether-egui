@@ -1,16 +1,17 @@
 use egui::{Color32, Response, RichText, Ui};
 use log::{debug, error};
 use serde::Serialize;
-use tether_agent::{PlugOptionsBuilder, TetherAgent};
+use tether_agent::{ChannelOptionsBuilder, TetherAgent};
 
 use crate::{
+    Model,
     midi_mapping::MidiMapping,
     model::QueueItem,
     widgets::{
-        boolean::BoolWidget, colours::ColourWidget, empty::EmptyWidget, generic::GenericJSONWidget,
-        numbers::NumberWidget, point::Point2DWidget, CustomWidget, Qos, View, WidgetEntry,
+        CustomWidget, Qos, View, WidgetEntry, boolean::BoolWidget, colours::ColourWidget,
+        empty::EmptyWidget, generic::GenericJSONWidget, numbers::NumberWidget,
+        point::Point2DWidget,
     },
-    Model,
 };
 
 use super::common::{common_remove_button, standard_spacer};
@@ -36,7 +37,7 @@ pub fn common_save_button<T: Serialize>(
     tether_agent: &mut TetherAgent,
 ) {
     if ui.button("Save").clicked() {
-        update_plug_definition(entry, tether_agent);
+        update_channel_definition(entry, tether_agent);
         entry.common_mut().set_edit_mode(false);
     }
 }
@@ -58,7 +59,7 @@ pub fn common_send_button<T: Serialize>(
 }
 
 pub fn common_send<T: Serialize>(entry: &mut impl CustomWidget<T>, tether_agent: &TetherAgent) {
-    match tether_agent.encode_and_publish(&entry.common().plug, entry.value()) {
+    match tether_agent.send(&entry.common().channel, entry.value()) {
         Ok(()) => debug!("Send OK"),
         Err(_) => error!(
             "Failed to send via Tether; connected? {}",
@@ -69,7 +70,11 @@ pub fn common_send<T: Serialize>(entry: &mut impl CustomWidget<T>, tether_agent:
 
 pub fn entry_topic<T: Serialize>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>) {
     ui.label(
-        RichText::new(format!("Topic: {}", entry.common().plug.topic())).color(Color32::LIGHT_BLUE),
+        RichText::new(format!(
+            "Topic: {}",
+            entry.common().channel.generated_topic()
+        ))
+        .color(Color32::LIGHT_BLUE),
     );
 }
 
@@ -291,35 +296,39 @@ pub fn common_editable_values<T: Serialize>(
         .text_edit_singleline(&mut entry.common_mut().name)
         .changed()
     {
-        update_plug_definition(entry, tether_agent);
+        update_channel_definition(entry, tether_agent);
     }
 
     ui.label("Description");
     ui.text_edit_multiline(&mut entry.common_mut().description);
 
-    ui.label("Plug Name");
+    ui.label("Channel Name");
     if ui
-        .text_edit_singleline(&mut entry.common_mut().plug_name)
+        .text_edit_singleline(&mut entry.common_mut().channel_name)
         .changed()
     {
-        // Back to default (auto-generated) plug name, details
-        update_plug_definition(entry, tether_agent);
+        // Back to default (auto-generated) channel name, details
+        update_channel_definition(entry, tether_agent);
     }
 
+    let mut is_custom_topic_enabled = entry.common().custom_topic.is_some();
     if ui
-        .checkbox(&mut entry.common_mut().use_custom_topic, "Use custom topic")
+        .checkbox(&mut is_custom_topic_enabled, "Use custom topic")
         .changed()
-        && !entry.common().use_custom_topic
+        && is_custom_topic_enabled
+    // it WAS enabled...
     {
         // Back to default (auto-generated) topic
-        update_plug_definition(entry, tether_agent);
+        update_channel_definition(entry, tether_agent);
+    } else {
+        // it WAS NOT enabled...
+        entry.common_mut().custom_topic = Some("customID".into());
     }
-    ui.add_enabled_ui(entry.common().use_custom_topic, |ui| {
-        if ui
-            .text_edit_singleline(&mut entry.common_mut().custom_topic)
-            .changed()
-        {
-            update_plug_definition(entry, tether_agent);
+    ui.add_enabled_ui(is_custom_topic_enabled, |ui| {
+        if let Some(custom_topic) = &mut entry.common_mut().custom_topic {
+            if ui.text_edit_singleline(custom_topic).changed() {
+                update_channel_definition(entry, tether_agent);
+            }
         }
     });
 
@@ -353,22 +362,18 @@ pub fn common_editable_values<T: Serialize>(
     });
 }
 
-fn update_plug_definition<T: Serialize>(
+fn update_channel_definition<T: Serialize>(
     entry: &mut impl CustomWidget<T>,
     tether_agent: &mut TetherAgent,
 ) {
-    debug!("Will update plug definition");
+    debug!("Will update channel definition");
     debug!("QOS level: {}", entry.common().qos as i32);
     debug!("Retain: {}", entry.common().retain);
 
-    entry.common_mut().plug = PlugOptionsBuilder::create_output(&entry.common().plug_name)
+    entry.common_mut().channel = ChannelOptionsBuilder::create_sender(&entry.common().channel_name)
         .qos(Some(entry.common().qos as i32))
         .retain(Some(entry.common().retain))
-        .topic(if entry.common().use_custom_topic {
-            Some(&entry.common().custom_topic)
-        } else {
-            None
-        })
+        .topic(entry.common().custom_topic.as_deref())
         .build(tether_agent)
         .expect("failed to create output")
 }

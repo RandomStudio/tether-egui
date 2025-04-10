@@ -25,12 +25,12 @@ impl ColourWidget<ColourRGBA8> {
     pub fn new(
         widget_name: &str,
         description: Option<&str>,
-        plug_name: &str,
+        channel_name: &str,
         custom_topic: Option<&str>,
         agent: &mut TetherAgent,
     ) -> Self {
         ColourWidget {
-            common: Common::new(widget_name, description, plug_name, custom_topic, agent),
+            common: Common::new(widget_name, description, channel_name, custom_topic, agent),
             value: [255, 255, 255, 255],
         }
     }

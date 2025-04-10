@@ -1,6 +1,6 @@
 use egui::{
-    plot::{Plot, PlotPoint},
     Ui,
+    plot::{Plot, PlotPoint},
 };
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
@@ -28,12 +28,12 @@ impl Point2DWidget {
     pub fn new(
         widget_name: &str,
         description: Option<&str>,
-        plug_name: &str,
+        channel_name: &str,
         custom_topic: Option<&str>,
         agent: &mut TetherAgent,
     ) -> Self {
         Point2DWidget {
-            common: Common::new(widget_name, description, plug_name, custom_topic, agent),
+            common: Common::new(widget_name, description, channel_name, custom_topic, agent),
             value: [0., 0.],
         }
     }
@@ -112,7 +112,7 @@ impl View for Point2DWidget {
                 // println!("Pointer coordinates: {:?}", c)
                 let PlotPoint { x, y } = c;
                 let p = [x, y];
-                match tether_agent.encode_and_publish(&self.common().plug, p) {
+                match tether_agent.send(&self.common().channel, p) {
                     Ok(()) => debug!("Send OK"),
                     Err(_) => error!("Failed to send; connected? {}", tether_agent.is_connected()),
                 }

@@ -1,21 +1,23 @@
 use std::time::Duration;
 
 use log::{error, info, warn};
-use tether_agent::{three_part_topic::TetherOrCustomTopic, TetherAgent, TetherAgentOptionsBuilder};
-use tether_utils::tether_topics::{insights::Insights, TopicOptions};
+use tether_agent::{
+    TetherAgent, TetherAgentOptionsBuilder, tether_compliant_topic::TetherOrCustomTopic,
+};
+use tether_utils::tether_topics::{TopicOptions, insights::Insights};
 
 use crate::{
     gui::{
         render,
-        tether_gui_utils::{unconnected_tether_agent, EditableTetherSettings},
+        tether_gui_utils::{EditableTetherSettings, unconnected_tether_agent},
         utilities_view::{PlaybackState, RecordingState},
         widget_view::common_send,
     },
     midi_mapping::{
-        send_if_midi_note, toggle_if_midi_note, update_widget_if_controllable, MidiMessage,
-        MidiSubscriber,
+        MidiMessage, MidiSubscriber, send_if_midi_note, toggle_if_midi_note,
+        update_widget_if_controllable,
     },
-    project::{try_load, Project},
+    project::{Project, try_load},
     settings::Cli,
     widgets::WidgetEntry,
 };
@@ -98,15 +100,15 @@ impl eframe::App for Model {
                 if let Some(insights) = &mut self.insights {
                     insights.update(&topic, payload.to_vec());
                 }
-                let plug_name: String = match topic {
+                let channel_name: String = match topic {
                     TetherOrCustomTopic::Custom(topic) => {
                         error!("Invalid Tether Topic \"{}\"", &topic);
                         String::from("INVALID_TETHER_TOPIC!")
                     }
-                    TetherOrCustomTopic::Tether(tpt) => String::from(tpt.plug_name()),
+                    TetherOrCustomTopic::Tether(tpt) => String::from(tpt.channel_name()),
                 };
                 if let Some(midi_handler) = &self.midi_handler {
-                    match midi_handler.get_midi_message(&plug_name, &payload) {
+                    match midi_handler.get_midi_message(&channel_name, &payload) {
                         Some(MidiMessage::ControlChange(cc_message)) => {
                             for widget in self.project.widgets.iter_mut() {
                                 match widget {

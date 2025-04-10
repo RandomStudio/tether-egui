@@ -1,5 +1,6 @@
+use log::*;
 use serde::{Deserialize, Serialize};
-use tether_agent::{PlugDefinition, PlugOptionsBuilder, TetherAgent};
+use tether_agent::{ChannelDefinition, ChannelOptionsBuilder, TetherAgent};
 
 use crate::midi_mapping::MidiMapping;
 
@@ -54,7 +55,7 @@ pub enum Qos {
 pub struct Common {
     pub name: String,
     pub description: String,
-    pub plug: PlugDefinition,
+    pub channel: ChannelDefinition,
     pub midi_mapping: Option<MidiMapping>,
 
     // The fields below are never used in on-disk versions,
@@ -62,11 +63,9 @@ pub struct Common {
     #[serde(skip)]
     is_edit_mode: bool,
     #[serde(skip)]
-    pub use_custom_topic: bool,
+    pub custom_topic: Option<String>,
     #[serde(skip)]
-    pub custom_topic: String,
-    #[serde(skip)]
-    pub plug_name: String,
+    pub channel_name: String,
     #[serde(skip, default = "default_qos")]
     pub qos: Qos,
     #[serde(skip)]
@@ -92,17 +91,18 @@ impl Common {
     pub fn new(
         widget_name: &str,
         description: Option<&str>,
-        plug_name: &str,
+        channel_name: &str,
         custom_topic: Option<&str>,
         agent: &mut TetherAgent,
     ) -> Self {
-        let plug = match custom_topic {
-            Some(topic) => PlugOptionsBuilder::create_output(plug_name)
+        debug!("Custom topic? {:?}", custom_topic);
+        let channel = match custom_topic {
+            Some(topic) => ChannelOptionsBuilder::create_sender(channel_name)
                 .topic(Some(topic))
                 .build(agent)
                 .expect("failed to create output"),
 
-            None => PlugOptionsBuilder::create_output(plug_name)
+            None => ChannelOptionsBuilder::create_sender(channel_name)
                 .build(agent)
                 .expect("failed to create output"),
         };
@@ -116,15 +116,14 @@ impl Common {
                     String::from("no description provided")
                 }
             },
-            plug,
+            channel,
             is_edit_mode: true,
-            plug_name: shortened_name(widget_name),
-            use_custom_topic: false,
+            channel_name: shortened_name(widget_name),
             auto_send: true,
             midi_mapping: None,
             qos: Qos::AtMostOnce,
             retain: false,
-            custom_topic: String::from(""),
+            custom_topic: None,
         }
     }
 
