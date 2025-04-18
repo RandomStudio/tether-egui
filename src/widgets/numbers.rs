@@ -107,7 +107,7 @@ impl View for NumberWidget {
                 let value = *self.value() as i64;
                 let payload = rmp_serde::to_vec(&value).expect("failed to serialised");
                 tether_agent
-                    .send_raw(&self.common().channel, Some(&payload))
+                    .send_raw(&self.common().channel_def, Some(&payload))
                     .expect("failed to publish");
             } else {
                 // No rounding, just encode and publish

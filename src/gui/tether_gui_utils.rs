@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tether_agent::{TetherAgent, TetherAgentOptionsBuilder};
+use tether_agent::{TetherAgent, TetherAgentBuilder};
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -32,9 +32,9 @@ impl Default for EditableTetherSettings {
     }
 }
 
-impl From<EditableTetherSettings> for TetherAgentOptionsBuilder {
+impl From<EditableTetherSettings> for TetherAgentBuilder {
     fn from(editable: EditableTetherSettings) -> Self {
-        TetherAgentOptionsBuilder::new(&editable.role)
+        TetherAgentBuilder::new(&editable.role)
             .id(editable.id.as_deref())
             .host(Some(&editable.host))
             .port(Some(editable.port))
@@ -44,7 +44,7 @@ impl From<EditableTetherSettings> for TetherAgentOptionsBuilder {
     }
 }
 
-pub fn unconnected_tether_agent(options: &TetherAgentOptionsBuilder) -> TetherAgent {
+pub fn unconnected_tether_agent(options: &TetherAgentBuilder) -> TetherAgent {
     options
         .clone()
         .auto_connect(false)

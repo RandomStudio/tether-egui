@@ -1,7 +1,7 @@
 use egui::remap;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use tether_agent::{ChannelOptionsBuilder, TetherAgent};
+use tether_agent::TetherAgent;
 
 use crate::{
     gui::widget_view::common_send,
@@ -47,10 +47,12 @@ impl MidiSubscriber {
     /// Subscribe to all Tether MIDI control change messages
     pub fn new(agent: &mut TetherAgent) -> Self {
         if agent.is_connected() {
-            let _midi_controllers_channel =
-                ChannelOptionsBuilder::create_receiver("controlChange").build(agent);
-            let _midi_notes_channel =
-                ChannelOptionsBuilder::create_receiver("notesOn").build(agent);
+            let _midi_controllers_channel = agent
+                .create_receiver::<TetherControlChangePayload>("controlChange")
+                .expect("failed to build Receiver");
+            let _midi_notes_channel = agent
+                .create_receiver::<TetherNotePayload>("notesOn")
+                .expect("failed to build Receiver");
         }
         MidiSubscriber {}
     }

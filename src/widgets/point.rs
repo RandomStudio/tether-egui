@@ -112,7 +112,8 @@ impl View for Point2DWidget {
                 // println!("Pointer coordinates: {:?}", c)
                 let PlotPoint { x, y } = c;
                 let p = [x, y];
-                match tether_agent.send(&self.common().channel, p) {
+                let payload = rmp_serde::to_vec_named(&p).expect("failed to encode");
+                match tether_agent.send_raw(&self.common().channel_def, Some(&payload)) {
                     Ok(()) => debug!("Send OK"),
                     Err(_) => error!("Failed to send; connected? {}", tether_agent.is_connected()),
                 }

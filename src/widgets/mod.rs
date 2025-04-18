@@ -1,6 +1,8 @@
 use log::*;
 use serde::{Deserialize, Serialize};
-use tether_agent::{ChannelDefinition, ChannelOptionsBuilder, TetherAgent};
+use tether_agent::{
+    ChannelDefBuilder, ChannelSenderDef, ChannelSenderDefBuilder, TetherAgent, mqtt::QoS,
+};
 
 use crate::midi_mapping::MidiMapping;
 
@@ -42,20 +44,13 @@ pub trait CustomWidget<T: Serialize> {
     fn value_mut(&mut self) -> &mut T;
 }
 
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
-pub enum Qos {
-    AtMostOnce = 0,
-    AtLeastOnce = 1,
-    ExactlyOnce = 2,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// Represents user-defined options common to all Widgets
 pub struct Common {
     pub name: String,
     pub description: String,
-    pub channel: ChannelDefinition,
+    pub channel_def: ChannelSenderDef,
     pub midi_mapping: Option<MidiMapping>,
 
     // The fields below are never used in on-disk versions,
@@ -67,7 +62,7 @@ pub struct Common {
     #[serde(skip)]
     pub channel_name: String,
     #[serde(skip, default = "default_qos")]
-    pub qos: Qos,
+    pub qos: QoS,
     #[serde(skip)]
     pub retain: bool,
 
@@ -79,8 +74,8 @@ fn default_auto_send() -> bool {
     true
 }
 
-fn default_qos() -> Qos {
-    Qos::AtLeastOnce
+fn default_qos() -> QoS {
+    QoS::AtLeastOnce
 }
 
 pub fn shortened_name(full_name: &str) -> String {
@@ -108,14 +103,11 @@ impl Common {
     ) -> Self {
         debug!("New Widget: with Custom topic? {:?}", custom_topic);
         let channel = match custom_topic {
-            Some(topic) => ChannelOptionsBuilder::create_sender(channel_name)
-                .topic(Some(topic))
-                .build(agent)
-                .expect("failed to create output"),
+            Some(topic) => ChannelSenderDefBuilder::new(channel_name)
+                .override_topic(Some(topic))
+                .build(agent),
 
-            None => ChannelOptionsBuilder::create_sender(channel_name)
-                .build(agent)
-                .expect("failed to create output"),
+            None => ChannelSenderDefBuilder::new(channel_name).build(agent),
         };
 
         Common {
@@ -127,12 +119,12 @@ impl Common {
                     String::from("no description provided")
                 }
             },
-            channel,
+            channel_def: channel,
             is_edit_mode: true,
             channel_name: shortened_name(widget_name),
             auto_send: true,
             midi_mapping: None,
-            qos: Qos::AtMostOnce,
+            qos: QoS::AtMostOnce,
             retain: false,
             custom_topic: custom_topic.map(String::from),
         }

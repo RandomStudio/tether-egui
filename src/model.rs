@@ -1,9 +1,7 @@
 use std::time::Duration;
 
 use log::{error, info, warn};
-use tether_agent::{
-    TetherAgent, TetherAgentOptionsBuilder, tether_compliant_topic::TetherOrCustomTopic,
-};
+use tether_agent::{TetherAgent, TetherAgentBuilder, tether_compliant_topic::TetherOrCustomTopic};
 use tether_utils::tether_topics::{TopicOptions, insights::Insights};
 
 use crate::{
@@ -53,8 +51,7 @@ impl Default for Model {
             None => EditableTetherSettings::default(),
         };
 
-        let tether_agent =
-            unconnected_tether_agent(&TetherAgentOptionsBuilder::from(tether_settings));
+        let tether_agent = unconnected_tether_agent(&TetherAgentBuilder::from(tether_settings));
 
         let mut init_model = Model {
             tether_agent,
@@ -195,8 +192,7 @@ impl Model {
             None => EditableTetherSettings::default(),
         };
 
-        self.tether_agent =
-            unconnected_tether_agent(&TetherAgentOptionsBuilder::from(tether_settings));
+        self.tether_agent = unconnected_tether_agent(&TetherAgentBuilder::from(tether_settings));
 
         match self.tether_agent.connect() {
             Ok(()) => {

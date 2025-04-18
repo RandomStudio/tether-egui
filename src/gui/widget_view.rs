@@ -1,14 +1,16 @@
 use egui::{Color32, Response, RichText, Ui};
 use log::{debug, error};
 use serde::Serialize;
-use tether_agent::{ChannelOptionsBuilder, TetherAgent};
+use tether_agent::{
+    ChannelDef, ChannelDefBuilder, ChannelSenderDefBuilder, TetherAgent, mqtt::QoS,
+};
 
 use crate::{
     Model,
     midi_mapping::MidiMapping,
     model::QueueItem,
     widgets::{
-        CustomWidget, Qos, View, WidgetEntry, boolean::BoolWidget, colours::ColourWidget,
+        CustomWidget, View, WidgetEntry, boolean::BoolWidget, colours::ColourWidget,
         empty::EmptyWidget, generic::GenericJSONWidget, numbers::NumberWidget,
         point::Point2DWidget,
     },
@@ -59,7 +61,8 @@ pub fn common_send_button<T: Serialize>(
 }
 
 pub fn common_send<T: Serialize>(entry: &mut impl CustomWidget<T>, tether_agent: &TetherAgent) {
-    match tether_agent.send(&entry.common().channel, entry.value()) {
+    let payload = rmp_serde::to_vec_named(&entry.value()).expect("common_send failed to encode");
+    match tether_agent.send_raw(&entry.common().channel_def, Some(&payload)) {
         Ok(()) => debug!("Send OK"),
         Err(_) => error!(
             "Failed to send via Tether; connected? {}",
@@ -72,7 +75,7 @@ pub fn entry_topic<T: Serialize>(ui: &mut egui::Ui, entry: &impl CustomWidget<T>
     ui.label(
         RichText::new(format!(
             "Topic: {}",
-            entry.common().channel.generated_topic()
+            entry.common().channel_def.generated_topic()
         ))
         .color(Color32::LIGHT_BLUE),
     );
@@ -326,7 +329,7 @@ pub fn common_editable_values<T: Serialize>(
             if just_enabled {
                 None
             } else {
-                Some(String::from(entry.common().channel.generated_topic()))
+                Some(String::from(entry.common().channel_def.generated_topic()))
             }
         };
         debug!("New topic option: {:?}", new_topic_option);
@@ -348,7 +351,7 @@ pub fn common_editable_values<T: Serialize>(
                 update_channel_definition(entry, tether_agent);
             }
         } else {
-            ui.label(entry.common().channel.generated_topic());
+            ui.label(entry.common().channel_def.generated_topic());
         }
     });
 
@@ -359,19 +362,19 @@ pub fn common_editable_values<T: Serialize>(
             ui.label("QOS level");
             ui.radio_value(
                 &mut entry.common_mut().qos,
-                Qos::AtLeastOnce,
+                QoS::AtLeastOnce,
                 "0: At least once",
             )
             .on_hover_text("Fastest, no delivery guarrantees");
             ui.radio_value(
                 &mut entry.common_mut().qos,
-                Qos::AtMostOnce,
+                QoS::AtMostOnce,
                 "1: At most once",
             )
             .on_hover_text("Ensure delivery, duplicates possible");
             ui.radio_value(
                 &mut entry.common_mut().qos,
-                Qos::ExactlyOnce,
+                QoS::ExactlyOnce,
                 "2: Exactly once",
             )
             .on_hover_text("Slowest, guarranteed once-only delivery");
@@ -390,12 +393,11 @@ fn update_channel_definition<T: Serialize>(
     debug!("QOS level: {}", entry.common().qos as i32);
     debug!("Retain: {}", entry.common().retain);
 
-    entry.common_mut().channel = ChannelOptionsBuilder::create_sender(&entry.common().channel_name)
-        .qos(Some(entry.common().qos as i32))
+    entry.common_mut().channel_def = ChannelSenderDefBuilder::new(&entry.common().channel_name)
+        .qos(Some(entry.common().qos))
         .retain(Some(entry.common().retain))
-        .topic(entry.common().custom_topic.as_deref())
-        .build(tether_agent)
-        .expect("failed to create output")
+        .override_topic(entry.common().custom_topic.as_deref())
+        .build(tether_agent);
 }
 
 pub fn common_edit_midi_mapping<T: Serialize>(ui: &mut egui::Ui, entry: &mut impl CustomWidget<T>) {

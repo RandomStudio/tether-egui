@@ -5,7 +5,7 @@ use egui::{
     plot::{Line, Plot, PlotPoints},
 };
 use log::*;
-use tether_agent::TetherAgentOptionsBuilder;
+use tether_agent::TetherAgentBuilder;
 use tether_utils::{
     tether_playback::{PlaybackOptions, TetherPlaybackUtil},
     tether_record::{RecordOptions, TetherRecordUtil},
@@ -72,7 +72,7 @@ fn render_insights(ui: &mut Ui, model: &mut Model) {
             }
 
             ui.label(format!("Agent IDs x{}", insights.ids().len()));
-            for id in insights.roles() {
+            for id in insights.ids() {
                 ui.small(format!(" - {}", id));
             }
 
@@ -212,7 +212,7 @@ fn render_playback(ui: &mut Ui, model: &mut Model) {
                         model.playback.stop_request_tx = Some(player.get_stop_tx());
                         model.playback.thread_handle = Some(std::thread::spawn(move || {
                             if let Ok(mut tether_agent) =
-                                TetherAgentOptionsBuilder::from(tether_settings).build()
+                                TetherAgentBuilder::from(tether_settings).build()
                             {
                                 tether_agent.connect().expect("failed to connect");
                                 info!("Connected new Tether Agent for playback OK");
@@ -327,9 +327,7 @@ fn render_record(ui: &mut Ui, model: &mut Model) {
                     None => EditableTetherSettings::default(),
                 };
 
-                if let Ok(mut tether_agent) =
-                    TetherAgentOptionsBuilder::from(tether_settings).build()
-                {
+                if let Ok(mut tether_agent) = TetherAgentBuilder::from(tether_settings).build() {
                     model.recording.stop_request_tx = Some(recorder.get_stop_tx());
                     model.recording.thread_handle = Some(std::thread::spawn(move || {
                         tether_agent.connect().expect("failed to connect");

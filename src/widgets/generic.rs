@@ -47,7 +47,7 @@ impl GenericJSONWidget {
         match serde_json::from_str::<serde_json::Value>(&self.value) {
             Ok(encoded) => {
                 let payload = rmp_serde::to_vec_named(&encoded).expect("failed to encode msgpack");
-                match tether_agent.send_raw(&self.common().channel, Some(&payload)) {
+                match tether_agent.send_raw(&self.common().channel_def, Some(&payload)) {
                     Ok(()) => debug!("Send OK"),
                     Err(_) => error!("Failed to send; connected? {}", tether_agent.is_connected()),
                 }
