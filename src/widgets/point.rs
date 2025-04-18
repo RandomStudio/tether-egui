@@ -13,7 +13,7 @@ use crate::{
     midi_mapping::MidiMapping,
 };
 
-use super::{Common, CustomWidget, View};
+use super::{Common, CustomWidget, View, shortened_name};
 
 type Point2D = [f64; 2];
 
@@ -28,12 +28,18 @@ impl Point2DWidget {
     pub fn new(
         widget_name: &str,
         description: Option<&str>,
-        channel_name: &str,
+        channel_name: Option<&str>,
         custom_topic: Option<&str>,
         agent: &mut TetherAgent,
     ) -> Self {
         Point2DWidget {
-            common: Common::new(widget_name, description, channel_name, custom_topic, agent),
+            common: Common::new(
+                widget_name,
+                description,
+                channel_name.unwrap_or(&shortened_name(widget_name)),
+                custom_topic,
+                agent,
+            ),
             value: [0., 0.],
         }
     }

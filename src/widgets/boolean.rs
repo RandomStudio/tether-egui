@@ -10,7 +10,7 @@ use crate::{
     midi_mapping::MidiMapping,
 };
 
-use super::{Common, CustomWidget, View};
+use super::{Common, CustomWidget, View, shortened_name};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -23,13 +23,19 @@ impl BoolWidget {
     pub fn new(
         widget_name: &str,
         description: Option<&str>,
-        channel_name: &str,
+        channel_name: Option<&str>,
         custom_topic: Option<&str>,
         init_state: bool,
         agent: &mut TetherAgent,
     ) -> Self {
         BoolWidget {
-            common: Common::new(widget_name, description, channel_name, custom_topic, agent),
+            common: Common::new(
+                widget_name,
+                description,
+                channel_name.unwrap_or(&shortened_name(widget_name)),
+                custom_topic,
+                agent,
+            ),
             value: init_state,
         }
     }

@@ -200,9 +200,9 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .project
             .widgets
             .push(WidgetEntry::Bool(BoolWidget::new(
-                "Boolean Message",
+                "Boolean Messages",
                 Some("A true or false value"),
-                "booleans",
+                None,
                 None,
                 false,
                 &mut model.tether_agent,
@@ -213,9 +213,9 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .project
             .widgets
             .push(WidgetEntry::Empty(EmptyWidget::new(
-                "Empty Meassage",
+                "Empty Meassages",
                 Some("A message with no payload"),
-                "events",
+                None,
                 None,
                 &mut model.tether_agent,
             )));
@@ -226,9 +226,9 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .project
             .widgets
             .push(WidgetEntry::FloatNumber(NumberWidget::new(
-                "Floating Point Number",
+                "Floating Point Numbers",
                 Some("A single 64-bit floating point number"),
-                "floats",
+                None,
                 None,
                 0.,
                 0. ..=1.0,
@@ -241,9 +241,9 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .project
             .widgets
             .push(WidgetEntry::WholeNumber(NumberWidget::new(
-                "Whole Number",
+                "Whole Numbers",
                 Some("A single 64-bit whole number"),
-                "numbers",
+                None,
                 None,
                 0.,
                 0. ..=100.,
@@ -256,9 +256,9 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .project
             .widgets
             .push(WidgetEntry::Point2D(Point2DWidget::new(
-                "Point2D",
+                "2DPoints",
                 Some("X and Y values"),
-                "point2d",
+                None,
                 None,
                 &mut model.tether_agent,
             )));
@@ -268,9 +268,9 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .project
             .widgets
             .push(WidgetEntry::Generic(GenericJSONWidget::new(
-                "Generic JSON Data",
+                "Generic Messages",
                 Some("Any generic data, in JSON format"),
-                "generic",
+                None,
                 None,
                 &mut model.tether_agent,
             )));
@@ -280,9 +280,9 @@ pub fn available_widgets(ui: &mut egui::Ui, model: &mut Model) {
             .project
             .widgets
             .push(WidgetEntry::Colour(ColourWidget::new(
-                "Colour",
+                "Colours",
                 Some("8-bit colour including alpha"),
-                "colours",
+                None,
                 None,
                 &mut model.tether_agent,
             )))

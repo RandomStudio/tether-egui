@@ -11,7 +11,7 @@ use crate::{
     midi_mapping::MidiMapping,
 };
 
-use super::{Common, CustomWidget, View};
+use super::{Common, CustomWidget, View, shortened_name};
 
 const SENSIBLE_MIN: f64 = -100000.;
 const SENSIBLE_MAX: f64 = 100000.;
@@ -37,7 +37,7 @@ impl NumberWidget {
     pub fn new(
         name: &str,
         description: Option<&str>,
-        channel_name: &str,
+        channel_name: Option<&str>,
         custom_topic: Option<&str>,
         value: f64,
         range: RangeInclusive<f64>,
@@ -45,7 +45,13 @@ impl NumberWidget {
         agent: &mut TetherAgent,
     ) -> Self {
         NumberWidget {
-            common: Common::new(name, description, channel_name, custom_topic, agent),
+            common: Common::new(
+                name,
+                description,
+                channel_name.unwrap_or(&shortened_name(name)),
+                custom_topic,
+                agent,
+            ),
             value,
             range_min: *range.start(),
             range_max: *range.end(),

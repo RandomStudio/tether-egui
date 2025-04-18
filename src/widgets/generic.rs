@@ -11,7 +11,7 @@ use crate::{
     midi_mapping::MidiMapping,
 };
 
-use super::{Common, CustomWidget, View};
+use super::{Common, CustomWidget, View, shortened_name};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -32,12 +32,18 @@ impl GenericJSONWidget {
     pub fn new(
         widget_name: &str,
         description: Option<&str>,
-        channel_name: &str,
+        channel_name: Option<&str>,
         custom_topic: Option<&str>,
         agent: &mut TetherAgent,
     ) -> Self {
         GenericJSONWidget {
-            common: Common::new(widget_name, description, channel_name, custom_topic, agent),
+            common: Common::new(
+                widget_name,
+                description,
+                channel_name.unwrap_or(&shortened_name(widget_name)),
+                custom_topic,
+                agent,
+            ),
             value: "{\"answer\":42}".into(),
             is_valid_json: true,
         }

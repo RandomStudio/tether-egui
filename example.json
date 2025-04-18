@@ -3,83 +3,184 @@
     {
       "bool": {
         "common": {
-          "name": "Boolean Message",
+          "name": "Boolean Messages",
           "description": "A true or false value",
-          "channel": {
-            "ChannelSender": {
-              "name": "booleanMessage",
-              "topic": {
-                "Tether": {
-                  "role": "gui",
-                  "id": null,
-                  "channel_name": "booleanMessage",
-                  "full_topic": "gui/booleanMessage"
-                }
-              },
-              "qos": 0,
-              "retain": false
-            }
+          "channelDef": {
+            "name": "booleanMessages",
+            "generated_topic": "gui/booleanMessages",
+            "topic": {
+              "Tether": {
+                "role": "gui",
+                "id": null,
+                "channel_name": "booleanMessages",
+                "full_topic": "gui/booleanMessages"
+              }
+            },
+            "qos": "AtMostOnce",
+            "retain": false
           },
           "midiMapping": null
         },
-        "value": true
+        "value": false
       }
     },
     {
-      "colour": {
+      "empty": {
         "common": {
-          "name": "Colour",
-          "description": "8-bit colour including alpha",
-          "channel": {
-            "ChannelSender": {
-              "name": "colour",
-              "topic": {
-                "Tether": {
-                  "role": "gui",
-                  "id": null,
-                  "channel_name": "colour",
-                  "full_topic": "gui/colour"
-                }
-              },
-              "qos": 0,
-              "retain": false
-            }
+          "name": "Empty Meassages",
+          "description": "A message with no payload",
+          "channelDef": {
+            "name": "emptyMeassages",
+            "generated_topic": "gui/emptyMeassages",
+            "topic": {
+              "Tether": {
+                "role": "gui",
+                "id": null,
+                "channel_name": "emptyMeassages",
+                "full_topic": "gui/emptyMeassages"
+              }
+            },
+            "qos": "AtMostOnce",
+            "retain": false
           },
           "midiMapping": null
         },
-        "value": [
-          129,
-          74,
-          74,
-          255
-        ]
+        "value": null
+      }
+    },
+    {
+      "floatNumber": {
+        "common": {
+          "name": "Floating Point Numbers",
+          "description": "A single 64-bit floating point number",
+          "channelDef": {
+            "name": "floatingPointNumbers",
+            "generated_topic": "gui/floatingPointNumbers",
+            "topic": {
+              "Tether": {
+                "role": "gui",
+                "id": null,
+                "channel_name": "floatingPointNumbers",
+                "full_topic": "gui/floatingPointNumbers"
+              }
+            },
+            "qos": "AtMostOnce",
+            "retain": false
+          },
+          "midiMapping": null
+        },
+        "value": 0.49,
+        "rangeMin": 0.0,
+        "rangeMax": 1.0,
+        "shouldRound": false,
+        "stepSize": 0.01
+      }
+    },
+    {
+      "wholeNumber": {
+        "common": {
+          "name": "Whole Numbers",
+          "description": "A single 64-bit whole number",
+          "channelDef": {
+            "name": "wholeNumbers",
+            "generated_topic": "gui/wholeNumbers",
+            "topic": {
+              "Tether": {
+                "role": "gui",
+                "id": null,
+                "channel_name": "wholeNumbers",
+                "full_topic": "gui/wholeNumbers"
+              }
+            },
+            "qos": "AtMostOnce",
+            "retain": false
+          },
+          "midiMapping": null
+        },
+        "value": 0.0,
+        "rangeMin": 0.0,
+        "rangeMax": 100.0,
+        "shouldRound": true,
+        "stepSize": 1.0
       }
     },
     {
       "point2D": {
         "common": {
-          "name": "Point2D",
+          "name": "2DPoints",
           "description": "X and Y values",
-          "channel": {
-            "ChannelSender": {
-              "name": "point2d",
-              "topic": {
-                "Tether": {
-                  "role": "gui",
-                  "id": null,
-                  "channel_name": "point2d",
-                  "full_topic": "gui/point2d"
-                }
-              },
-              "qos": 0,
-              "retain": false
-            }
+          "channelDef": {
+            "name": "2dpoints",
+            "generated_topic": "gui/2dpoints",
+            "topic": {
+              "Tether": {
+                "role": "gui",
+                "id": null,
+                "channel_name": "2dpoints",
+                "full_topic": "gui/2dpoints"
+              }
+            },
+            "qos": "AtMostOnce",
+            "retain": false
           },
           "midiMapping": null
         },
         "value": [
           0.0,
           0.0
+        ]
+      }
+    },
+    {
+      "generic": {
+        "common": {
+          "name": "Generic Messages",
+          "description": "Any generic data, in JSON format",
+          "channelDef": {
+            "name": "genericMessages",
+            "generated_topic": "gui/genericMessages",
+            "topic": {
+              "Tether": {
+                "role": "gui",
+                "id": null,
+                "channel_name": "genericMessages",
+                "full_topic": "gui/genericMessages"
+              }
+            },
+            "qos": "AtMostOnce",
+            "retain": false
+          },
+          "midiMapping": null
+        },
+        "value": "{\"answer\":42}"
+      }
+    },
+    {
+      "colour": {
+        "common": {
+          "name": "Colours",
+          "description": "8-bit colour including alpha",
+          "channelDef": {
+            "name": "colours",
+            "generated_topic": "gui/colours",
+            "topic": {
+              "Tether": {
+                "role": "gui",
+                "id": null,
+                "channel_name": "colours",
+                "full_topic": "gui/colours"
+              }
+            },
+            "qos": "AtMostOnce",
+            "retain": false
+          },
+          "midiMapping": null
+        },
+        "value": [
+          255,
+          255,
+          255,
+          255
         ]
       }
     }
